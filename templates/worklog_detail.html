@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ worklog.title }} | Work Log</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            background: #f4f6fb;
+            font-family: 'Inter', sans-serif;
+            color: #1f2937;
+            margin: 0;
+        }
+        .worklog-detail-container {
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .worklog-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+            padding: 32px;
+        }
+        .worklog-title {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .worklog-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+        .worklog-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .worklog-content {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            background: #fff;
+            min-height: 200px;
+        }
+        .worklog-content h1,
+        .worklog-content h2,
+        .worklog-content h3 {
+            color: #111827;
+        }
+        .worklog-content blockquote {
+            border-left: 4px solid #6366f1;
+            background: #f5f3ff;
+            margin: 16px 0;
+            padding: 12px 16px;
+            color: #4c1d95;
+        }
+        .attachments-section {
+            margin-top: 24px;
+        }
+        .attachment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .attachment-item a {
+            text-decoration: none;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            color: #4f46e5;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="worklog-detail-container">
+        <div class="worklog-card">
+            <h1 class="worklog-title">{{ worklog.title }}</h1>
+            <div class="worklog-meta">
+                <span>👤 {{ owner.full_name or owner.username }}</span>
+                <span>📅 {{ worklog.updated_at or worklog.created_at }}</span>
+                {% if project %}<span>📁 {{ project.name }}</span>{% endif %}
+                {% if task %}<span>📝 Task #{{ task.id }}</span>{% endif %}
+                {% if subtask %}<span>✅ Subtask #{{ subtask.id }} · {{ subtask.title }}</span>{% endif %}
+            </div>
+            <div class="worklog-content">
+                {{ worklog.content | safe }}
+            </div>
+            {% if worklog.attachments %}
+            <div class="attachments-section">
+                <h3>Đính kèm</h3>
+                {% for file in worklog.attachments %}
+                <div class="attachment-item">
+                    <a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.name }}</a>
+                    <span>{{ (file.size or 0) / 1024 | round(1) }} KB</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <a href="/" class="back-link">← Quay lại ứng dụng</a>
+        </div>
+    </div>
+</body>
+</html>
+

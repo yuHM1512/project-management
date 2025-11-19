@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script>
+        if (!localStorage.getItem('pm_token')) {
+            window.location.href = '/login';
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="/assets/Logo.png" alt="M29 Projects" class="logo-img">
+                <button class="btn-new-project" id="btnNewProject">+ New Project</button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" data-view="dashboard" class="nav-link active">
+                        <img src="/assets/icon/dashboard.png" alt="Dashboard" class="icon">
+                        Dashboard
+                    </a></li>
+                    <li><a href="#" data-view="projects" class="nav-link">
+                        <img src="/assets/icon/project.png" alt="Projects" class="icon">
+                        Projects
+                    </a></li>
+                    <li><a href="#" data-view="board" class="nav-link">
+                        <img src="/assets/icon/board.png" alt="Board" class="icon">
+                        Board
+                    </a></li>
+                    <li><a href="#" data-view="notifications" class="nav-link">
+                        <div style="position: relative; display: inline-block;">
+                            <img src="/assets/icon/notification.png" alt="Notifications" class="icon">
+                            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+                        </div>
+                        Notifications
+                    </a></li>
+                    <li><a href="#" data-view="users" class="nav-link admin-only" style="display: none;">
+                        <img src="/assets/icon/users.png" alt="Users" class="icon">
+                        Users
+                    </a></li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-projects">
+                <h3>Personal</h3>
+                <ul id="personalList" class="personal-links">
+                    <li><a href="#" class="personal-link" data-personal="todos">
+                        <img src="/assets/icon/todo.png" alt="To-do" class="icon"> To-do List
+                    </a></li>
+                    <li><a href="#" class="personal-link" data-personal="notes">
+                        <img src="/assets/icon/mynotes.png" alt="Notes" class="icon"> My Notes
+                    </a></li>
+                    <li><a href="#" class="personal-link" data-personal="work">
+                        <img src="/assets/icon/worklog.png" alt="Work Log" class="icon"> Work Log
+                    </a></li>
+                    <li><a href="#" class="personal-link" data-personal="account">
+                        <img src="/assets/icon/account.png" alt="Account" class="icon"> Account
+                    </a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h2 id="pageTitle">M29 - PROJECT MANAGEMENT DASHBOARD</h2>
+                </div>
+                <div class="header-right">
+                    <input type="search" placeholder="Search..." class="search-input" id="searchInput">
+                    <div class="user-info">
+                        <div class="user-menu">
+                            <span class="user-avatar" id="userAvatar">👤</span>
+                        </div>
+                        <span class="user-name" id="userDisplayName">Đang tải...</span>
+                    </div>
+                    <button class="btn-secondary" id="logoutBtn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Dashboard View -->
+                <div id="dashboardView" class="view active">
+                    <div class="stats-grid">
+                        <div class="stat-card" data-card-accent="indigo">
+                            <div class="stat-card-icon-wrapper">
+                                <img src="/assets/kpi/project.png" alt="Projects" class="stat-card-icon">
+                            </div>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">Total Projects</div>
+                                <p class="stat-number" id="statTotalProjects">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" data-card-accent="green">
+                            <div class="stat-card-icon-wrapper">
+                                <img src="/assets/kpi/complete.png" alt="Completion" class="stat-card-icon">
+                            </div>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">Completion Rate</div>
+                                <p class="stat-number" id="statCompletionRate">0%</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" data-card-accent="blue">
+                            <div class="stat-card-icon-wrapper">
+                                <img src="/assets/kpi/on-time.png" alt="On-time" class="stat-card-icon">
+                            </div>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">On-time Rate</div>
+                                <p class="stat-number" id="statOnTimeRate">0%</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" data-card-accent="red">
+                            <div class="stat-card-icon-wrapper">
+                                <img src="/assets/kpi/overdue.png" alt="Overdue" class="stat-card-icon">
+                            </div>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">Overdue Count</div>
+                                <p class="stat-number" id="statOverdueCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="warning-zone" style="display: none;">
+                        <div class="warning-card at-risk">
+                            <div class="warning-header">
+                                <span class="warning-title">At Risk</span>
+                                <span class="warning-count" id="warningAtRiskCount">0</span>
+                            </div>
+                            <div class="warning-list" id="warningAtRiskList">Không có dự án nào</div>
+                        </div>
+                        <div class="warning-card overdue">
+                            <div class="warning-header">
+                                <span class="warning-title">Overdue</span>
+                                <span class="warning-count" id="warningOverdueCount">0</span>
+                            </div>
+                            <div class="warning-list" id="warningOverdueList">Không có dự án nào</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 24px; margin-top: 32px;">
+                        <div class="today-tasks-card">
+                            <div class="today-tasks-header">
+                                <h3><img src="/assets/icon/today.png" alt="Today" class="today-tasks-icon">Today Tasks</h3>
+                            </div>
+                            <div class="today-tasks-table">
+                                <div class="today-tasks-table-header">
+                                    <div class="task-col-status">Status</div>
+                                    <div class="task-col-title">Task</div>
+                                    <div class="task-col-description">Description</div>
+                                    <div class="task-col-actions">Actions</div>
+                                </div>
+                                <div id="todayTasksList" class="today-tasks-table-body">
+                                    <div class="empty-state">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Upcoming Deadlines Widget -->
+                        <div class="upcoming-deadlines-card">
+                            <div class="upcoming-deadlines-header">
+                                <h3>
+                                    <img src="/assets/icon/deadline.png" alt="Deadlines" class="upcoming-deadlines-icon">
+                                    Upcoming Deadlines
+                                </h3>
+                            </div>
+                            <div id="upcomingDeadlinesList" class="upcoming-deadlines-list">
+                                <div class="empty-state">Đang tải...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-projects">
+                        <h3>Recent Projects</h3>
+                        <div id="recentProjectsList" class="projects-grid"></div>
+                    </div>
+
+                    <!--
+                    <div class="dashboard-calendar-card">
+                        <div class="calendar-header">
+                            <button id="dashboardPrevMonth">←</button>
+                            <h3 id="dashboardCurrentMonth"></h3>
+                            <button id="dashboardNextMonth">→</button>
+                        </div>
+                        <div class="calendar-grid" id="dashboardCalendarGrid"></div>
+                    </div>
+                    -->
+                </div>
+
+                <!-- Projects View -->
+                <div id="projectsView" class="view">
+                    <div class="view-header">
+                        <h2>All Projects</h2>
+                        <button class="btn-primary" id="btnCreateProject">+ New Project</button>
+                    </div>
+                    <div id="projectsGrid" class="projects-grid"></div>
+                </div>
+
+                <!-- Personal View -->
+                <div id="personalView" class="view" data-anchor="personalWorkLog">
+                    <div class="view-header">
+                        <h2>Personal Workspace</h2>
+                    </div>
+                    <div class="personal-sections">
+                        <div id="personalSectionTodos" class="personal-section">
+                            <div class="todo-card">
+                                <h3>To-do List</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Ngày</label>
+                                        <input type="date" id="todoDate" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Thêm công việc</label>
+                                        <button type="button" class="btn-primary" id="btnAddTodoRow">+ Thêm</button>
+                                    </div>
+                                </div>
+                                <form id="todoForm">
+                                    <div id="todoRows" class="todo-rows"></div>
+                                    <div class="form-actions">
+                                        <span id="todoStatus" class="form-status"></span>
+                                        <button type="submit" class="btn-primary">Lưu To-do</button>
+                                    </div>
+                                </form>
+                                <div class="todo-day-list"></div>
+                            </div>
+                        </div>
+
+                        <div id="personalSectionNotes" class="personal-section">
+                            <div class="notes-tabs">
+                                <button class="note-tab active" data-note-tab="list">Danh sách</button>
+                                <button class="note-tab" data-note-tab="form">Tạo / Chỉnh sửa</button>
+                            </div>
+                            <div id="noteTabList" class="note-tab-panel active">
+                                <div class="note-list-panel">
+                                    <div class="note-list" id="noteList">
+                                        <div class="empty-state">Chưa có ghi chú nào.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="noteTabForm" class="note-tab-panel">
+                                <div class="note-editor-card">
+                                    <form id="noteForm">
+                                        <div class="note-form-header">
+                                            <button type="button" class="btn-secondary" id="btnNewNote">+ New Note</button>
+                                        </div>
+                                        <input type="hidden" id="noteId">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Tên note</label>
+                                                <input type="text" id="noteTitle" required placeholder="Tên note...">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Ngày tạo</label>
+                                                <input type="date" id="noteDate">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Nội dung</label>
+                                            <div id="noteEditor" class="quill-editor"></div>
+                                        </div>
+                                        <div class="form-actions worklog-actions">
+                                            <span id="noteStatus" class="form-status"></span>
+                                            <div class="worklog-action-buttons">
+                                                <button type="button" class="btn-secondary danger" id="btnDeleteNote" style="display: none;">Xóa</button>
+                                                <button type="submit" class="btn-primary">Lưu Note</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="personalSectionWork" class="personal-section">
+                            <div class="worklog-tabs">
+                                <button class="worklog-tab active" data-worklog-tab="list">Danh sách</button>
+                                <button class="worklog-tab" data-worklog-tab="form">Tạo / Chỉnh sửa</button>
+                            </div>
+                            <div id="worklogTabList" class="worklog-tab-panel active">
+                                <div class="note-list-panel">
+                                    <div class="worklog-list" id="workLogList">
+                                        <div class="empty-state">Chưa có Work Log nào.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="worklogTabForm" class="worklog-tab-panel">
+                                <div class="worklog-editor-card">
+                                    <form id="workLogForm">
+                                        <div class="note-form-header">
+                                            <button type="button" class="btn-secondary" id="btnNewWorkLog">+ New Work Log</button>
+                                        </div>
+                                        <input type="hidden" id="workLogId">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Tên Work Log</label>
+                                                <input type="text" id="workLogTitle" required placeholder="Tên tài liệu...">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Project</label>
+                                                <select id="workLogProject">
+                                                    <option value="">-- Chưa gán --</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Task</label>
+                                                <select id="workLogTask">
+                                                    <option value="">-- Chưa gán --</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Sub Task</label>
+                                                <select id="workLogSubtask" disabled>
+                                                    <option value="">-- Chưa gán --</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Nội dung</label>
+                                            <div id="workLogEditor" class="quill-editor"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Đính kèm</label>
+                                            <input type="file" id="workLogAttachmentInput" multiple>
+                                            <small class="input-hint">Lưu work log trước khi upload file. Hỗ trợ nhiều file.</small>
+                                            <div id="workLogAttachments" class="worklog-attachments"></div>
+                                        </div>
+                                        <div class="form-actions worklog-actions">
+                                            <span id="workLogStatus" class="form-status"></span>
+                                            <div class="worklog-action-buttons">
+                                                <button type="button" class="btn-secondary" id="btnResetWorkLog">Reset</button>
+                                                <button type="button" class="btn-secondary danger" id="btnDeleteWorkLog" style="display: none;">Xóa</button>
+                                                <button type="submit" class="btn-primary">Lưu Work Log</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="personalSectionAccount" class="personal-section active">
+                            <div class="card account-card">
+                                <h3>Account Information</h3>
+                                <p class="card-description">Cập nhật thông tin cá nhân của bạn.</p>
+                                <form id="accountForm" class="account-form">
+                                    <div class="account-avatar-row">
+                                        <div class="avatar-preview" id="accountAvatarPreview">
+                                            <img id="accountAvatarPreviewImg" src="" alt="Avatar preview" onerror="this.src='https://placehold.co/120x120?text=Avatar';">
+                                        </div>
+                                        <div class="form-group avatar-input-group">
+                                            <label>Avatar URL</label>
+                                            <input type="text" id="accountAvatarUrl" placeholder="https://..." autocomplete="off" inputmode="url">
+                                            <small><a href="https://notion-avatar.app" target="_blank" rel="noopener">Tạo custom avatar</a></small>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Email</label>
+                                            <input type="email" id="accountEmail" required placeholder="you@example.com">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Họ và tên</label>
+                                            <input type="text" id="accountFullName" placeholder="Nguyễn Văn A">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Đơn vị</label>
+                                            <input type="text" id="accountDepartment" placeholder="Phòng/Ban">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Bộ phận</label>
+                                            <input type="text" id="accountTeam" placeholder="Nhóm phụ trách">
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <span id="accountStatus" class="form-status"></span>
+                                        <button type="submit" class="btn-primary">Lưu thay đổi</button>
+                                    </div>
+                                </form>
+                                
+                                <!-- Change Password Section -->
+                                <div class="card account-card" style="margin-top: 24px;">
+                                    <h3>Đổi mật khẩu</h3>
+                                    <p class="card-description">Thay đổi mật khẩu đăng nhập của bạn.</p>
+                                    <form id="changePasswordForm" class="account-form">
+                                        <div class="form-group">
+                                            <label>Mật khẩu hiện tại</label>
+                                            <input type="password" id="currentPassword" required placeholder="Nhập mật khẩu hiện tại">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Mật khẩu mới</label>
+                                            <input type="password" id="newPassword" required placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)" minlength="6">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Xác nhận mật khẩu mới</label>
+                                            <input type="password" id="confirmPassword" required placeholder="Nhập lại mật khẩu mới" minlength="6">
+                                        </div>
+                                        <div class="form-actions">
+                                            <span id="passwordStatus" class="form-status"></span>
+                                            <button type="submit" class="btn-primary">Đổi mật khẩu</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users View -->
+                <div id="usersView" class="view">
+                    <div class="view-header">
+                        <h2>User Management</h2>
+                    </div>
+                    <div id="usersTableContainer" style="background: white; border-radius: 8px; padding: 24px; box-shadow: var(--shadow);">
+                        <table id="usersTable" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border-color);">
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Avatar</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Username</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Email</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Full Name</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Department</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Team</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Role</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="8" style="padding: 24px; text-align: center; color: var(--text-secondary);">Đang tải...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Board View (Kanban) -->
+                <div id="notificationsView" class="view">
+                    <div class="notifications-container">
+                        <div class="notifications-header">
+                            <h2>Notifications</h2>
+                            <button class="btn-secondary" onclick="markAllNotificationsAsRead()">Đánh dấu tất cả đã đọc</button>
+                        </div>
+                        <div id="notificationsList" class="notifications-list">
+                            <div class="empty-state">Đang tải...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="boardView" class="view">
+                    <div class="board-layout">
+                        <div class="board-main">
+                            <div class="view-header">
+                                <select id="projectSelect" class="project-select">
+                                    <option value="">Select Project</option>
+                                </select>
+                                <button class="btn-primary" id="btnCreateTask">+ New Task</button>
+                            </div>
+                    <div class="project-summary-section" id="projectSummarySection" style="display: none;">
+                        <!-- Cột trái: Ngày yêu cầu và Tiến độ -->
+                        <div class="summary-left-column">
+                            <!-- Ngày yêu cầu hoàn thành - Card riêng -->
+                            <div class="summary-due-date-card">
+                                <label>Ngày yêu cầu hoàn thành</label>
+                                <span id="projectDueDateDisplay">--</span>
+                            </div>
+                            
+                            <!-- Tiến độ dự án - Card riêng, nằm dưới -->
+                            <div class="summary-progress-card">
+                                <label>Tiến độ dự án</label>
+                                <div class="summary-progress">
+                                    <div class="summary-progress-bar">
+                                        <div class="summary-progress-fill" id="projectProgressFill"></div>
+                                    </div>
+                                    <span id="projectProgressText">0% (0/0)</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cột phải: Activity Log Card -->
+                        <div class="activity-log-card" id="activityLogCard">
+                            <div class="activity-header">
+                                <h3>Activity Log</h3>
+                            </div>
+                            <div class="activity-list" id="activityList">
+                                <div style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 14px;">
+                                    Chưa có hoạt động nào.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                            
+                            <!-- Board Tabs -->
+                            <div class="board-tabs">
+                                <button class="board-tab active" data-tab="status">Status</button>
+                                <button class="board-tab" data-tab="timeline">Timeline</button>
+                                <button class="board-tab" data-tab="thread">Thread</button>
+                            </div>
+                    
+                    <!-- Status Tab (Kanban Board) -->
+                    <div id="boardTabStatus" class="board-tab-content active">
+                        <div class="kanban-board" id="kanbanBoard">
+                            <div class="kanban-column" data-status="todo">
+                                <div class="column-header">
+                                    <h3>To Do</h3>
+                                    <span class="task-count" id="countTodo">0</span>
+                                </div>
+                                <div class="task-list" id="tasksTodo"></div>
+                            </div>
+                            <div class="kanban-column" data-status="in_progress">
+                                <div class="column-header">
+                                    <h3>In Progress</h3>
+                                    <span class="task-count" id="countInProgress">0</span>
+                                </div>
+                                <div class="task-list" id="tasksInProgress"></div>
+                            </div>
+                            <div class="kanban-column" data-status="done">
+                                <div class="column-header">
+                                    <h3>Done</h3>
+                                    <span class="task-count" id="countDone">0</span>
+                                </div>
+                                <div class="task-list" id="tasksDone"></div>
+                            </div>
+                            <div class="kanban-column" data-status="blocked">
+                                <div class="column-header">
+                                    <h3>Blocked</h3>
+                                    <span class="task-count" id="countBlocked">0</span>
+                                </div>
+                                <div class="task-list" id="tasksBlocked"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Tab (Gantt Chart) -->
+                    <div id="boardTabTimeline" class="board-tab-content">
+                        <div class="gantt-section">
+                            <div class="gantt-header">
+                                <h3>Timeline</h3>
+                                <div class="gantt-legend">
+                                    <span class="legend-item"><span class="legend-color todo"></span> To Do</span>
+                                    <span class="legend-item"><span class="legend-color in-progress"></span> In Progress</span>
+                                    <span class="legend-item"><span class="legend-color done"></span> Done</span>
+                                    <span class="legend-item"><span class="legend-color blocked"></span> Blocked</span>
+                                </div>
+                            </div>
+                            <div class="gantt-container">
+                                <div class="gantt-timeline" id="ganttTimeline"></div>
+                                <div class="gantt-chart" id="ganttChart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Thread Tab (Discussion) -->
+                    <div id="boardTabThread" class="board-tab-content">
+                        <div class="thread-container">
+                            <div class="thread-messages" id="threadMessages">
+                                <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
+                                    Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
+                                </div>
+                            </div>
+                            <div class="thread-input-container">
+                                <div style="position: relative; flex: 1;">
+                                    <textarea id="threadInput" placeholder="Nhập tin nhắn... (Gõ @ để mention)" rows="3"></textarea>
+                                    <div id="mentionDropdown" class="mention-dropdown" style="display: none;"></div>
+                                </div>
+                                <button class="btn-primary" id="btnSendThread">Gửi</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Project Modal -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="projectModalTitle">New Project</h2>
+                <button class="modal-close" id="closeProjectModal">×</button>
+            </div>
+            <form id="projectForm">
+                <input type="hidden" id="projectId">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="projectName" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="projectDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Project Type</label>
+                    <select id="projectType" required>
+                        <option value="">-- Chọn loại dự án --</option>
+                        <!-- Options sẽ được load bằng JavaScript -->
+                    </select>
+                    <small class="input-hint">Phân loại dự án theo cấp độ (Công ty / Phòng ban)</small>
+                </div>
+                <div class="form-group">
+                    <label>Ngày hoàn thành dự kiến</label>
+                    <input type="date" id="projectDueDate">
+                    <small class="input-hint">Dùng để theo dõi tiến độ hoàn thành dự án</small>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" id="projectColor" value="#6366f1">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelProject">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="taskModalTitle">New Task</h2>
+                <button class="modal-close" id="closeTaskModal">×</button>
+            </div>
+            <form id="taskForm">
+                <input type="hidden" id="taskId">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="taskDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Assignees (có thể chọn nhiều)</label>
+                    <div id="taskAssigneesContainer" class="assignees-container">
+                        <div class="assignees-list" id="taskAssigneesList">
+                            <!-- Checkboxes sẽ được thêm bằng JavaScript -->
+                        </div>
+                        <small class="input-hint">Chọn một hoặc nhiều thành viên để gán task</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="taskStatus">
+                            <option value="todo">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="done">Done</option>
+                            <option value="blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="datetime-local" id="taskDueDate">
+                </div>
+                <div class="form-group">
+                    <label>Tags (comma-separated)</label>
+                    <input type="text" id="taskTags" placeholder="tag1, tag2, tag3">
+                </div>
+                <div id="taskReadOnlyNote" class="readonly-note" style="display: none;">
+                    Bạn chỉ đang xem chi tiết task này và không thể chỉnh sửa.
+                </div>
+                <div class="form-group">
+                    <label>Progress</label>
+                    <div class="task-progress-wrapper">
+                        <div class="task-progress-bar">
+                            <div class="task-progress-fill" id="taskProgressFill" style="width: 0%;"></div>
+                        </div>
+                        <small id="taskProgressText">0% (0/0)</small>
+                    </div>
+                </div>
+                <div class="form-group" id="subtasksSection">
+                    <label>Sub Tasks</label>
+                    <div id="subtasksEmptyState" class="subtasks-empty">Lưu task trước khi thêm sub task.</div>
+                    <div id="subtasksList" class="subtasks-list"></div>
+                    <div class="subtask-form" id="subtaskFormWrapper">
+                        <input type="text" id="newSubtaskTitle" placeholder="Tên sub task">
+                        <textarea id="newSubtaskDescription" rows="2" placeholder="Mô tả (tuỳ chọn)"></textarea>
+                        <input type="text" id="newSubtaskAttachment" placeholder="Link minh hoạ (tuỳ chọn)">
+                        <button type="button" class="btn-primary" id="btnAddSubtask">+ Thêm Sub Task</button>
+                    </div>
+                </div>
+                <input type="file" id="subtaskUploadInput" accept="image/*" style="display: none;">
+                
+                <!-- Comments Section -->
+                <div class="form-group" id="commentsSection" style="display: none;">
+                    <label>Comments</label>
+                    <div id="commentsList" class="comments-list"></div>
+                    <div class="comment-form">
+                        <textarea id="newCommentContent" rows="3" placeholder="Thêm comment..."></textarea>
+                        <div class="comment-form-actions">
+                            <input type="file" id="commentAttachmentInput" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-secondary" id="btnCommentAttachment">📎 Đính kèm</button>
+                            <button type="button" class="btn-primary" id="btnAddComment">Gửi</button>
+                        </div>
+                        <div id="commentAttachmentPreview" class="comment-attachment-preview" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelTask">Cancel</button>
+                    <button type="button" class="btn-secondary" id="confirmTaskDone" style="display: none;">Xác nhận Done</button>
+                    <button type="submit" class="btn-primary" id="saveTaskBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="userModalTitle">Edit User</h2>
+                <button class="modal-close" id="closeUserModal">×</button>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="userUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="userEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="userFullName">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" id="userDepartment">
+                    </div>
+                    <div class="form-group">
+                        <label>Team</label>
+                        <input type="text" id="userTeam">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="userRole">
+                        <option value="member">Member</option>
+                        <option value="admin">Admin</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Avatar</label>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <img id="userAvatarPreview" src="" alt="Avatar" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); display: none;">
+                        <input type="file" id="userAvatarInput" accept="image/png,image/jpeg,image/jpg" style="flex: 1;">
+                    </div>
+                    <small class="input-hint">Chọn file PNG, JPG hoặc JPEG để upload avatar</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelUser">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Work Log Link Modal -->
+    <div id="workLogLinkModal" class="modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2>Gắn Work Log</h2>
+                <button class="modal-close" id="closeWorkLogLinkModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="workLogLinkList" class="worklog-link-list">
+                    <div class="empty-state">Chưa có Work Log nào.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+
