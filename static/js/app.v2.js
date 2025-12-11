@@ -106,8 +106,32 @@ function forceLogout() {
     window.location.href = '/login';
 }
 
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    
+    sidebar.classList.toggle('collapsed');
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
+}
+
 // Event Listeners
 function initEventListeners() {
+    // Sidebar toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    // Load sidebar state from localStorage
+    const sidebarState = localStorage.getItem('sidebarCollapsed');
+    if (sidebarState === 'true') {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.classList.add('collapsed');
+        }
+    }
+    
     // Navigation
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -310,11 +334,12 @@ function switchView(view) {
         stopThreadPolling();
         stopActivityPolling();
         document.getElementById('projectSummarySection').style.display = 'none';
-        showPersonalSection(currentPersonalSection || 'account');
+        showPersonalSection(currentPersonalSection || 'account', true);
     } else {
         stopThreadPolling(); // Dừng polling khi chuyển sang view khác
         stopActivityPolling(); // Dừng activity polling
         document.getElementById('projectSummarySection').style.display = 'none';
+        showPersonalSection(currentPersonalSection || 'account', false);
     }
 }
 
@@ -366,14 +391,18 @@ function initPersonalNavigation() {
         });
     }
 
-    showPersonalSection(currentPersonalSection);
+    showPersonalSection(currentPersonalSection, false);
 }
 
-function showPersonalSection(section = 'account') {
+function showPersonalSection(section = 'account', highlightNav = true) {
     currentPersonalSection = section;
     document.querySelectorAll('#personalList .personal-link').forEach(link => {
         const linkSection = link.getAttribute('data-personal');
-        link.classList.toggle('active', linkSection === section);
+        if (highlightNav) {
+            link.classList.toggle('active', linkSection === section);
+        } else {
+            link.classList.remove('active');
+        }
     });
     const sectionMap = {
         todos: document.getElementById('personalSectionTodos'),
@@ -1402,7 +1431,25 @@ async function apiCall(endpoint, method = 'GET', data = null) {
             return null;
         }
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            let errorDetail = '';
+            try {
+                const errorJson = await response.clone().json();
+                if (errorJson?.detail) {
+                    errorDetail = typeof errorJson.detail === 'string'
+                        ? errorJson.detail
+                        : JSON.stringify(errorJson.detail);
+                } else if (Object.keys(errorJson || {}).length) {
+                    errorDetail = JSON.stringify(errorJson);
+                }
+            } catch (_) {
+                try {
+                    errorDetail = await response.clone().text();
+                } catch (_) {
+                    // ignore
+                }
+            }
+            const statusText = response.statusText || 'Error';
+            throw new Error(`HTTP ${response.status} - ${statusText}${errorDetail ? `: ${errorDetail}` : ''}`);
         }
         return await response.json();
     } catch (error) {
@@ -1535,7 +1582,7 @@ async function selectProject(projectId) {
 async function createProject(projectData) {
     const data = await apiCall('/projects/', 'POST', projectData);
     if (data) {
-        await loadProjects();
+        await Promise.all([loadProjects(), loadDashboard()]);
         closeProjectModal();
     }
 }
@@ -1543,7 +1590,7 @@ async function createProject(projectData) {
 async function updateProject(projectId, projectData) {
     const data = await apiCall(`/projects/${projectId}`, 'PUT', projectData);
     if (data) {
-        await loadProjects();
+        await Promise.all([loadProjects(), loadDashboard()]);
         closeProjectModal();
     }
 }
@@ -2253,16 +2300,70 @@ function closeProjectModal() {
     document.getElementById('projectModal').classList.remove('active');
 }
 
+function normalizeDateInput(value) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    
+    let day;
+    let month;
+    let year;
+    
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+        [day, month, year] = trimmed.split('/');
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        [year, month, day] = trimmed.split('-');
+    } else {
+        const parsedDate = new Date(trimmed);
+        if (Number.isNaN(parsedDate.getTime())) {
+            console.warn('Không thể parse ngày hạn project:', value);
+            return null;
+        }
+        year = parsedDate.getFullYear().toString();
+        month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        day = String(parsedDate.getDate()).padStart(2, '0');
+    }
+
+    const dayNum = parseInt(day, 10);
+    const monthNum = parseInt(month, 10);
+    const yearNum = parseInt(year, 10);
+    if (![dayNum, monthNum, yearNum].every(Number.isFinite)) {
+        console.warn('Ngày không hợp lệ:', value);
+        return null;
+    }
+
+    const utcDate = new Date(Date.UTC(yearNum, monthNum - 1, dayNum, 0, 0, 0));
+    if (
+        Number.isNaN(utcDate.getTime()) ||
+        utcDate.getUTCFullYear() !== yearNum ||
+        utcDate.getUTCMonth() + 1 !== monthNum ||
+        utcDate.getUTCDate() !== dayNum
+    ) {
+        console.warn('Ngày không tồn tại:', value);
+        return null;
+    }
+
+    const normalizedYear = String(yearNum).padStart(4, '0');
+    const normalizedMonth = String(monthNum).padStart(2, '0');
+    const normalizedDay = String(dayNum).padStart(2, '0');
+    return `${normalizedYear}-${normalizedMonth}-${normalizedDay}T00:00:00Z`;
+}
+
 function handleProjectSubmit(e) {
     e.preventDefault();
     const projectId = document.getElementById('projectId').value;
     const projectTypeId = document.getElementById('projectType').value;
+    const dueDateValue = document.getElementById('projectDueDate').value;
+    const normalizedDueDate = normalizeDateInput(dueDateValue);
+    if (dueDateValue && !normalizedDueDate) {
+        alert('Ngày hoàn thành dự án không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy hoặc chọn ngày từ lịch.');
+        return;
+    }
     const projectData = {
         name: document.getElementById('projectName').value,
         description: document.getElementById('projectDescription').value,
         color: document.getElementById('projectColor').value,
         project_type_id: projectTypeId ? parseInt(projectTypeId) : null,
-        due_date: document.getElementById('projectDueDate').value || null
+        due_date: normalizedDueDate
     };
     
     if (projectId) {

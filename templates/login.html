@@ -11,7 +11,7 @@
     <div class="container min-vh-100 d-flex align-items-center justify-content-center">
         <div class="card shadow" style="max-width: 420px; width: 100%;">
             <div class="text-center p-4">
-                <img src="{{ url_for('assets', path='Logo.png') }}" alt="Project Management Logo" class="img-fluid" style="max-height: 120px;">
+                <img src="{{ url_for('static', path='Logo.png') }}" alt="Project Management Logo" class="img-fluid" style="max-height: 120px;">
             </div>
             <div class="card-header bg-dark text-white">
                 <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Đăng nhập</h5>
@@ -21,9 +21,17 @@
                     <label class="form-label">Tên đăng nhập</label>
                     <input type="text" class="form-control" id="loginUsername" placeholder="Nhập username (ví dụ: admin)">
                 </div>
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="form-label">Mật khẩu</label>
                     <input type="password" class="form-control" id="loginPassword" placeholder="Nhập mật khẩu">
+                </div>
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rememberMe" checked>
+                        <label class="form-check-label" for="rememberMe">
+                            Ghi nhớ đăng nhập
+                        </label>
+                    </div>
                 </div>
                 <button class="btn btn-primary w-100" onclick="doLogin()">
                     <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
@@ -46,9 +54,11 @@
             }
 
             try {
+                const rememberMe = document.getElementById('rememberMe').checked;
                 const formData = new URLSearchParams();
                 formData.append('username', username);
                 formData.append('password', password);
+                formData.append('remember_me', rememberMe ? 'true' : 'false');
 
                 const res = await fetch('/api/auth/login', {
                     method: 'POST',

@@ -9,8 +9,8 @@ load_dotenv()
 
 # Database URL: ưu tiên lấy từ biến môi trường (PostgreSQL trong production)
 SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:151299@localhost:5432/project_management",
+    "SQLALCHEMY_DATABASE_URL",
+    "",
 )
 
 connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}

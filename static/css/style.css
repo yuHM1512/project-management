@@ -146,6 +146,123 @@ body {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar.collapsed .sidebar-header .logo-img {
+    display: none;
+}
+
+.sidebar.collapsed .btn-new-project .btn-text {
+    display: none;
+}
+
+.sidebar.collapsed .btn-new-project {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 20px;
+}
+
+.sidebar.collapsed .nav-link {
+    justify-content: center;
+    padding: 12px;
+}
+
+.sidebar.collapsed .nav-link .icon {
+    margin-right: 0;
+}
+
+.sidebar.collapsed .sidebar-nav ul li a,
+.sidebar.collapsed .sidebar-projects ul li a {
+    justify-content: center;
+    padding: 12px;
+}
+
+.sidebar.collapsed .nav-link > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-projects h3,
+.sidebar.collapsed .nav-link > span:not(.icon),
+.sidebar.collapsed .personal-link > span:not(.icon) {
+    display: none;
+}
+
+.sidebar.collapsed .nav-link {
+    position: relative;
+}
+
+.sidebar.collapsed .nav-link .notification-badge {
+    top: -4px;
+    right: -4px;
+}
+
+.sidebar.collapsed .nav-link:hover::after,
+.sidebar.collapsed .personal-link:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 100%;
+    margin-left: 12px;
+    padding: 8px 12px;
+    background: #1f2937;
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed .nav-link[data-view="dashboard"]:hover::after {
+    content: "Dashboard";
+}
+
+.sidebar.collapsed .nav-link[data-view="projects"]:hover::after {
+    content: "Projects";
+}
+
+.sidebar.collapsed .nav-link[data-view="board"]:hover::after {
+    content: "Board";
+}
+
+.sidebar.collapsed .nav-link[data-view="notifications"]:hover::after {
+    content: "Notifications";
+}
+
+.sidebar.collapsed .nav-link[data-view="users"]:hover::after {
+    content: "Users";
+}
+
+.sidebar.collapsed .personal-link[data-personal="todos"]:hover::after {
+    content: "To-do List";
+}
+
+.sidebar.collapsed .personal-link[data-personal="notes"]:hover::after {
+    content: "My Notes";
+}
+
+.sidebar.collapsed .personal-link[data-personal="work"]:hover::after {
+    content: "Work Log";
+}
+
+.sidebar.collapsed .personal-link[data-personal="account"]:hover::after {
+    content: "Account";
+}
+
+.sidebar.collapsed .sidebar-projects {
+    padding: 20px 12px;
 }
 
 .sidebar-header {
@@ -333,13 +450,26 @@ body {
 }
 
 .sidebar-projects a {
-    display: block;
+    display: flex;
+    align-items: center;
     padding: 8px 12px;
     color: var(--text-primary);
     text-decoration: none;
     border-radius: 6px;
     font-size: 14px;
     transition: background 0.2s;
+}
+
+.sidebar-projects a .icon {
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.sidebar.collapsed .sidebar-projects a .icon {
+    margin-right: 0;
 }
 
 .sidebar-projects a:hover {
@@ -361,6 +491,31 @@ body {
     justify-content: space-between;
     align-items: center;
     background: white;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--sidebar-bg);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
 }
 
 .header h2 {
