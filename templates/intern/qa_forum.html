@@ -1,0 +1,116 @@
+{% extends "intern/base.html" %}
+
+{% block title %}Q&A Forum - Stitch Design{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap justify-between gap-3 p-4">
+    <div class="flex min-w-72 flex-col gap-3">
+        <p class="text-[#0d121b] tracking-light text-[32px] font-bold leading-tight">Q&amp;A Forum</p>
+        <p class="text-[#4c669a] text-sm font-normal leading-normal">Ask questions and find answers from mentors and
+            trainers.</p>
+    </div>
+    {% if success %}
+    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 rounded-lg fade-in">
+        Question posted successfully!
+    </div>
+    {% endif %}
+</div>
+
+<div class="px-4 py-3">
+    <label class="flex flex-col min-w-40 h-12 w-full">
+        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+            <div
+                class="text-[#4c669a] flex border-none bg-[#e7ebf3] items-center justify-center pl-4 rounded-l-lg border-r-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                    viewBox="0 0 256 256">
+                    <path
+                        d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z">
+                    </path>
+                </svg>
+            </div>
+            <input placeholder="Search for questions or keywords"
+                class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d121b] focus:outline-0 focus:ring-0 border-none bg-[#e7ebf3] focus:border-none h-full placeholder:text-[#4c669a] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+                value="" />
+        </div>
+    </label>
+</div>
+
+<div class="flex justify-end px-4 py-2">
+    <button onclick="document.getElementById('qa-modal').classList.remove('hidden')"
+        class="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#0d121b] text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-opacity-80 transition-all shadow-md active:scale-95">
+        <span class="truncate">+ Ask a Question</span>
+    </button>
+</div>
+
+<!-- Simple Modal -->
+<div id="qa-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-[#f8f9fc] rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-[#cfd7e7]">
+        <h2 class="text-xl font-bold mb-4 text-[#0d121b]">Post a new question</h2>
+        <form action="/intern/qa-forum" method="POST" class="flex flex-col gap-4">
+            <input name="title" placeholder="Topic title"
+                class="w-full border border-[#cfd7e7] rounded-lg p-3 bg-white text-[#0d121b]" required>
+            <textarea name="content" placeholder="Details..."
+                class="w-full border border-[#cfd7e7] rounded-lg p-3 bg-white text-[#0d121b] min-h-32"
+                required></textarea>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('qa-modal').classList.add('hidden')"
+                    class="px-4 py-2 text-[#4c669a] hover:bg-gray-100 rounded-lg">Cancel</button>
+                <button type="submit"
+                    class="px-6 py-2 bg-[#0d121b] text-white rounded-lg font-bold hover:bg-opacity-80">Post</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h2 class="text-[#0d121b] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">All Questions</h2>
+<div class="flex flex-col gap-4 px-4 pb-8">
+    {% for q in questions %}
+    <div class="flex flex-col gap-3 rounded-xl border border-[#cfd7e7] bg-white p-4 shadow-sm">
+        <div class="flex items-start justify-between">
+            <div class="flex flex-col gap-1">
+                <h3 class="text-[#0d121b] text-lg font-bold leading-tight">{{ q.title }}</h3>
+                <div class="flex items-center gap-2">
+                    <span class="text-[#4c669a] text-xs">By {{ q.author_name }}</span>
+                    <span class="text-[#cfd7e7] text-xs">•</span>
+                    <span class="text-[#4c669a] text-xs">{{ q.created_at.strftime('%Y-%m-%d') }}</span>
+                </div>
+            </div>
+        </div>
+        <p class="text-[#0d121b] text-sm leading-normal whitespace-pre-wrap">{{ q.content }}</p>
+
+        <!-- Answers Section -->
+        {% if q.answers %}
+        <div class="mt-3 pl-4 border-l-2 border-[#e7ebf3] flex flex-col gap-3">
+            {% for answer in q.answers %}
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-[#0d121b] text-sm font-bold">{{ answer.author_name }}</span>
+                    <span class="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">{{
+                        answer.author_role }}</span>
+                    <span class="text-[#cfd7e7] text-xs">•</span>
+                    <span class="text-[#4c669a] text-xs">{{ answer.created_at.strftime('%Y-%m-%d') }}</span>
+                </div>
+                <p class="text-[#0d121b] text-sm leading-normal">{{ answer.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Admin Answer Form -->
+        {% if user.role == 'admin' %}
+        <form action="/intern/qa-forum/answer" method="POST" class="mt-2 pt-2 border-t border-[#e7ebf3]">
+            <input type="hidden" name="question_id" value="{{ q.id }}">
+            <div class="flex gap-2">
+                <input name="content" placeholder="Write an answer..." required
+                    class="flex-1 rounded-lg border border-[#cfd7e7] bg-[#f8f9fc] p-2 text-sm focus:outline-none focus:border-[#0d121b]">
+                <button type="submit"
+                    class="bg-[#0d121b] text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-opacity-80">Reply</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+    {% else %}
+    <p class="text-[#4c669a] text-center py-8">No questions asked yet. Be the first!</p>
+    {% endfor %}
+</div>
+{% endblock %}

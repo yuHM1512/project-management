@@ -6,8 +6,8 @@ import uuid
 from pathlib import Path
 
 from database import get_db
-from models import User
-from schemas import UserResponse, UserUpdate, UserMeUpdate, ChangePasswordRequest
+from models import User, UserRole
+from schemas import UserResponse, UserUpdate, UserMeUpdate, ChangePasswordRequest, UserCreate
 from routers.auth import get_current_user, require_admin, verify_password, get_password_hash
 
 
@@ -15,6 +15,40 @@ router = APIRouter()
 
 UPLOAD_DIR = Path("static/uploads/avatars")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@router.post("/", response_model=UserResponse)
+def create_user(
+    user_in: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Tạo user mới (chỉ admin)"""
+    # Kiểm tra username đã tồn tại
+    db_user = db.query(User).filter(User.username == user_in.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # Kiểm tra email đã tồn tại
+    db_user = db.query(User).filter(User.email == user_in.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Tạo user mới
+    hashed_password = get_password_hash(user_in.password)
+    db_user = User(
+        username=user_in.username,
+        email=user_in.email,
+        hashed_password=hashed_password,
+        full_name=user_in.full_name,
+        department=user_in.department,
+        team=user_in.team,
+        role=user_in.role or UserRole.MEMBER.value
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 
 @router.get("/", response_model=List[UserResponse])

@@ -13,6 +13,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    role: Optional[str] = UserRole.MEMBER.value
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -80,6 +81,7 @@ class ProjectUpdate(BaseModel):
     status: Optional[str] = None
     color: Optional[str] = None
     project_type_id: Optional[int] = None
+    due_date: Optional[datetime] = None
 
 class ProjectResponse(ProjectBase):
     id: int
@@ -422,3 +424,136 @@ class NotificationResponse(NotificationBase):
     class Config:
         from_attributes = True
 
+
+# Meetings
+class MeetingBase(BaseModel):
+    time: datetime
+    location: str = "Phòng họp"
+    department: Optional[str] = None
+    employee_id: int
+    team: Optional[str] = None
+    contents: Optional[List[str]] = None  # ["kpi", "strengths", ...]
+    content_data: Optional[dict] = None  # {"kpi": "<html>", ...}
+
+
+class MeetingCreate(MeetingBase):
+    pass
+
+
+class MeetingUpdate(BaseModel):
+    time: Optional[datetime] = None
+    location: Optional[str] = None
+    department: Optional[str] = None
+    employee_id: Optional[int] = None
+    team: Optional[str] = None
+    contents: Optional[List[str]] = None
+    content_data: Optional[dict] = None
+
+
+class MeetingResponse(MeetingBase):
+    id: int
+    creator_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    creator_name: Optional[str] = None  # Tên người tạo
+    employee_name: Optional[str] = None  # Tên nhân viên
+    employee_username: Optional[str] = None  # Username của nhân viên
+    
+    class Config:
+        from_attributes = True
+
+
+# MES Schemas
+class MESKPIBase(BaseModel):
+    icon: str
+    title: str
+    value: str
+    impact_label: Optional[str] = None
+    impact_color: Optional[str] = None
+    order: Optional[int] = 0
+
+class MESKPICreate(MESKPIBase):
+    pass
+
+class MESKPIUpdate(BaseModel):
+    icon: Optional[str] = None
+    title: Optional[str] = None
+    value: Optional[str] = None
+    impact_label: Optional[str] = None
+    impact_color: Optional[str] = None
+    order: Optional[int] = None
+
+class MESKPIResponse(MESKPIBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class MESMapNodeBase(BaseModel):
+    pillar: int
+    title: str
+    subtitle: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    status: Optional[str] = None
+    status_color: Optional[str] = None
+    is_active: Optional[bool] = True
+    order: Optional[int] = 0
+
+class MESMapNodeCreate(MESMapNodeBase):
+    pass
+
+class MESMapNodeUpdate(BaseModel):
+    pillar: Optional[int] = None
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    status: Optional[str] = None
+    status_color: Optional[str] = None
+    is_active: Optional[bool] = None
+    order: Optional[int] = None
+
+class MESMapNodeResponse(MESMapNodeBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class MESModuleDetailBase(BaseModel):
+    pillar: int
+    step_number: str
+    title: str
+    description: str
+    icon: Optional[str] = None
+    order: Optional[int] = 0
+
+class MESModuleDetailCreate(MESModuleDetailBase):
+    pass
+
+class MESModuleDetailUpdate(BaseModel):
+    pillar: Optional[int] = None
+    step_number: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    order: Optional[int] = None
+
+class MESModuleDetailResponse(MESModuleDetailBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class MESAllContentResponse(BaseModel):
+    kpis: List[MESKPIResponse]
+    map_nodes: List[MESMapNodeResponse]
+    module_details: List[MESModuleDetailResponse]

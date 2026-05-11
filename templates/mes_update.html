@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="vi" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị MES - HACHIBA APP</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Be Vietnam Pro', sans-serif;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+        }
+
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+    </style>
+</head>
+
+<body class="h-full bg-slate-50 text-slate-800">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header
+            class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-30">
+            <div class="flex items-center gap-4">
+                <a href="/mes" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7 7-7" />
+                    </svg>
+                </a>
+                <h1 class="text-xl font-bold tracking-tight">Quản trị Nội dung MES</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openModal('guide')"
+                    class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-all border border-slate-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Hướng dẫn
+                </button>
+                <div class="text-right mr-4 hidden md:block">
+                    <p class="text-sm font-bold">{{ user.full_name }}</p>
+                    <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Administrator</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                    {{ user.username[0].upper() }}
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 max-w-7xl mx-auto w-full">
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-200 mb-8 overflow-x-auto">
+                <button onclick="switchTab('kpis')" id="tab-kpis"
+                    class="px-6 py-4 text-sm font-bold tab-active whitespace-nowrap">🔥 KPIs Chiến lược</button>
+                <button onclick="switchTab('map')" id="tab-map"
+                    class="px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">🗺️ Sơ đồ
+                    Kiến trúc</button>
+                <button onclick="switchTab('details')" id="tab-details"
+                    class="px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">📝 Chi
+                    tiết Module</button>
+            </div>
+
+            <!-- KPI Section -->
+            <section id="section-kpis" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">Danh sách KPIs</h2>
+                    <button onclick="openModal('kpi')"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200">+
+                        Thêm KPI mới</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Icon
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tiêu đề
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Giá trị
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Impact
+                                </th>
+                                <th
+                                    class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                                    Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kpi-table-body" class="divide-y divide-slate-100">
+                            <!-- Data will be loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Map Node Section -->
+            <section id="section-map" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">Danh sách Map Nodes</h2>
+                    <button onclick="openModal('map')"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200">+
+                        Thêm Node mới</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Pillar
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tiêu đề
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Trạng
+                                    thái</th>
+                                <th
+                                    class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                                    Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="map-table-body" class="divide-y divide-slate-100">
+                            <!-- Data will be loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Module Detail Section -->
+            <section id="section-details" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">Chi tiết Module</h2>
+                    <button onclick="openModal('detail')"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200">+
+                        Thêm Step mới</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Pillar
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Step
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tiêu đề
+                                </th>
+                                <th
+                                    class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                                    Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-table-body" class="divide-y divide-slate-100">
+                            <!-- Data will be loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- KPI Modal -->
+    <div id="modal-kpi" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl">
+            <h3 id="modal-kpi-title" class="text-xl font-bold mb-6">Thêm KPI mới</h3>
+            <form id="form-kpi" onsubmit="saveKPI(event)">
+                <input type="hidden" id="kpi-id">
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase mb-1">
+                            <span>Icon (Emoji)</span>
+                            <button type="button" onclick="openModal('guide')"
+                                class="text-blue-500 hover:text-blue-700">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </label>
+                        <input type="text" id="kpi-icon" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tiêu đề</label>
+                        <input type="text" id="kpi-title" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Giảm thao tác giấy">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Giá trị</label>
+                        <input type="text" id="kpi-value" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="70-90%">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Impact Label</label>
+                            <input type="text" id="kpi-impact-label"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="High Impact">
+                        </div>
+                        <div>
+                            <label
+                                class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase mb-1">
+                                <span>Impact Color (Tailwind)</span>
+                                <button type="button" onclick="openModal('guide')"
+                                    class="text-blue-500 hover:text-blue-700">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </label>
+                            <input type="text" id="kpi-impact-color"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="rose-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">STT (Order)</label>
+                        <input type="number" id="kpi-order" value="0"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                <div class="mt-8 flex gap-3">
+                    <button type="button" onclick="closeModal('kpi')"
+                        class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-bold text-slate-600 hover:bg-slate-50 transition-colors">Huỷ</button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">Lưu
+                        lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Map Node Modal -->
+    <div id="modal-map" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-lg p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 id="modal-map-title" class="text-xl font-bold mb-6">Thêm Map Node mới</h3>
+            <form id="form-map" onsubmit="saveMapNode(event)">
+                <input type="hidden" id="map-id">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label
+                            class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase mb-1">
+                            <span>Pillar (1-6)</span>
+                            <button type="button" onclick="openModal('guide')"
+                                class="text-blue-500 hover:text-blue-700">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </label>
+                        <input type="number" id="map-pillar" min="1" max="6" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">STT (Order)</label>
+                        <input type="number" id="map-order" value="0"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tiêu đề</label>
+                        <input type="text" id="map-title" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Kho Nguyên liệu">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Subtitle (Module
+                            ID)</label>
+                        <input type="text" id="map-subtitle"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="MODULE WH-01">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mô tả ngắn</label>
+                        <textarea id="map-description" rows="2"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Status Text</label>
+                            <input type="text" id="map-status"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="Active">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Status Color
+                                (Tailwind)</label>
+                            <input type="text" id="map-status-color"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="emerald">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Accent Color</label>
+                            <input type="text" id="map-color"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="blue">
+                        </div>
+                        <div>
+                            <label
+                                class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase mb-1">
+                                <span>Icon Code (Tailwind)</span>
+                                <button type="button" onclick="openModal('guide')"
+                                    class="text-blue-500 hover:text-blue-700">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </label>
+                            <input type="text" id="map-icon"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="M3 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 flex gap-3">
+                    <button type="button" onclick="closeModal('map')"
+                        class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-bold text-slate-600 hover:bg-slate-50 transition-colors">Huỷ</button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">Lưu
+                        lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Module Detail Modal -->
+    <div id="modal-detail" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-2xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 id="modal-detail-title" class="text-xl font-bold mb-6">Thêm Module Step mới</h3>
+            <form id="form-detail" onsubmit="saveModuleDetail(event)">
+                <input type="hidden" id="detail-id">
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pillar (1-6)</label>
+                        <input type="number" id="detail-pillar" min="1" max="6" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label
+                            class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase mb-1">
+                            <span>Step Number</span>
+                            <button type="button" onclick="openModal('guide')"
+                                class="text-blue-500 hover:text-blue-700">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </label>
+                        <input type="text" id="detail-step-number" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Step 01">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">STT (Order)</label>
+                        <input type="number" id="detail-order" value="0"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tiêu đề</label>
+                        <input type="text" id="detail-title" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nội dung chi tiết</label>
+                        <textarea id="detail-description" rows="5" required
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label
+                            class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase mb-1">
+                            <span>Icon (Emoji)</span>
+                            <button type="button" onclick="openModal('guide')"
+                                class="text-blue-500 hover:text-blue-700">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </label>
+                        <input type="text" id="detail-icon"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="✔️">
+                    </div>
+                </div>
+                <div class="mt-8 flex gap-3">
+                    <button type="button" onclick="closeModal('detail')"
+                        class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-bold text-slate-600 hover:bg-slate-50 transition-colors">Huỷ</button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">Lưu
+                        lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Data Entry Guide Modal -->
+    <div id="modal-guide" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-3xl p-8 shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">📚 Hướng dẫn Nhập liệu</h3>
+                    <p class="text-sm text-slate-500 font-medium">Quy định về Icon, Màu sắc và Tailwind CSS</p>
+                </div>
+                <button onclick="closeModal('guide')" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-8">
+                <!-- KPI Section -->
+                <div>
+                    <h4 class="text-sm font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-blue-50 flex items-center justify-center text-xs">1</span>
+                        🔥 KPIs Chiến lược
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <p class="text-xs font-bold text-slate-700 mb-2">Icon (Emoji)</p>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-3">Sử dụng trực tiếp Emoji. <br>VD: 📄,
+                                📈, ⚡</p>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 bg-white border border-slate-200 rounded text-sm">📄</span>
+                                <span class="px-2 py-1 bg-white border border-slate-200 rounded text-sm">📈</span>
+                                <span class="px-2 py-1 bg-white border border-slate-200 rounded text-sm">🛡️</span>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <p class="text-xs font-bold text-slate-700 mb-2">Impact Color (Tailwind)</p>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-3">Tên màu + Sắc độ (500). <br>VD: <code
+                                    class="bg-rose-100 text-rose-700 px-1 rounded">rose-500</code>, <code
+                                    class="bg-emerald-100 text-emerald-700 px-1 rounded">emerald-500</code></p>
+                            <div class="flex flex-wrap gap-2">
+                                <span
+                                    class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-500">rose-500</span>
+                                <span
+                                    class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-500">emerald-500</span>
+                                <span
+                                    class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-500">blue-500</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Node Section -->
+                <div>
+                    <h4
+                        class="text-sm font-bold text-orange-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-orange-50 flex items-center justify-center text-xs">2</span>
+                        🗺️ Sơ đồ Kiến trúc
+                    </h4>
+                    <div class="space-y-4">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-700 mb-2">Màu sắc (Accent / Status)</p>
+                                    <p class="text-xs text-slate-500 leading-relaxed">Chỉ điền <b>Tên Màu</b> (không kèm
+                                        số). Hệ thống sẽ tự xử lý sắc độ.</p>
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        <span
+                                            class="px-2 py-1 bg-blue-500 text-white text-[10px] rounded font-bold">blue</span>
+                                        <span
+                                            class="px-2 py-1 bg-emerald-500 text-white text-[10px] rounded font-bold">emerald</span>
+                                        <span
+                                            class="px-2 py-1 bg-pink-500 text-white text-[10px] rounded font-bold">pink</span>
+                                        <span
+                                            class="px-2 py-1 bg-purple-500 text-white text-[10px] rounded font-bold">purple</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-700 mb-2">Icon Code (SVG Path)</p>
+                                    <p class="text-xs text-slate-500 leading-relaxed mb-2">Sao chép thuộc tính <code
+                                            class="bg-slate-200 px-1 rounded">d="..."</code> từ <a
+                                            href="https://heroicons.com/" target="_blank"
+                                            class="text-blue-600 underline">Heroicons</a>.</p>
+                                    <div
+                                        class="p-2 bg-white border border-slate-200 rounded text-[9px] font-mono text-slate-400 truncate">
+                                        M3 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module Detail Section -->
+                <div>
+                    <h4
+                        class="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-emerald-50 flex items-center justify-center text-xs">3</span>
+                        📝 Chi tiết Module
+                    </h4>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <ul class="text-xs text-slate-600 space-y-2 list-disc pl-4">
+                            <li><b>Pillar:</b> Chọn từ 1 đến 6 để gán vào cột trụ tương ứng.</li>
+                            <li><b>Step Number:</b> Ghi rõ thứ tự bước (VD: <code
+                                    class="bg-white px-1 border rounded">Step 01</code>, <code
+                                    class="bg-white px-1 border rounded">Step 02</code>).</li>
+                            <li><b>Icon:</b> Sử dụng Emoji tương tự phần KPIs.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('guide')"
+                    class="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">Đã
+                    hiểu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allData = { kpis: [], map_nodes: [], module_details: [] };
+
+        function getAuthHeader() {
+            const token = localStorage.getItem('pm_token');
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        }
+
+        async function loadContent() {
+            try {
+                const res = await fetch('/api/mes/all', {
+                    headers: getAuthHeader()
+                });
+                allData = await res.json();
+                renderKPIs();
+                renderMapNodes();
+                renderModuleDetails();
+            } catch (error) {
+                console.error('Failed to load content:', error);
+            }
+        }
+
+        function renderKPIs() {
+            const body = document.getElementById('kpi-table-body');
+            body.innerHTML = allData.kpis.map(k => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-xl">${k.icon}</td>
+                    <td class="px-6 py-4 font-bold text-sm">${k.title}</td>
+                    <td class="px-6 py-4 font-black text-blue-600">${k.value}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-${k.impact_color || 'slate-100'}/10 text-${k.impact_color || 'slate-500'}">
+                            ${k.impact_label || 'N/A'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick='editKPI(${JSON.stringify(k)})' class="text-blue-600 hover:underline font-bold text-xs mr-3">Sửa</button>
+                        <button onclick="deleteItem('kpis', ${k.id})" class="text-rose-600 hover:underline font-bold text-xs">Xoá</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderMapNodes() {
+            const body = document.getElementById('map-table-body');
+            body.innerHTML = allData.map_nodes.map(n => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-xs font-bold text-slate-500">Pillar ${n.pillar}</td>
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-sm">${n.title}</div>
+                        <div class="text-[10px] text-slate-400 font-bold">${n.subtitle || ''}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-${n.status_color || 'emerald'}-50 text-${n.status_color || 'emerald'}-600">
+                            ${n.status || 'Active'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick='editMapNode(${JSON.stringify(n)})' class="text-blue-600 hover:underline font-bold text-xs mr-3">Sửa</button>
+                        <button onclick="deleteItem('map-nodes', ${n.id})" class="text-rose-600 hover:underline font-bold text-xs">Xoá</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderModuleDetails() {
+            const body = document.getElementById('detail-table-body');
+            body.innerHTML = allData.module_details.map(d => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-xs font-bold text-slate-500">Pillar ${d.pillar}</td>
+                    <td class="px-6 py-4 text-xs font-black text-blue-600">${d.step_number}</td>
+                    <td class="px-6 py-4 font-bold text-sm">${d.title}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick='editModuleDetail(${JSON.stringify(d)})' class="text-blue-600 hover:underline font-bold text-xs mr-3">Sửa</button>
+                        <button onclick="deleteItem('module-details', ${d.id})" class="text-rose-600 hover:underline font-bold text-xs">Xoá</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+
+            document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.remove('tab-active', 'text-slate-500'));
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+        }
+
+        function openModal(type) {
+            document.getElementById(`modal-${type}`).classList.remove('hidden');
+            if (type !== 'guide') {
+                document.getElementById(`modal-${type}-title`).innerText = `Thêm ${type.toUpperCase()} mới`;
+                document.getElementById(`form-${type}`).reset();
+                document.getElementById(`${type}-id`).value = '';
+            }
+        }
+
+        function closeModal(type) {
+            document.getElementById(`modal-${type}`).classList.add('hidden');
+        }
+
+        async function deleteItem(type, id) {
+            if (!confirm('Bạn có chắc chắn muốn xoá mục này?')) return;
+            try {
+                const res = await fetch(`/api/mes/${type}/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeader()
+                });
+                if (res.ok) {
+                    loadContent();
+                } else {
+                    alert('Xoá thất bại');
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi');
+            }
+        }
+
+        async function saveKPI(e) {
+            e.preventDefault();
+            const id = document.getElementById('kpi-id').value;
+            const data = {
+                icon: document.getElementById('kpi-icon').value,
+                title: document.getElementById('kpi-title').value,
+                value: document.getElementById('kpi-value').value,
+                impact_label: document.getElementById('kpi-impact-label').value,
+                impact_color: document.getElementById('kpi-impact-color').value,
+                order: parseInt(document.getElementById('kpi-order').value)
+            };
+            await saveData('kpis', id, data, 'kpi');
+        }
+
+        async function saveMapNode(e) {
+            e.preventDefault();
+            const id = document.getElementById('map-id').value;
+            const data = {
+                pillar: parseInt(document.getElementById('map-pillar').value),
+                title: document.getElementById('map-title').value,
+                subtitle: document.getElementById('map-subtitle').value,
+                description: document.getElementById('map-description').value,
+                status: document.getElementById('map-status').value,
+                status_color: document.getElementById('map-status-color').value,
+                color: document.getElementById('map-color').value,
+                icon: document.getElementById('map-icon').value,
+                order: parseInt(document.getElementById('map-order').value)
+            };
+            await saveData('map-nodes', id, data, 'map');
+        }
+
+        async function saveModuleDetail(e) {
+            e.preventDefault();
+            const id = document.getElementById('detail-id').value;
+            const data = {
+                pillar: parseInt(document.getElementById('detail-pillar').value),
+                step_number: document.getElementById('detail-step-number').value,
+                title: document.getElementById('detail-title').value,
+                description: document.getElementById('detail-description').value,
+                icon: document.getElementById('detail-icon').value,
+                order: parseInt(document.getElementById('detail-order').value)
+            };
+            await saveData('module-details', id, data, 'detail');
+        }
+
+        async function saveData(type, id, data, modalKey) {
+            const url = id ? `/api/mes/${type}/${id}` : `/api/mes/${type}`;
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    closeModal(modalKey);
+                    loadContent();
+                } else {
+                    const err = await res.json();
+                    alert('Lưu thất bại: ' + (err.detail || 'Access Denied'));
+                }
+            } catch (error) {
+                alert('Đã xảy ra lỗi');
+            }
+        }
+
+        function editKPI(k) {
+            openModal('kpi');
+            document.getElementById('modal-kpi-title').innerText = 'Sửa KPI';
+            document.getElementById('kpi-id').value = k.id;
+            document.getElementById('kpi-icon').value = k.icon;
+            document.getElementById('kpi-title').value = k.title;
+            document.getElementById('kpi-value').value = k.value;
+            document.getElementById('kpi-impact-label').value = k.impact_label;
+            document.getElementById('kpi-impact-color').value = k.impact_color;
+            document.getElementById('kpi-order').value = k.order;
+        }
+
+        function editMapNode(n) {
+            openModal('map');
+            document.getElementById('modal-map-title').innerText = 'Sửa Map Node';
+            document.getElementById('map-id').value = n.id;
+            document.getElementById('map-pillar').value = n.pillar;
+            document.getElementById('map-title').value = n.title;
+            document.getElementById('map-subtitle').value = n.subtitle;
+            document.getElementById('map-description').value = n.description;
+            document.getElementById('map-status').value = n.status;
+            document.getElementById('map-status-color').value = n.status_color;
+            document.getElementById('map-color').value = n.color;
+            document.getElementById('map-icon').value = n.icon;
+            document.getElementById('map-order').value = n.order;
+        }
+
+        function editModuleDetail(d) {
+            openModal('detail');
+            document.getElementById('modal-detail-title').innerText = 'Sửa Module Step';
+            document.getElementById('detail-id').value = d.id;
+            document.getElementById('detail-pillar').value = d.pillar;
+            document.getElementById('detail-step-number').value = d.step_number;
+            document.getElementById('detail-title').value = d.title;
+            document.getElementById('detail-description').value = d.description;
+            document.getElementById('detail-icon').value = d.icon;
+            document.getElementById('detail-order').value = d.order;
+        }
+
+        window.onload = loadContent;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1879 @@
+<!doctype html>
+<html lang="vi" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACHIBA APP - Hệ thống MES Toàn Diện</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="/_sdk/element_sdk.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-surface-2: #f1f5f9;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --blue: #1a73e8;
+            --emerald: #0f9d58;
+            --purple: #7c3aed;
+            --orange: #d97706;
+            --pink: #db2777;
+            --cyan: #0891b2;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.09), 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-wrapper {
+            position: relative;
+            background: var(--bg-page);
+            overflow: hidden;
+            min-height: 100vh;
+        }
+
+        .bg-decor-1 {
+            position: absolute;
+            top: -10%;
+            left: -5%;
+            width: 40%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(26, 115, 232, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 1;
+            filter: blur(80px);
+            animation: float 15s infinite alternate;
+        }
+
+        .bg-decor-2 {
+            position: absolute;
+            bottom: -5%;
+            right: -10%;
+            width: 45%;
+            height: 65%;
+            background: radial-gradient(circle, rgba(15, 157, 88, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 1;
+            filter: blur(100px);
+            animation: float 20s infinite alternate-reverse;
+        }
+
+        .bg-decor-3 {
+            position: absolute;
+            top: 20%;
+            right: 15%;
+            width: 25%;
+            height: 40%;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 1;
+            filter: blur(60px);
+        }
+
+        @keyframes float {
+            from {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            to {
+                transform: translate(5%, 5%) rotate(10deg);
+            }
+        }
+
+        .main-title {
+            background: linear-gradient(135deg, #0f172a 0%, var(--blue) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1.5px;
+        }
+
+        * {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .gradient-bg {
+            background-color: var(--bg-page);
+        }
+
+        /* Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-15px) scale(1.01);
+            box-shadow: var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.05) !important;
+            border-color: rgba(26, 115, 232, 0.3) !important;
+        }
+
+        .module-card {
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Per-module glow → clean accent border-shadow */
+        .glow-blue {
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(26, 115, 232, 0.1);
+        }
+
+        .glow-emerald {
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(15, 157, 88, 0.1);
+        }
+
+        .glow-purple {
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(124, 58, 237, 0.1);
+        }
+
+        .glow-orange {
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(217, 119, 6, 0.1);
+        }
+
+        .glow-pink {
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(219, 39, 119, 0.1);
+        }
+
+        .glow-cyan {
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(8, 145, 178, 0.1);
+        }
+
+        /* Module card hover */
+        .module-card {
+            transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        .module-card::after {
+            content: none;
+        }
+
+        /* Feature item — light card */
+        .feature-item {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .feature-item:hover {
+            background: var(--bg-surface-2) !important;
+            transform: translateY(-2px);
+        }
+
+        .feature-item::before {
+            content: none;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-8px)
+            }
+        }
+
+        .float-animation {
+            animation: float 5s ease-in-out infinite;
+        }
+
+        /* Navigation */
+        .nav-item {
+            transition: all 0.2s ease;
+            border-radius: 10px;
+            margin: 2px 0;
+        }
+
+        .nav-item:hover {
+            background: rgba(26, 115, 232, 0.06);
+            color: var(--blue) !important;
+        }
+
+        .nav-item.active {
+            background: rgba(26, 115, 232, 0.08);
+            border-left: 3px solid var(--blue);
+            color: var(--blue) !important;
+        }
+
+        /* Reveal animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hero dot-grid pattern (Google Stitch style) */
+        .hero-pattern {
+            position: relative;
+        }
+
+        .hero-pattern::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-image: radial-gradient(circle, #94a3b8 1px, transparent 1px);
+            background-size: 28px 28px;
+            opacity: 0.25;
+        }
+
+        /* Stat cards */
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-hover);
+        }
+
+        /* Section alternating bg */
+        .section-alt {
+            background-color: #f1f5f9;
+        }
+
+        /* Chip / tag */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* Collapsible Sidebar Styles */
+        #main-sidebar {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 300px;
+            /* Increased to 300px for safety */
+        }
+
+        #main-sidebar.collapsed {
+            width: 84px;
+        }
+
+        #main-sidebar.collapsed .sidebar-label,
+        #main-sidebar.collapsed .sidebar-header-text {
+            display: none;
+        }
+
+        #main-sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        #main-sidebar.collapsed .nav-item span {
+            margin-right: 0;
+        }
+
+        #content-wrapper {
+            transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-left: 0;
+            margin-left: 0 !important;
+            position: relative;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            #content-wrapper {
+                padding-left: 300px;
+                /* Synchronized with sidebar width */
+                margin-left: 0 !important;
+            }
+
+            #content-wrapper.sidebar-collapsed-active {
+                padding-left: 84px !important;
+                margin-left: 0 !important;
+            }
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 24px;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 60;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: var(--bg-surface-2);
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .collapsed .toggle-btn {
+            transform: rotate(180deg);
+        }
+
+        /* Tooltip Styles */
+        .architecture-node {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .architecture-node:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Back to Map Button */
+        .back-to-map-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: 2px solid var(--blue);
+            border-radius: 0.5rem;
+            color: var(--blue);
+            font-weight: 700;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }
+
+        .back-to-map-btn:hover {
+            background: var(--blue);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .back-to-map-btn svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .tooltip-popup {
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            padding: 0;
+            min-width: 320px;
+            max-width: 420px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .tooltip-popup.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .tooltip-header {
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tooltip-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0 0 0.25rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tooltip-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tooltip-description {
+            padding: 1rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tooltip-features {
+            padding: 1rem 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .tooltip-features-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tooltip-feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.625rem 0;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .tooltip-feature-item:last-child {
+            border-bottom: none;
+        }
+
+        .tooltip-feature-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+        }
+
+        .tooltip-feature-content {
+            flex: 1;
+        }
+
+        .tooltip-feature-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+        }
+
+        .tooltip-feature-desc {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .tooltip-arrow {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 1px solid var(--border);
+            transform: rotate(45deg);
+        }
+
+        .tooltip-arrow.top {
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            border-top: none;
+            border-left: none;
+        }
+
+        .tooltip-arrow.bottom {
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            border-bottom: none;
+            border-right: none;
+        }
+
+        .tooltip-arrow.left {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%) rotate(45deg);
+            border-top: none;
+            border-right: none;
+        }
+
+        .tooltip-arrow.right {
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%) rotate(45deg);
+            border-bottom: none;
+            border-left: none;
+        }
+
+        /* Scrollbar styling for tooltip */
+        .tooltip-features::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tooltip-features::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .tooltip-features::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .tooltip-features::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Hub and Spoke Architecture Map */
+        .architecture-canvas {
+            position: relative;
+            width: 100%;
+            height: 800px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.03) 0%, transparent 70%);
+        }
+
+        .architecture-core {
+            position: relative;
+            z-index: 20;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: var(--blue);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 0 50px rgba(37, 99, 235, 0.4);
+            text-align: center;
+            border: 8px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .architecture-node-spoke {
+            position: absolute;
+            z-index: 10;
+            width: 200px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .architecture-node-spoke:hover {
+            transform: translateY(-5px) scale(1.02);
+            z-index: 30;
+        }
+
+        /* Spoke Positions - 1/2/3 top arc, 4/5/6 bottom arc (đối xứng) */
+        .spoke-1 {
+            top: 12%;
+            left: 12%;
+        }
+
+        .spoke-2 {
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .spoke-3 {
+            top: 12%;
+            right: 12%;
+        }
+
+        .spoke-4 {
+            bottom: 18%;
+            left: 10%;
+        }
+
+        .spoke-5 {
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .spoke-6 {
+            bottom: 18%;
+            right: 12%;
+        }
+
+        .architecture-output-group {
+            position: absolute;
+            left: 69.6%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 30;
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .architecture-canvas {
+                height: auto;
+                flex-direction: column;
+                gap: 2rem;
+                padding: 2rem 0;
+            }
+
+            .architecture-node-spoke {
+                position: static;
+                width: 100%;
+                max-width: 400px;
+                transform: none !important;
+            }
+
+            .architecture-core {
+                order: -1;
+                margin-bottom: 2rem;
+            }
+        }
+
+        .spoke-progress-bg {
+            height: 6px;
+            background: #f1f5f9;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .spoke-progress-bar {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 1s ease-out;
+        }
+
+        .spoke-svg-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .spoke-line {
+            stroke: var(--blue);
+            stroke-width: 2;
+            stroke-dasharray: 6 6;
+            opacity: 0.2;
+            fill: none;
+        }
+
+        .timeline-container {
+            position: relative;
+            padding-left: 2rem;
+            margin-top: 2rem;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--blue) 0%, var(--border) 100%);
+            opacity: 0.3;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2.5rem;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -2rem;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--blue);
+            z-index: 10;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
+        }
+
+        .timeline-step {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 6px;
+            background: rgba(26, 115, 232, 0.08);
+            color: var(--blue);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .timeline-content {
+            padding-left: 0.5rem;
+        }
+
+        .timeline-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .timeline-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .timeline-container {
+                padding-left: 1.5rem;
+            }
+
+            .timeline-marker {
+                left: -1.5rem;
+                width: 12px;
+                height: 12px;
+                border-width: 2px;
+            }
+        }
+    </style>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+    </style>
+    <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+</head>
+
+<body class="h-full gradient-bg text-slate-800 overflow-auto">
+    <div class="app-wrapper w-full h-full overflow-auto"><!-- Navigation Sidebar -->
+        <nav id="main-sidebar"
+            class="fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-50 hidden lg:block overflow-y-auto">
+            <!-- Sidebar Toggle Button -->
+            <button id="sidebar-toggle" class="toggle-btn hidden lg:flex">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8 px-2">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md shadow-blue-200">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                    </div>
+                    <div class="sidebar-header-text">
+                        <h2 class="font-extrabold text-slate-900 tracking-tight text-sm">HACHIBA APP</h2>
+                        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">MES Platform</p>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <a href="#overview" class="nav-item active block px-4 py-2.5 text-sm font-semibold text-slate-700">
+                        <span class="flex items-center gap-3"><span class="shrink-0">🎯</span> <span
+                                class="sidebar-label">Tổng quan chiến lược</span></span>
+                    </a>
+                    <a href="#map" class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">🗺️</span> <span
+                                class="sidebar-label">Sơ đồ Kiến trúc</span></span>
+                    </a>
+                    <a href="#module-kho-nl" class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">📦</span> <span
+                                class="sidebar-label">1. Kho Nguyên liệu</span></span>
+                    </a>
+                    <a href="#module-kho-tp" class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">📤</span> <span
+                                class="sidebar-label">2. Kho Thành phẩm</span></span>
+                    </a>
+                    <a href="#module-gtd" class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">🔍</span> <span
+                                class="sidebar-label">3. Module GTD</span></span>
+                    </a>
+                    <a href="#module-to-cat" class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">✂️</span> <span
+                                class="sidebar-label">4. Số hoá Tổ cắt</span></span>
+                    </a>
+                    <a href="#module-chuyen-may"
+                        class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">🏭</span> <span
+                                class="sidebar-label">5. Năng suất Chuyền may</span></span>
+                    </a>
+                    <a href="#module-kho-pl" class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">🧵</span> <span
+                                class="sidebar-label">6. Kho Phụ liệu</span></span>
+                    </a>
+                    <a href="#platform" class="nav-item block px-4 py-2.5 text-sm font-semibold text-slate-500">
+                        <span class="flex items-center gap-3"><span class="shrink-0">🌐</span> <span
+                                class="sidebar-label">Nền Tảng</span></span>
+                    </a>
+                </div>
+                <div class="mt-8 pt-8 border-t border-slate-100 flex flex-col gap-3">
+                    {% if user.role == 'admin' %}
+                    <a href="/mes-update"
+                        class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-bold bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-200 hover:bg-emerald-700 hover:scale-[1.02] transition-all duration-200 group">
+                        <span class="shrink-0 group-hover:rotate-12 transition-transform">⚙️</span>
+                        <span class="sidebar-label">Quản lý nội dung</span>
+                    </a>
+                    {% endif %}
+                    <a href="/"
+                        class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-bold bg-blue-600 text-white rounded-xl shadow-md shadow-blue-200 hover:bg-blue-700 hover:scale-[1.02] transition-all duration-200 group">
+                        <span class="shrink-0 group-hover:rotate-12 transition-transform">🏠</span>
+                        <span class="sidebar-label">Quay về Projects</span>
+                    </a>
+                </div>
+            </div>
+        </nav><!-- Mobile Header -->
+        <header class="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 z-50 px-5 py-3.5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                    </div>
+                    <span class="font-extrabold tracking-tight text-slate-900" id="mobile-title">HACHIBA MES</span>
+                </div>
+                <button id="menu-toggle"
+                    class="p-2 rounded-lg bg-slate-100 border border-slate-200 active:scale-95 transition-all">
+                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </header><!-- Mobile Menu -->
+        <div id="mobile-menu" class="lg:hidden fixed inset-0 bg-slate-950/98 z-40 hidden pt-24 px-6 overflow-y-auto">
+            <div class="space-y-3 pb-12">
+                <a href="#overview"
+                    class="mobile-nav block p-5 rounded-lg bg-white/5 border border-white/10 text-white font-bold text-lg">🎯
+                    Tổng quan chiến lược</a>
+                <a href="#map"
+                    class="mobile-nav block p-4 rounded-lg text-slate-400 font-semibold border border-transparent">🗺️
+                    Sơ đồ Kiến trúc</a>
+                <a href="#module-kho-nl"
+                    class="mobile-nav block p-4 rounded-lg text-slate-400 font-semibold border border-transparent">📦 1.
+                    Kho Nguyên liệu</a>
+                <a href="#module-kho-tp"
+                    class="mobile-nav block p-4 rounded-lg text-slate-400 font-semibold border border-transparent">📤 2.
+                    Kho Thành phẩm</a>
+                <a href="#module-gtd"
+                    class="mobile-nav block p-4 rounded-lg text-slate-400 font-semibold border border-transparent">🔍 3.
+                    Module GTD</a>
+                <a href="#module-to-cat"
+                    class="mobile-nav block p-4 rounded-lg text-slate-400 font-semibold border border-transparent">✂️ 4.
+                    Số hoá Tổ Cắt</a>
+                <a href="#module-chuyen-may"
+                    class="mobile-nav block p-4 rounded-lg text-slate-400 font-semibold border border-transparent">🏭 5.
+                    Năng suất Chuyển may</a>
+                <a href="#module-kho-pl"
+                    class="mobile-nav block p-4 rounded-lg text-slate-400 font-semibold border border-transparent">🧵 6.
+                    Kho Phụ liệu</a>
+                <a href="/"
+                    class="mobile-nav block p-4 mt-6 rounded-lg bg-blue-600 text-white font-bold text-center shadow-lg shadow-blue-200">
+                    🏠 Quay về Projects
+                </a>
+            </div>
+            <div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                Integration
+            </div>
+        </div>
+        <div id="content-wrapper" class="dashboard-wrapper min-h-screen">
+            <!-- Background Decorations -->
+            <div class="bg-decor-1"></div>
+            <div class="bg-decor-2"></div>
+            <div class="bg-decor-3"></div>
+
+            <main class="relative z-10">
+                <!-- Hero Section -->
+                <section id="overview"
+                    class="min-h-[80vh] flex items-center justify-center px-6 py-20 relative overflow-hidden">
+                    <div class="max-w-5xl mx-auto text-center relative z-10">
+                        <div
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold mb-8 animate-bounce">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            POWERED BY MARCH 29 TEAM
+                        </div>
+                        <h1 class="text-6xl lg:text-8xl font-black mb-8 tracking-tighter main-title leading-[1.05]">
+                            Hachiba <br>MES System
+                        </h1>
+                        <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
+                            Hệ điều hành sản xuất thông minh, tối ưu hóa toàn bộ chuỗi cung ứng theo tiêu chuẩn Industry
+                            4.0.
+                        </p>
+
+                        <!-- KPI Highlight Cards (Redesigned) -->
+                        <div id="kpi-container"
+                            class="grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mt-16 reveal">
+                            <!-- KPI 1 -->
+                            <div
+                                class="glass-card hover-lift p-6 rounded-lg bg-white/40 border border-white/20 relative overflow-hidden group transition-all duration-300">
+                                <div class="flex justify-between items-start mb-4 relative z-10">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-xl">
+                                        📄</div>
+                                    <span
+                                        class="text-rose-500 flex items-center text-[10px] font-bold uppercase tracking-wider">High
+                                        Impact</span>
+                                </div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-1 relative z-10 tracking-tighter">
+                                    70–90%</h3>
+                                <p class="text-slate-500 text-xs font-semibold tracking-tight relative z-10">Giảm Thao
+                                    tác giấy</p>
+
+                            </div>
+
+                            <!-- KPI 2 -->
+                            <div
+                                class="glass-card hover-lift p-6 rounded-lg bg-white/40 border border-white/20 relative overflow-hidden group transition-all duration-300">
+                                <div class="flex justify-between items-start mb-4 relative z-10">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-xl">
+                                        📈</div>
+                                    <span
+                                        class="text-emerald-500 flex items-center text-[10px] font-bold uppercase tracking-wider">Optimized</span>
+                                </div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-1 relative z-10 tracking-tighter">5–12%
+                                </h3>
+                                <p class="text-slate-500 text-xs font-semibold tracking-tight relative z-10">Tăng Năng
+                                    suất chuyền</p>
+
+                            </div>
+
+                            <!-- KPI 3 -->
+                            <div
+                                class="glass-card hover-lift p-6 rounded-lg bg-white/40 border border-white/20 relative overflow-hidden group transition-all duration-300">
+                                <div class="flex justify-between items-start mb-4 relative z-10">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-xl">
+                                        🛡️</div>
+                                    <span
+                                        class="text-amber-500 flex items-center text-[10px] font-bold uppercase tracking-wider">Reduced</span>
+                                </div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-1 relative z-10 tracking-tighter">
+                                    30–50%</h3>
+                                <p class="text-slate-500 text-xs font-semibold tracking-tight relative z-10">Giảm Lỗi
+                                    lặp lại</p>
+
+                            </div>
+
+                            <!-- KPI 4 -->
+                            <div
+                                class="glass-card hover-lift p-6 rounded-lg bg-white/40 border border-white/20 relative overflow-hidden group transition-all duration-300">
+                                <div class="flex justify-between items-start mb-4 relative z-10">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-xl">
+                                        ⚡</div>
+                                    <span
+                                        class="text-blue-500 flex items-center text-[10px] font-bold uppercase tracking-wider">Accelerated</span>
+                                </div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-1 relative z-10 tracking-tighter">3–5x
+                                </h3>
+                                <p class="text-slate-500 text-xs font-semibold tracking-tight relative z-10">Xử lý dữ
+                                    liệu nhanh</p>
+
+                            </div>
+
+                            <!-- KPI 5 -->
+                            <div
+                                class="glass-card hover-lift p-6 rounded-lg bg-white/40 border border-white/20 relative overflow-hidden group transition-all duration-300">
+                                <div class="flex justify-between items-start mb-4 relative z-10">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-xl">
+                                        💰</div>
+                                    <span
+                                        class="text-teal-500 flex items-center text-[10px] font-bold uppercase tracking-wider">Precise</span>
+                                </div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-1 relative z-10 tracking-tighter">100%
+                                </h3>
+                                <p class="text-slate-500 text-xs font-semibold tracking-tight relative z-10">Chính xác
+                                    Quỹ lương</p>
+
+                            </div>
+
+                            <!-- KPI 6 -->
+                            <div
+                                class="glass-card hover-lift p-6 rounded-lg bg-white/40 border border-white/20 relative overflow-hidden group transition-all duration-300">
+                                <div class="flex justify-between items-start mb-4 relative z-10">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-xl">
+                                        🔗</div>
+                                    <span
+                                        class="text-indigo-500 flex items-center text-[10px] font-bold uppercase tracking-wider">Verified</span>
+                                </div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-1 relative z-10 tracking-tighter">E2E
+                                </h3>
+                                <p class="text-slate-500 text-xs font-semibold tracking-tight relative z-10">Truy xuất
+                                    nguồn gốc</p>
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- Section Divider -->
+                <div class="max-w-4xl mx-auto px-6 py-10 reveal">
+                    <div class="relative flex items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-4 text-slate-400">
+                            <div
+                                class="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shadow-sm">
+                                <svg class="w-5 h-5 text-blue-500 animate-bounce" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                            </div>
+                        </span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+                </div>
+
+                <!-- MES Architecture Map (Redesigned) -->
+                <section id="map" class="px-6 py-20 reveal">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="text-center mb-16">
+                            <span class="chip bg-blue-50 text-blue-600 mb-4 font-bold">Architecture Master Map</span>
+                            <h2 class="text-4xl font-black text-slate-900 tracking-tight text-center">SƠ ĐỒ KIẾN TRÚC
+                                TỔNG THỂ</h2>
+                        </div>
+
+                        <div id="architecture-canvas" class="architecture-canvas mt-10">
+                            <!-- SVG Connection Layer -->
+                            <svg class="spoke-svg-layer hidden lg:block" viewBox="0 0 1000 800">
+                                <defs>
+                                    <marker id="arrowhead-balanced" markerWidth="10" markerHeight="10" refX="9" refY="5"
+                                        orient="auto">
+                                        <path d="M0,0 L10,5 L0,10 Z" fill="#1a73e8" />
+                                    </marker>
+                                </defs>
+                                <!-- ERP to Core Connection (Balanced Forward Flow) - left arrow (GIỮ) -->
+                                <line x1="240" y1="400" x2="395" y2="400" stroke="#1a73e8" stroke-width="6"
+                                    stroke-linecap="round" marker-end="url(#arrowhead-balanced)" />
+
+                                <!-- Core to Output Layer Connection (Right Arrow) -->
+                                <line x1="605" y1="400" x2="695" y2="400" stroke="#1a73e8" stroke-width="6"
+                                    stroke-linecap="round" marker-end="url(#arrowhead-balanced)" />
+
+                                <!-- Lines from center to spokes (Separated top arc) -->
+                                <line x1="500" y1="400" x2="240" y2="170" class="spoke-line" /> <!-- Pillar 1 -->
+                                <line x1="500" y1="400" x2="500" y2="110" class="spoke-line" /> <!-- Pillar 2 -->
+                                <line x1="500" y1="400" x2="760" y2="170" class="spoke-line" /> <!-- Pillar 3 -->
+                                <line x1="500" y1="400" x2="240" y2="586" class="spoke-line" /> <!-- Pillar 4 -->
+                                <line x1="500" y1="400" x2="500" y2="650" class="spoke-line" /> <!-- Pillar 5 -->
+                                <line x1="500" y1="400" x2="760" y2="586" class="spoke-line" /> <!-- Pillar 6 -->
+                            </svg>
+
+                            <!-- Data Input Layer (ERP) -->
+                            <div
+                                class="relative lg:absolute lg:left-6 lg:top-1/2 lg:-translate-y-1/2 z-30 mb-8 lg:mb-0">
+                                <div
+                                    class="chip bg-slate-100 text-slate-600 mb-2 font-bold border border-slate-200 mx-auto lg:mx-0 w-fit text-[10px]">
+                                    DATA INPUT LAYER</div>
+                                <div
+                                    class="p-4 rounded-lg bg-white border border-slate-200 shadow-xl flex items-center gap-4 hover-lift w-fit mx-auto lg:mx-0">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-lg text-white">
+                                        🏢</div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 text-xs leading-tight">Internal ERP System
+                                        </h4>
+                                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                                            Inheritance Input Information</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Central Core Node -->
+                            <div class="architecture-core animate-pulse">
+                                <span class="text-4xl mb-2">⚙️</span>
+                                <h3 class="text-xl font-black tracking-tight leading-tight">HACHIBA<br>MES SYSTEM</h3>
+                            </div>
+
+
+                            <div id="architecture-nodes-container">
+                                <!-- Architecture nodes will be rendered here -->
+                            </div>
+
+                            <!-- Data Output Layer Group (Right Side) -->
+                            <div class="architecture-output-group hidden lg:flex">
+                                <div class="text-center w-full">
+                                    <div
+                                        class="chip bg-slate-100 text-slate-600 mb-2 font-bold border border-slate-200 lg:ml-0 w-fit text-[10px]">
+                                        DATA OUTPUT LAYER
+                                    </div>
+                                    <div class="p-1.5 rounded-xl bg-white border border-slate-200 shadow-xl w-full">
+                                        <div class="flex flex-row gap-2 text-left">
+                                            <div class="flex flex-col gap-0.5 flex-1">
+                                                <span class="text-base shrink-0">🌍</span>
+                                                <div>
+                                                    <h5
+                                                        class="font-bold text-slate-900 text-[8.5px] leading-[1.1] tracking-tighter">
+                                                        Transparency</h5>
+                                                    <p
+                                                        class="text-[6.5px] text-slate-500 leading-none tracking-tighter">
+                                                        Buyer nodes.</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col gap-0.5 border-l border-slate-100 pl-2 flex-1">
+                                                <span class="text-base shrink-0">📡</span>
+                                                <div>
+                                                    <h5
+                                                        class="font-bold text-slate-900 text-[8.5px] leading-[1.1] tracking-tighter">
+                                                        IoT Connect</h5>
+                                                    <p
+                                                        class="text-[6.5px] text-slate-500 leading-none tracking-tighter">
+                                                        PLC/SCADA.</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col gap-0.5 border-l border-slate-100 pl-2 flex-1">
+                                                <span class="text-base shrink-0">🔒</span>
+                                                <div>
+                                                    <h5
+                                                        class="font-bold text-slate-900 text-[8.5px] leading-[1.1] tracking-tighter">
+                                                        Secure Data</h5>
+                                                    <p
+                                                        class="text-[6.5px] text-slate-500 leading-none tracking-tighter">
+                                                        Enterprise Encr.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Customer System (Buyer Portal) -->
+                                <div
+                                    class="p-2 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 shadow-2xl flex items-center gap-2 hover-lift w-full">
+                                    <div
+                                        class="w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center text-base">
+                                        🌐</div>
+                                    <div class="text-left">
+                                        <h4 class="font-bold text-white text-[9.5px] tracking-tight mb-0.5">Customer
+                                            System</h4>
+                                        <p class="text-blue-300 text-[7.5px] font-medium italic">Buyer Portal
+                                            Integration</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="module-sections-container">
+                    <!-- Module sections will be rendered here -->
+                </div>
+                <!-- Horizon Technology Platform -->
+                <section id="platform" class="px-6 py-20 bg-slate-50/50 reveal">
+                    <div class="max-w-4xl mx-auto text-center">
+                        <div class="mb-12">
+                            <span
+                                class="chip bg-blue-50 text-blue-600 mb-4 font-bold uppercase tracking-widest text-[10px]">Horizon
+                                Platform</span>
+                            <h2 class="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">NỀN TẢNG CÔNG NGHỆ
+                            </h2>
+                            <p class="text-slate-500 mt-3 font-medium">Hệ sinh thái thông minh, linh hoạt và bảo mật
+                                tuyệt đối.</p>
+                        </div>
+
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <!-- Cloud -->
+                            <div class="p-8 rounded-lg bg-white border border-slate-100 shadow-sm hover-lift">
+                                <div class="text-3xl mb-4">☁️</div>
+                                <h3 class="font-bold text-slate-900 mb-1">Cloud Native</h3>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Vận hành ổn định, mở rộng
+                                    linh hoạt theo quy mô.</p>
+                            </div>
+
+                            <!-- Data -->
+                            <div class="p-8 rounded-lg bg-white border border-slate-100 shadow-sm hover-lift">
+                                <div class="text-3xl mb-4">📊</div>
+                                <h3 class="font-bold text-slate-900 mb-1">Data Driven</h3>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Báo cáo Real-time, hỗ trợ
+                                    ra quyết định tức thì.</p>
+                            </div>
+
+                            <!-- API -->
+                            <div class="p-8 rounded-lg bg-white border border-slate-100 shadow-sm hover-lift">
+                                <div class="text-3xl mb-4">🔌</div>
+                                <h3 class="font-bold text-slate-900 mb-1">Open API</h3>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Kết nối ERP (Bravo/SAP) &
+                                    IoT chuẩn quốc tế.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="px-6 py-16 bg-slate-900 text-white">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-xl tracking-tight">HACHIBA APP</h3>
+                            <p class="text-blue-400 text-xs font-bold uppercase tracking-widest">The Smart
+                                Operating System</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center md:text-right">
+                        <p class="text-slate-400 text-sm font-medium mb-2">© 2026 Hachiba Solution. All
+                            rights reserved.</p>
+                        <div class="flex gap-4 justify-center md:justify-end">
+                            <span
+                                class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reliability</span>
+                            <span
+                                class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Intelligence</span>
+                            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Scale</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <script>
+            async function fetchAndRenderMES() {
+                try {
+                    const response = await fetch('/api/mes/all');
+                    const data = await response.json();
+
+                    renderKPIs(data.kpis);
+                    renderArchitectureNodes(data.map_nodes);
+                    renderModuleSections(data.module_details);
+
+                    // Re-initialize any observers or listeners that depend on the new elements
+                    const newRevealElements = document.querySelectorAll('.reveal');
+                    newRevealElements.forEach(el => revealObserver.observe(el));
+
+                    // Re-initialize Tooltip System for newly added nodes
+                    initializeArchitectureTooltips();
+                } catch (error) {
+                    console.error('Error fetching MES content:', error);
+                }
+            }
+
+            function renderKPIs(kpis) {
+                const container = document.getElementById('kpi-container');
+                if (!container) return;
+
+                container.innerHTML = kpis.map(kpi => `
+                <div class="glass-card hover-lift p-6 rounded-lg bg-white/40 border border-white/20 relative overflow-hidden group transition-all duration-300 reveal">
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div class="w-10 h-10 rounded-lg bg-${kpi.impact_color.split('-')[0]}-50 flex items-center justify-center text-xl">
+                            ${kpi.icon}
+                        </div>
+                        <span class="text-${kpi.impact_color} flex items-center text-[10px] font-bold uppercase tracking-wider">
+                            ${kpi.impact_label || ''}
+                        </span>
+                    </div>
+                    <h3 class="text-3xl font-black text-slate-900 mb-1 relative z-10 tracking-tighter">
+                        ${kpi.value}
+                    </h3>
+                    <p class="text-slate-500 text-xs font-semibold tracking-tight relative z-10">
+                        ${kpi.title}
+                    </p>
+                </div>
+            `).join('');
+            }
+
+            function renderArchitectureNodes(nodes) {
+                const container = document.getElementById('architecture-nodes-container');
+                if (!container) return;
+
+                container.innerHTML = nodes.map(node => `
+                <div class="architecture-node architecture-node-spoke spoke-${node.pillar} glass-card p-4 rounded-lg border-l-4 border-l-${node.color}-500"
+                    data-pillar="${node.pillar}" data-title="${node.title}" data-subtitle="${node.subtitle || ''}"
+                    data-description="${node.description || ''}" data-icon="${node.icon || ''}"
+                    data-color="${node.color}">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="size-9 rounded-lg bg-${node.color}-50 flex items-center justify-center text-lg">
+                            ${node.icon || ''}
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-sm">${node.title}</h4>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-[10px] font-extrabold text-${node.color}-600 uppercase tracking-widest">
+                            ${node.subtitle || ''}
+                        </p>
+                    </div>
+                    <div class="flex justify-between items-center mt-3">
+                        <span class="text-[9px] font-bold text-${node.status_color.split('-')[0]}-600 uppercase tracking-tighter px-2 py-0.5 border border-${node.status_color.split('-')[0]}-200 rounded-full bg-${node.status_color.split('-')[0]}-50/50">
+                            ${node.status || ''}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+            }
+
+            function renderModuleSections(details) {
+                const container = document.getElementById('module-sections-container');
+                if (!container) return;
+
+                // Group details by pillar
+                const groupedDetails = details.reduce((acc, detail) => {
+                    if (!acc[detail.pillar]) acc[detail.pillar] = [];
+                    acc[detail.pillar].push(detail);
+                    return acc;
+                }, {});
+
+                // Pillar titles and colors (could also be moved to DB but keeping logic simple for now)
+                const pillarInfo = {
+                    1: { title: 'KHO NGUYÊN LIỆU THÔNG MINH', color: 'blue', icon: '📦' },
+                    2: { title: 'KHO THÀNH PHẨM & TRUY XUẤT E2E', color: 'pink', icon: '📤' },
+                    3: { title: 'GTD - BĂNG CHUYỀN TỰ ĐỘNG', color: 'orange', icon: '🔍' },
+                    4: { title: 'TỐI ƯU HÓA TÁC NGHIỆP CẮT', color: 'emerald', icon: '✂️' },
+                    5: { title: 'SCADA & CHUYỀN MAY THÔNG MINH', color: 'purple', icon: '🏭' },
+                    6: { title: 'HỆ SINH THÁI PHỤ LIỆU (Kho PL)', color: 'cyan', icon: '🧵' }
+                };
+
+                const pillarSections = {
+                    1: 'module-kho-nl',
+                    2: 'module-kho-tp',
+                    3: 'module-gtd',
+                    4: 'module-to-cat',
+                    5: 'module-chuyen-may',
+                    6: 'module-kho-pl'
+                };
+
+                container.innerHTML = Object.entries(groupedDetails).map(([pillar, items]) => {
+                    const info = pillarInfo[pillar];
+                    const sectionId = pillarSections[pillar];
+                    const isPillar6 = pillar == 6;
+
+                    return `
+                    <section id="${sectionId}" class="px-10 lg:px-20 py-24 reveal">
+                        <div class="max-w-5xl mx-auto">
+                            <a href="javascript:scrollToMap()" class="back-to-map-btn no-underline">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                <span>Quay về Sơ đồ Kiến trúc</span>
+                            </a>
+                            <div class="module-card glass-card rounded-lg p-8 lg:p-14 hover-lift glow-${info.color} ${isPillar6 ? 'bg-white border border-slate-100 shadow-lg shadow-cyan-50/50' : ''}">
+                                <div class="text-center mb-12">
+                                    <div class="w-16 h-16 rounded-lg bg-${info.color}-600 flex items-center justify-center text-3xl shadow-lg shadow-${info.color}-100 mx-auto mb-6">
+                                        ${info.icon}
+                                    </div>
+                                    <div class="flex items-center justify-center gap-3 mb-2">
+                                        <span class="chip bg-${info.color}-50 text-${info.color}-600">Pillar 0${pillar}</span>
+                                        ${isPillar6 ? '<span class="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-extrabold uppercase tracking-widest">🚀 Roadmap — Year 2</span>' : ''}
+                                    </div>
+                                    <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">${info.title}</h2>
+                                    <p class="text-slate-600 mt-2 font-medium">Chi tiết giải pháp công nghệ.</p>
+                                </div>
+
+                                <div class="max-w-3xl mx-auto">
+                                    <div class="timeline-container">
+                                        ${items.map(item => `
+                                            <div class="timeline-item reveal">
+                                                <div class="timeline-marker" style="${isPillar6 ? 'border-color: var(--cyan);' : ''}"></div>
+                                                <div class="timeline-content">
+                                                    <span class="timeline-step" style="${isPillar6 ? 'background: rgba(8, 145, 178, 0.08); color: var(--cyan);' : ''}">${item.step_number}</span>
+                                                    <h3 class="timeline-title">${item.title}</h3>
+                                                    <p class="timeline-desc">${item.description}</p>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                `;
+                }).join('');
+            }
+
+            // Initialize display on load
+            document.addEventListener('DOMContentLoaded', fetchAndRenderMES);
+
+            // ... existing script content ...
+            // Scroll reveal animation
+            const revealElements = document.querySelectorAll('.reveal');
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+            revealElements.forEach(el => revealObserver.observe(el));
+
+            // Default configuration
+            const defaultConfig = {
+                main_title: 'HỆ THỐNG MES HACHIBA APP',
+                subtitle: 'Hệ thống quản lý điều hành sản xuất xuyên suốt từ khâu Nguyên liệu đến Thành phẩm, tích hợp chặt chẽ với hệ thống ERP (Bravo8/SAP), kết nối khách hàng (Decathlon) và hướng tới mô hình Nhà máy thông minh.',
+                background_color: '#0f172a',
+                text_color: '#f1f5f9',
+                accent_color: '#3b82f6',
+                secondary_color: '#10b981',
+                highlight_color: '#8b5cf6'
+            };
+
+            // Initialize Element SDK
+            if (window.elementSdk) {
+                window.elementSdk.init({
+                    defaultConfig,
+                    onConfigChange: async (config) => {
+                        // Update main title
+                        const mainTitle = document.getElementById('main-title');
+                        if (mainTitle) {
+                            mainTitle.textContent = config.main_title || defaultConfig.main_title;
+                        }
+
+                        // Update subtitle
+                        const subtitle = document.getElementById('subtitle');
+                        if (subtitle) {
+                            subtitle.textContent = config.subtitle || defaultConfig.subtitle;
+                        }
+
+                        // Update mobile title
+                        const mobileTitle = document.getElementById('mobile-title');
+                        if (mobileTitle) {
+                            const title = config.main_title || defaultConfig.main_title;
+                            mobileTitle.textContent = title.length > 20 ? title.substring(0, 20) + '...' : title;
+                        }
+                    },
+                    mapToCapabilities: (config) => ({
+                        recolorables: [
+                            {
+                                get: () => config.background_color || defaultConfig.background_color,
+                                set: (value) => {
+                                    config.background_color = value;
+                                    window.elementSdk.setConfig({ background_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.text_color || defaultConfig.text_color,
+                                set: (value) => {
+                                    config.text_color = value;
+                                    window.elementSdk.setConfig({ text_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.accent_color || defaultConfig.accent_color,
+                                set: (value) => {
+                                    config.accent_color = value;
+                                    window.elementSdk.setConfig({ accent_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.secondary_color || defaultConfig.secondary_color,
+                                set: (value) => {
+                                    config.secondary_color = value;
+                                    window.elementSdk.setConfig({ secondary_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.highlight_color || defaultConfig.highlight_color,
+                                set: (value) => {
+                                    config.highlight_color = value;
+                                    window.elementSdk.setConfig({ highlight_color: value });
+                                }
+                            }
+                        ],
+                        borderables: [],
+                        fontEditable: undefined,
+                        fontSizeable: undefined
+                    }),
+                    mapToEditPanelValues: (config) => new Map([
+                        ['main_title', config.main_title || defaultConfig.main_title],
+                        ['subtitle', config.subtitle || defaultConfig.subtitle]
+                    ])
+                });
+            }
+
+            // Mobile menu toggle
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (menuToggle && mobileMenu) {
+                menuToggle.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+
+                // Close menu when clicking a link
+                const mobileNavLinks = document.querySelectorAll('.mobile-nav');
+                mobileNavLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileMenu.classList.add('hidden');
+                    });
+                });
+            }
+
+            // Active nav item highlighting
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('section[id]');
+
+            function updateActiveNav() {
+                const scrollPosition = window.scrollY + 100;
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.offsetHeight;
+                    const sectionId = section.getAttribute('id');
+
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                        navItems.forEach(item => {
+                            item.classList.remove('active');
+                            if (item.getAttribute('href') === `#${sectionId}`) {
+                                item.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }
+
+            document.querySelector('.app-wrapper').addEventListener('scroll', updateActiveNav);
+            window.addEventListener('scroll', updateActiveNav);
+
+            // Sidebar Desktop Toggle
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('main-sidebar');
+            const content = document.getElementById('content-wrapper');
+
+            if (sidebarToggle && sidebar && content) {
+                sidebarToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('collapsed');
+                    content.classList.toggle('sidebar-collapsed-active');
+
+                    // Trigger scroll event to update active nav state based on new layout
+                    window.dispatchEvent(new Event('scroll'));
+                });
+            }
+
+            // Tooltip System for Architecture Nodes
+            const pillarFeatures = {
+                1: [
+                    { icon: '🏗️', title: 'Kiến trúc & Engine', desc: 'Thiết kế hệ thống và cơ sở dữ liệu, kết nối đồng bộ với các hệ thống khác.' },
+                    { icon: '🔄', title: 'Quản lý Nhập/Xuất Kho', desc: 'Theo dõi hàng nhập và xuất kho, cảnh báo khi vượt định mức.' },
+                    { icon: '🏷️', title: 'QR Hub & Quét mã', desc: 'Tạo và quét mã QR từ nhiều thiết bị, đồng bộ dữ liệu theo thời gian thực.' },
+                    { icon: '🏢', title: 'Vận hành Kho & Tồn kho', desc: 'Quản lý vị trí hàng hóa, dự báo sức chứa và cảnh báo hàng tồn lâu.' },
+                    { icon: '🧵', title: 'Phân hệ May mẫu', desc: 'Quản lý vải mẫu, hỗ trợ trên điện thoại và máy tính bảng.' },
+                    { icon: '📊', title: 'Thống kê & Báo cáo', desc: 'Tạo báo cáo, hiển thị trên TV và xuất file nhiều định dạng.' },
+                    { icon: '⚙️', title: 'Tích hợp & Bảo trì', desc: 'Kết nối với hệ thống khách hàng, sao lưu dữ liệu tự động.' }
+                ],
+                2: [
+                    { icon: '🏗️', title: 'Kiến trúc Kho TP', desc: 'Thiết kế hệ thống quản lý kho thành phẩm, đồng bộ với hệ thống ERP.' },
+                    { icon: '📥', title: 'Quản lý Đơn hàng & Nhập kho', desc: 'Nhận đơn hàng tự động, tạo mã QR và cảnh báo sai lệch.' },
+                    { icon: '🛡️', title: 'Kiểm tra Chất lượng', desc: 'Checklist kiểm tra, khách hàng xác nhận qua web, báo cáo lỗi tự động.' },
+                    { icon: '🏷️', title: 'QR & Ứng dụng Mobile', desc: 'Quét mã QR thùng, pallet, sản phẩm từ điện thoại và máy tính bảng.' },
+                    { icon: '📤', title: 'Vận hành Xuất hàng', desc: 'Kiểm tra đóng gói, đối chiếu số lượng và cảnh báo thiếu/thừa.' },
+                    { icon: '🏢', title: 'Kho Đa Điểm', desc: 'Sơ đồ kho trực quan, quản lý nhiều kho và cảnh báo tồn kho rủi ro.' },
+                    { icon: '🔎', title: 'Truy xuất Nguồn gốc', desc: 'Theo dõi toàn bộ quá trình từ đơn hàng đến khách hàng, hiển thị real-time.' },
+                    { icon: '⚙️', title: 'Quản trị & Bảo trì', desc: 'Phân quyền người dùng, kết nối 2 chiều với hệ thống, sao lưu an toàn.' }
+                ],
+                3: [
+                    { icon: '🏛️', title: 'Nghiên cứu Băng Chuyền', desc: 'Cải thiện cảm biến đọc mã, phát triển công nghệ nhận diện hình ảnh để đo kích thước chính xác hơn.' },
+                    { icon: '🏷️', title: 'Quản lý Nhãn MTS', desc: 'Gán nhãn tự động, tra cứu lịch sử và quét nhập/xuất tích hợp băng chuyền.' },
+                    { icon: '♻️', title: 'Quản lý Hàng Tái Chế', desc: 'Theo dõi hàng tái chế, kiểm soát nhập/xuất và thống kê tồn kho.' },
+                    { icon: '🧠', title: 'Điều khiển & AI', desc: 'Nâng cấp phần cứng, camera và công nghệ AI nhận diện mã nhanh chóng.' },
+                    { icon: '📊', title: 'Thống kê & Dashboard', desc: 'Báo cáo nhập/xuất, hiển thị trạng thái vận hành và tồn kho trên TV.' },
+                    { icon: '⚙️', title: 'Vận hành & Bảo trì', desc: 'Quản lý tập trung, lưu trữ an toàn và sao lưu định kỳ.' }
+                ],
+                4: [
+                    { icon: '🏗️', title: 'Thiết kế Hệ thống', desc: 'Hệ thống xử lý nhiều tác vụ, cơ sở dữ liệu lớn và kết nối với hệ thống ERP.' },
+                    { icon: '📅', title: 'Kế hoạch Cắt', desc: 'Đồng bộ nguyên liệu, lập kế hoạch sản xuất và cấp phát sơ đồ cắt tự động.' },
+                    { icon: '🔗', title: 'Quản lý Sơ đồ Cắt', desc: 'Lưu trữ sơ đồ số, quản lý định mức và kiểm soát dữ liệu tự động.' },
+                    { icon: '✂️', title: 'Vận hành Bàn cắt', desc: 'Quản lý trải vải, đối soát phiếu và theo dõi tiến độ, in thẻ QR.' },
+                    { icon: '🔄', title: 'Nghiệp vụ Thay thế', desc: 'Xử lý thay thế sản phẩm, cập nhật nguyên liệu và báo cáo tồn kho.' },
+                    { icon: '🏷️', title: 'Quản lý Bán thành phẩm', desc: 'Tạo mã QR cho bó hàng, quét nhận và theo dõi năng suất real-time.' },
+                    { icon: '⛓️', title: 'Truy xuất Nguồn gốc', desc: 'Theo dõi toàn bộ quá trình từ vải đến sản phẩm, bảo mật cao.' },
+                    { icon: '⚙️', title: 'Quản trị & Giám sát', desc: 'Phân quyền người dùng, lưu lịch sử và gửi thông báo email tự động.' }
+                ],
+                5: [
+                    { icon: '🏗️', title: 'Kiến trúc Chuyền May', desc: 'Kết nối thiết bị, thiết kế cơ sở dữ liệu chuyền may và kết nối với hệ thống ERP.' },
+                    { icon: '🗺️', title: 'Thiết kế Chuyền Trực quan', desc: 'Sơ đồ trạm làm việc, quản lý nhân sự và máy móc, điều chuyển linh hoạt.' },
+                    { icon: '🔄', title: 'Quản lý Phụ liệu', desc: 'Chuẩn hóa dữ liệu phụ liệu, quét nhận hàng và tích hợp với kho.' },
+                    { icon: '💰', title: 'Sản lượng & Lương', desc: 'Tính lương tự động từ sản lượng, đối soát và báo cáo nhập kho.' },
+                    { icon: '⚡', title: 'Năng suất & Hiệu quả', desc: 'Tính toán năng suất tự động, phê duyệt điều chỉnh và theo dõi real-time.' },
+                    { icon: '🛡️', title: 'Kiểm tra Chất lượng', desc: 'Ghi nhận lỗi, chuyển đổi lỗi theo quy tắc và báo cáo để cải tiến.' },
+                    { icon: '🔔', title: 'Hệ thống Cảnh báo', desc: 'Nút gọi hỗ trợ, theo dõi thời gian phản hồi và cảnh báo bằng màu sắc.' },
+                    { icon: '⚙️', title: 'Dashboard & Cảnh báo', desc: 'Giám sát chi tiết từ tổ đến trạm, báo cáo bảo trì và hiển thị trên TV.' }
+                ],
+                6: [
+                    { icon: '⏳', title: 'Đang chờ xác nhận', desc: 'Phân hệ Kho Phụ Liệu đang trong giai đoạn khảo sát và chờ xác nhận triển khai.' }
+                ]
+            };
+
+            function createTooltip(node) {
+                const pillar = parseInt(node.dataset.pillar);
+                const title = node.dataset.title;
+                const subtitle = node.dataset.subtitle;
+                const description = node.dataset.description;
+                const icon = node.dataset.icon;
+                const features = pillarFeatures[pillar] || [];
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip-popup';
+                tooltip.innerHTML = `
+                <div class="tooltip-features">
+                    <div class="tooltip-features-title">Tính năng chính</div>
+                    ${features.map(feature => `
+                        <div class="tooltip-feature-item">
+                            <span class="tooltip-feature-icon">${feature.icon}</span>
+                            <div class="tooltip-feature-content">
+                                <div class="tooltip-feature-title">${feature.title}</div>
+                                <div class="tooltip-feature-desc">${feature.desc}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="tooltip-arrow top"></div>
+            `;
+
+                document.body.appendChild(tooltip);
+                return tooltip;
+            }
+
+            function positionTooltip(tooltip, node) {
+                const nodeRect = node.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const scrollY = window.scrollY;
+                const scrollX = window.scrollX;
+
+                // Default: show below the node
+                let top = nodeRect.bottom + scrollY + 12;
+                let left = nodeRect.left + scrollX + (nodeRect.width / 2) - (tooltipRect.width / 2);
+                let arrowClass = 'top';
+
+                // Check if tooltip goes off right edge
+                if (left + tooltipRect.width > scrollX + viewportWidth - 20) {
+                    left = scrollX + viewportWidth - tooltipRect.width - 20;
+                }
+
+                // Check if tooltip goes off left edge
+                if (left < scrollX + 20) {
+                    left = scrollX + 20;
+                }
+
+                // Check if tooltip goes off bottom edge - show above instead
+                if (top + tooltipRect.height > scrollY + viewportHeight - 20) {
+                    top = nodeRect.top + scrollY - tooltipRect.height - 12;
+                    arrowClass = 'bottom';
+                    tooltip.querySelector('.tooltip-arrow').className = `tooltip-arrow ${arrowClass}`;
+                }
+
+                tooltip.style.top = `${top}px`;
+                tooltip.style.left = `${left}px`;
+            }
+
+            // Scroll to Map function
+            function scrollToMap() {
+                const mapSection = document.getElementById('map');
+                const container = document.querySelector('.app-wrapper');
+                if (mapSection && container) {
+                    const offset = 100; // Offset for fixed header/sidebar
+                    const elementPosition = mapSection.offsetTop;
+                    container.scrollTo({
+                        top: elementPosition - offset,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            // Pillar to section mapping
+            const pillarToSection = {
+                1: 'module-kho-nl',
+                2: 'module-kho-tp',
+                3: 'module-gtd',
+                4: 'module-to-cat',
+                5: 'module-chuyen-may',
+                6: 'module-kho-pl'
+            };
+
+            // Scroll to Pillar section
+            function scrollToPillar(pillarNumber) {
+                const sectionId = pillarToSection[pillarNumber];
+                if (sectionId) {
+                    const section = document.getElementById(sectionId);
+                    const container = document.querySelector('.app-wrapper');
+                    if (section && container) {
+                        const offset = 100; // Offset for fixed header/sidebar
+                        const elementPosition = section.offsetTop;
+                        container.scrollTo({
+                            top: elementPosition - offset,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            }
+
+            // Initialize tooltip system
+            let currentTooltip = null;
+            let tooltipTimeout = null;
+
+            function initializeArchitectureTooltips() {
+                const architectureNodes = document.querySelectorAll('.architecture-node');
+
+                architectureNodes.forEach(node => {
+                    // Add click handler to scroll to pillar section
+                    node.addEventListener('click', (e) => {
+                        // Don't trigger if clicking on tooltip
+                        if (e.target.closest('.tooltip-popup')) {
+                            return;
+                        }
+
+                        // Hide tooltip if visible
+                        if (currentTooltip) {
+                            currentTooltip.classList.remove('active');
+                            if (tooltipTimeout) {
+                                clearTimeout(tooltipTimeout);
+                            }
+                            tooltipTimeout = setTimeout(() => {
+                                if (currentTooltip) {
+                                    currentTooltip.remove();
+                                    currentTooltip = null;
+                                }
+                            }, 100);
+                        }
+
+                        const pillar = parseInt(node.dataset.pillar);
+                        if (pillar) {
+                            scrollToPillar(pillar);
+                        }
+                    });
+
+                    node.addEventListener('mouseenter', (e) => {
+                        // Clear any existing timeout
+                        if (tooltipTimeout) {
+                            clearTimeout(tooltipTimeout);
+                            tooltipTimeout = null;
+                        }
+
+                        // Remove existing tooltip if any
+                        if (currentTooltip) {
+                            currentTooltip.remove();
+                        }
+
+                        // Create and show new tooltip
+                        const tooltip = createTooltip(node);
+                        currentTooltip = tooltip;
+
+                        // Position tooltip
+                        setTimeout(() => {
+                            positionTooltip(tooltip, node);
+                            tooltip.classList.add('active');
+                        }, 10);
+
+                        // Handle tooltip hover to keep it visible
+                        tooltip.addEventListener('mouseenter', () => {
+                            if (tooltipTimeout) {
+                                clearTimeout(tooltipTimeout);
+                                tooltipTimeout = null;
+                            }
+                            tooltip.classList.add('active');
+                        });
+
+                        tooltip.addEventListener('mouseleave', () => {
+                            tooltip.classList.remove('active');
+                            tooltipTimeout = setTimeout(() => {
+                                if (tooltip.parentNode) {
+                                    tooltip.remove();
+                                }
+                                if (currentTooltip === tooltip) {
+                                    currentTooltip = null;
+                                }
+                            }, 200);
+                        });
+                    });
+
+                    node.addEventListener('mouseleave', (e) => {
+                        // Check if mouse is moving to tooltip
+                        const relatedTarget = e.relatedTarget;
+                        if (currentTooltip && relatedTarget && currentTooltip.contains(relatedTarget)) {
+                            return; // Don't hide if moving to tooltip
+                        }
+
+                        if (currentTooltip) {
+                            currentTooltip.classList.remove('active');
+                            tooltipTimeout = setTimeout(() => {
+                                if (currentTooltip) {
+                                    currentTooltip.remove();
+                                    currentTooltip = null;
+                                }
+                            }, 200);
+                        }
+                    });
+                });
+            }
+
+            // Update tooltip position on scroll/resize
+            ['scroll', 'resize'].forEach(event => {
+                window.addEventListener(event, () => {
+                    if (currentTooltip && currentTooltip.classList.contains('active')) {
+                        const architectureNodes = document.querySelectorAll('.architecture-node');
+                        const activeNode = Array.from(architectureNodes).find(node =>
+                            node.matches(':hover')
+                        );
+                        if (activeNode) {
+                            positionTooltip(currentTooltip, activeNode);
+                        }
+                    }
+                });
+            });
+        </script>
+        <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'9d2de9f66767e2f0',t:'MTc3MTkyNTEwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+</body>
+
+</html>

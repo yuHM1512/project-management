@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Management</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v={{ get_file_version('static/css/style.css') }}">
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <script>
         if (!localStorage.getItem('pm_token')) {
@@ -12,58 +14,76 @@
         }
     </script>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <img src="/assets/Logo.png" alt="M29 Projects" class="logo-img">
-                <button class="btn-new-project" id="btnNewProject">+ New Project</button>
+                <a href="/" id="logoLink" style="display: inline-block; cursor: pointer;">
+                    <img src="/static/Logo.png?v={{ get_file_version('static/Logo.png') }}"
+                        onerror="this.onerror=null; this.src='/static/Logo.png';" alt="M29 Projects" class="logo-img">
+                </a>
+                <button class="btn-new-project" id="btnNewProject">
+                    <span class="btn-text">+ New Project</span>
+                </button>
             </div>
-            
+
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="#" data-view="dashboard" class="nav-link active">
-                        <img src="/assets/icon/dashboard.png" alt="Dashboard" class="icon">
-                        Dashboard
-                    </a></li>
+                            <img src="/assets/icon/dashboard.png" alt="Dashboard" class="icon">
+                            <span>Dashboard</span>
+                        </a></li>
                     <li><a href="#" data-view="projects" class="nav-link">
-                        <img src="/assets/icon/project.png" alt="Projects" class="icon">
-                        Projects
-                    </a></li>
+                            <img src="/assets/icon/project.png" alt="Projects" class="icon">
+                            <span>Projects</span>
+                        </a></li>
                     <li><a href="#" data-view="board" class="nav-link">
-                        <img src="/assets/icon/board.png" alt="Board" class="icon">
-                        Board
-                    </a></li>
+                            <img src="/assets/icon/board.png" alt="Board" class="icon">
+                            <span>Board</span>
+                        </a></li>
                     <li><a href="#" data-view="notifications" class="nav-link">
-                        <div style="position: relative; display: inline-block;">
-                            <img src="/assets/icon/notification.png" alt="Notifications" class="icon">
-                            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
-                        </div>
-                        Notifications
-                    </a></li>
+                            <div style="position: relative; display: inline-flex; align-items: center;">
+                                <img src="/assets/icon/notification.png" alt="Notifications" class="icon">
+                                <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+                            </div>
+                            <span>Notifications</span>
+                        </a></li>
                     <li><a href="#" data-view="users" class="nav-link admin-only" style="display: none;">
-                        <img src="/assets/icon/users.png" alt="Users" class="icon">
-                        Users
-                    </a></li>
+                            <img src="/assets/icon/users.png" alt="Users" class="icon">
+                            <span>Users</span>
+                        </a></li>
                 </ul>
             </nav>
-            
+
             <div class="sidebar-projects">
                 <h3>Personal</h3>
                 <ul id="personalList" class="personal-links">
                     <li><a href="#" class="personal-link" data-personal="todos">
-                        <img src="/assets/icon/todo.png" alt="To-do" class="icon"> To-do List
-                    </a></li>
+                            <img src="/assets/icon/todo.png" alt="To-do" class="icon">
+                            <span>To-do List</span>
+                        </a></li>
+                    <li><a href="#" class="personal-link" data-personal="meeting">
+                            <img src="/assets/icon/meeting.png" alt="Meeting" class="icon">
+                            <span>Meeting</span>
+                        </a></li>
                     <li><a href="#" class="personal-link" data-personal="notes">
-                        <img src="/assets/icon/mynotes.png" alt="Notes" class="icon"> My Notes
-                    </a></li>
+                            <img src="/assets/icon/mynotes.png" alt="Notes" class="icon">
+                            <span>My Notes</span>
+                        </a></li>
                     <li><a href="#" class="personal-link" data-personal="work">
-                        <img src="/assets/icon/worklog.png" alt="Work Log" class="icon"> Work Log
-                    </a></li>
+                            <img src="/assets/icon/worklog.png" alt="Work Log" class="icon">
+                            <span>Work Log</span>
+                        </a></li>
+                    <li><a href="#" class="personal-link" id="navInternHub">
+                            <img src="/assets/icon/intern.png" alt="Intern Hub" class="icon">
+                            <span>Intern Hub</span>
+                        </a></li>
                     <li><a href="#" class="personal-link" data-personal="account">
-                        <img src="/assets/icon/account.png" alt="Account" class="icon"> Account
-                    </a></li>
+                            <img src="/assets/icon/account.png" alt="Account" class="icon">
+                            <span>Account</span>
+                        </a></li>
                 </ul>
             </div>
         </aside>
@@ -73,6 +93,12 @@
             <!-- Header -->
             <header class="header">
                 <div class="header-left">
+                    <button class="sidebar-toggle-btn" id="sidebarToggle" title="Thu gọn/Mở rộng sidebar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 12h18M3 6h18M3 18h18" />
+                        </svg>
+                    </button>
                     <h2 id="pageTitle">M29 - PROJECT MANAGEMENT DASHBOARD</h2>
                 </div>
                 <div class="header-right">
@@ -146,11 +172,12 @@
                             <div class="warning-list" id="warningOverdueList">Không có dự án nào</div>
                         </div>
                     </div>
-                    
+
                     <div style="display: flex; gap: 24px; margin-top: 32px;">
                         <div class="today-tasks-card">
                             <div class="today-tasks-header">
-                                <h3><img src="/assets/icon/today.png" alt="Today" class="today-tasks-icon">Today Tasks</h3>
+                                <h3><img src="/assets/icon/today.png" alt="Today" class="today-tasks-icon">Today Tasks
+                                </h3>
                             </div>
                             <div class="today-tasks-table">
                                 <div class="today-tasks-table-header">
@@ -168,7 +195,8 @@
                         <div class="upcoming-deadlines-card">
                             <div class="upcoming-deadlines-header">
                                 <h3>
-                                    <img src="/assets/icon/deadline.png" alt="Deadlines" class="upcoming-deadlines-icon">
+                                    <img src="/assets/icon/deadline.png" alt="Deadlines"
+                                        class="upcoming-deadlines-icon">
                                     Upcoming Deadlines
                                 </h3>
                             </div>
@@ -177,7 +205,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="recent-projects">
                         <h3>Recent Projects</h3>
                         <div id="recentProjectsList" class="projects-grid"></div>
@@ -200,6 +228,21 @@
                     <div class="view-header">
                         <h2>All Projects</h2>
                         <button class="btn-primary" id="btnCreateProject">+ New Project</button>
+                    </div>
+                    <!-- MES System Block -->
+                    <div class="mes-block-container" style="margin-bottom: 2rem;">
+                        <a href="/mes" class="mes-block-link" style="text-decoration: none; display: block;">
+                            <div class="project-card" style="background: linear-gradient(135deg, #1a73e8 0%, #0f9d58 100%); color: white; border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(26, 115, 232, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow=''">
+                                <div class="project-card-header">
+                                    <div class="project-color" style="background: white; width: 8px; height: 8px; border-radius: 50%;"></div>
+                                    <h3 style="color: white; margin: 0; font-size: 1.5rem; font-weight: 700;">MES</h3>
+                                </div>
+                                <p style="color: rgba(255, 255, 255, 0.9); margin-top: 0.5rem; font-size: 0.95rem;">Hệ thống MES Toàn Diện - Hachiba APP</p>
+                                <div class="project-meta" style="margin-top: 1rem; color: rgba(255, 255, 255, 0.8);">
+                                    <span>⚙️ Manufacturing Execution System</span>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                     <div id="projectsGrid" class="projects-grid"></div>
                 </div>
@@ -234,6 +277,199 @@
                             </div>
                         </div>
 
+                        <div id="personalSectionMeeting" class="personal-section">
+                            <div class="meeting-card">
+                                <div class="meeting-tabs">
+                                    <button class="meeting-tab active" data-meeting-tab="list">Danh sách</button>
+                                    <button class="meeting-tab" data-meeting-tab="create" id="btnCreateMeetingTab"
+                                        style="display: none;">Tạo cuộc họp</button>
+                                </div>
+                                <div id="meetingTabList" class="meeting-tab-panel active">
+                                    <div class="meeting-list-panel">
+                                        <div class="meeting-type-selector">
+                                            <button class="meeting-type-btn active" data-meeting-type="personal">Họp cá
+                                                nhân</button>
+                                        </div>
+                                        <div class="meeting-list" id="meetingList">
+                                            <div class="empty-state">Chưa có cuộc họp nào.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="meetingTabCreate" class="meeting-tab-panel">
+                                    <div class="meeting-editor-card">
+                                        <form id="meetingForm">
+                                            <div class="meeting-form-section">
+                                                <div class="meeting-form-section-title">
+                                                    <span>1. Thông tin chung</span>
+                                                </div>
+                                                <input type="hidden" id="meetingId">
+                                                <div class="form-row">
+                                                    <div class="form-group">
+                                                        <label>Thời gian</label>
+                                                        <input type="datetime-local" id="meetingTime" required>
+                                                        <small class="input-hint">Thời gian tự động: GMT+7</small>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Địa điểm</label>
+                                                        <select id="meetingLocation" required>
+                                                            <option value="Phòng họp">Phòng họp</option>
+                                                            <option value="Phòng làm việc">Phòng làm việc</option>
+                                                            <option value="Online (Teams/Zoom)">Online (Teams/Zoom)
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-row">
+                                                    <div class="form-group">
+                                                        <label>Đơn vị</label>
+                                                        <input type="text" id="meetingDepartment" readonly>
+                                                        <small class="input-hint">Tự động lấy từ department của
+                                                            bạn</small>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Nhân viên (Người được review)</label>
+                                                        <select id="meetingEmployee" required>
+                                                            <option value="">-- Chọn nhân viên --</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Bộ phận</label>
+                                                        <input type="text" id="meetingTeam" readonly>
+                                                        <small class="input-hint">Tự động theo nhân viên</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="meeting-form-section">
+                                                <div class="meeting-form-section-title">
+                                                    <span>2. Nội dung họp (Chọn các hạng mục cần trao đổi)</span>
+                                                </div>
+                                                <div class="meeting-content-checklist">
+                                                    <!-- KPI -->
+                                                    <div class="meeting-content-item" data-content-type="kpi"
+                                                        onclick="toggleMeetingContent('kpi')">
+                                                        <div class="meeting-content-check-label">
+                                                            <input type="checkbox" value="kpi"
+                                                                class="meeting-content-checkbox"
+                                                                onclick="event.stopPropagation()">
+                                                            <div class="meeting-content-info">
+                                                                <span class="meeting-content-name">📊 1. Xem xét
+                                                                    KPI</span>
+                                                                <span class="meeting-content-desc">Đánh giá kết quả công
+                                                                    việc dựa trên chỉ số thực tế.</span>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-edit-content"
+                                                            data-content-type="kpi" style="display: none;"
+                                                            onclick="event.stopPropagation(); openMeetingContentEditor('kpi')">
+                                                            ✏️ Soạn nội dung
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Strengths -->
+                                                    <div class="meeting-content-item" data-content-type="strengths"
+                                                        onclick="toggleMeetingContent('strengths')">
+                                                        <div class="meeting-content-check-label">
+                                                            <input type="checkbox" value="strengths"
+                                                                class="meeting-content-checkbox"
+                                                                onclick="event.stopPropagation()">
+                                                            <div class="meeting-content-info">
+                                                                <span class="meeting-content-name">🌟 2. Điểm tốt</span>
+                                                                <span class="meeting-content-desc">Ghi nhận các đóng góp
+                                                                    và nỗ lực vượt bậc.</span>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-edit-content"
+                                                            data-content-type="strengths" style="display: none;"
+                                                            onclick="event.stopPropagation(); openMeetingContentEditor('strengths')">
+                                                            ✏️ Soạn nội dung
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Improvements -->
+                                                    <div class="meeting-content-item" data-content-type="improvements"
+                                                        onclick="toggleMeetingContent('improvements')">
+                                                        <div class="meeting-content-check-label">
+                                                            <input type="checkbox" value="improvements"
+                                                                class="meeting-content-checkbox"
+                                                                onclick="event.stopPropagation()">
+                                                            <div class="meeting-content-info">
+                                                                <span class="meeting-content-name">💡 3. Điểm cần cải
+                                                                    thiện</span>
+                                                                <span class="meeting-content-desc">Xác định các rào cản
+                                                                    và hướng khắc phục.</span>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-edit-content"
+                                                            data-content-type="improvements" style="display: none;"
+                                                            onclick="event.stopPropagation(); openMeetingContentEditor('improvements')">
+                                                            ✏️ Soạn nội dung
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Development -->
+                                                    <div class="meeting-content-item" data-content-type="development"
+                                                        onclick="toggleMeetingContent('development')">
+                                                        <div class="meeting-content-check-label">
+                                                            <input type="checkbox" value="development"
+                                                                class="meeting-content-checkbox"
+                                                                onclick="event.stopPropagation()">
+                                                            <div class="meeting-content-info">
+                                                                <span class="meeting-content-name">🚀 4. Định hướng phát
+                                                                    triển</span>
+                                                                <span class="meeting-content-desc">Trao đổi về lộ trình
+                                                                    sự nghiệp và đào tạo.</span>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-edit-content"
+                                                            data-content-type="development" style="display: none;"
+                                                            onclick="event.stopPropagation(); openMeetingContentEditor('development')">
+                                                            ✏️ Soạn nội dung
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Feedback -->
+                                                    <div class="meeting-content-item" data-content-type="feedback"
+                                                        onclick="toggleMeetingContent('feedback')">
+                                                        <div class="meeting-content-check-label">
+                                                            <input type="checkbox" value="feedback"
+                                                                class="meeting-content-checkbox"
+                                                                onclick="event.stopPropagation()">
+                                                            <div class="meeting-content-info">
+                                                                <span class="meeting-content-name">💬 5. Ý kiến nhân
+                                                                    viên</span>
+                                                                <span class="meeting-content-desc">Lắng nghe mong muốn
+                                                                    và phản hồi từ nhân viên.</span>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-edit-content"
+                                                            data-content-type="feedback" style="display: none;"
+                                                            onclick="event.stopPropagation(); openMeetingContentEditor('feedback')">
+                                                            ✏️ Soạn nội dung
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div id="meetingFooterStatus" class="meeting-footer-status"></div>
+
+                                            <div class="form-actions worklog-actions" style="margin-top: 24px;">
+                                                <div class="worklog-action-buttons"
+                                                    style="width: 100%; display: flex; justify-content: flex-end; gap: 12px;">
+                                                    <button type="button" class="btn-secondary" id="btnResetMeeting">Làm
+                                                        mới</button>
+                                                    <button type="button" class="btn-secondary danger"
+                                                        id="btnDeleteMeeting" style="display: none;">Xóa</button>
+                                                    <button type="submit" class="btn-primary"
+                                                        style="min-width: 160px;">Lưu cuộc họp</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="personalSectionNotes" class="personal-section">
                             <div class="notes-tabs">
                                 <button class="note-tab active" data-note-tab="list">Danh sách</button>
@@ -250,7 +486,8 @@
                                 <div class="note-editor-card">
                                     <form id="noteForm">
                                         <div class="note-form-header">
-                                            <button type="button" class="btn-secondary" id="btnNewNote">+ New Note</button>
+                                            <button type="button" class="btn-secondary" id="btnNewNote">+ New
+                                                Note</button>
                                         </div>
                                         <input type="hidden" id="noteId">
                                         <div class="form-row">
@@ -270,7 +507,8 @@
                                         <div class="form-actions worklog-actions">
                                             <span id="noteStatus" class="form-status"></span>
                                             <div class="worklog-action-buttons">
-                                                <button type="button" class="btn-secondary danger" id="btnDeleteNote" style="display: none;">Xóa</button>
+                                                <button type="button" class="btn-secondary danger" id="btnDeleteNote"
+                                                    style="display: none;">Xóa</button>
                                                 <button type="submit" class="btn-primary">Lưu Note</button>
                                             </div>
                                         </div>
@@ -294,13 +532,15 @@
                                 <div class="worklog-editor-card">
                                     <form id="workLogForm">
                                         <div class="note-form-header">
-                                            <button type="button" class="btn-secondary" id="btnNewWorkLog">+ New Work Log</button>
+                                            <button type="button" class="btn-secondary" id="btnNewWorkLog">+ New Work
+                                                Log</button>
                                         </div>
                                         <input type="hidden" id="workLogId">
                                         <div class="form-row">
                                             <div class="form-group">
                                                 <label>Tên Work Log</label>
-                                                <input type="text" id="workLogTitle" required placeholder="Tên tài liệu...">
+                                                <input type="text" id="workLogTitle" required
+                                                    placeholder="Tên tài liệu...">
                                             </div>
                                             <div class="form-group">
                                                 <label>Project</label>
@@ -328,14 +568,17 @@
                                         <div class="form-group">
                                             <label>Đính kèm</label>
                                             <input type="file" id="workLogAttachmentInput" multiple>
-                                            <small class="input-hint">Lưu work log trước khi upload file. Hỗ trợ nhiều file.</small>
+                                            <small class="input-hint">Lưu work log trước khi upload file. Hỗ trợ nhiều
+                                                file.</small>
                                             <div id="workLogAttachments" class="worklog-attachments"></div>
                                         </div>
                                         <div class="form-actions worklog-actions">
                                             <span id="workLogStatus" class="form-status"></span>
                                             <div class="worklog-action-buttons">
-                                                <button type="button" class="btn-secondary" id="btnResetWorkLog">Reset</button>
-                                                <button type="button" class="btn-secondary danger" id="btnDeleteWorkLog" style="display: none;">Xóa</button>
+                                                <button type="button" class="btn-secondary"
+                                                    id="btnResetWorkLog">Reset</button>
+                                                <button type="button" class="btn-secondary danger" id="btnDeleteWorkLog"
+                                                    style="display: none;">Xóa</button>
                                                 <button type="submit" class="btn-primary">Lưu Work Log</button>
                                             </div>
                                         </div>
@@ -350,18 +593,22 @@
                                 <form id="accountForm" class="account-form">
                                     <div class="account-avatar-row">
                                         <div class="avatar-preview" id="accountAvatarPreview">
-                                            <img id="accountAvatarPreviewImg" src="" alt="Avatar preview" onerror="this.src='https://placehold.co/120x120?text=Avatar';">
+                                            <img id="accountAvatarPreviewImg" src="" alt="Avatar preview"
+                                                onerror="this.src='https://placehold.co/120x120?text=Avatar';">
                                         </div>
                                         <div class="form-group avatar-input-group">
                                             <label>Avatar URL</label>
-                                            <input type="text" id="accountAvatarUrl" placeholder="https://..." autocomplete="off" inputmode="url">
-                                            <small><a href="https://notion-avatar.app" target="_blank" rel="noopener">Tạo custom avatar</a></small>
+                                            <input type="text" id="accountAvatarUrl" placeholder="https://..."
+                                                autocomplete="off" inputmode="url">
+                                            <small><a href="https://notion-avatar.app" target="_blank"
+                                                    rel="noopener">Tạo custom avatar</a></small>
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label>Email</label>
-                                            <input type="email" id="accountEmail" required placeholder="you@example.com">
+                                            <input type="email" id="accountEmail" required
+                                                placeholder="you@example.com">
                                         </div>
                                         <div class="form-group">
                                             <label>Họ và tên</label>
@@ -385,7 +632,7 @@
                                         <button type="submit" class="btn-primary">Lưu thay đổi</button>
                                     </div>
                                 </form>
-                                
+
                                 <!-- Change Password Section -->
                                 <div class="card account-card" style="margin-top: 24px;">
                                     <h3>Đổi mật khẩu</h3>
@@ -393,15 +640,18 @@
                                     <form id="changePasswordForm" class="account-form">
                                         <div class="form-group">
                                             <label>Mật khẩu hiện tại</label>
-                                            <input type="password" id="currentPassword" required placeholder="Nhập mật khẩu hiện tại">
+                                            <input type="password" id="currentPassword" required
+                                                placeholder="Nhập mật khẩu hiện tại">
                                         </div>
                                         <div class="form-group">
                                             <label>Mật khẩu mới</label>
-                                            <input type="password" id="newPassword" required placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)" minlength="6">
+                                            <input type="password" id="newPassword" required
+                                                placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)" minlength="6">
                                         </div>
                                         <div class="form-group">
                                             <label>Xác nhận mật khẩu mới</label>
-                                            <input type="password" id="confirmPassword" required placeholder="Nhập lại mật khẩu mới" minlength="6">
+                                            <input type="password" id="confirmPassword" required
+                                                placeholder="Nhập lại mật khẩu mới" minlength="6">
                                         </div>
                                         <div class="form-actions">
                                             <span id="passwordStatus" class="form-status"></span>
@@ -418,8 +668,10 @@
                 <div id="usersView" class="view">
                     <div class="view-header">
                         <h2>User Management</h2>
+                        <button class="btn-primary" id="btnCreateUser">+ Create User</button>
                     </div>
-                    <div id="usersTableContainer" style="background: white; border-radius: 8px; padding: 24px; box-shadow: var(--shadow);">
+                    <div id="usersTableContainer"
+                        style="background: white; border-radius: 8px; padding: 24px; box-shadow: var(--shadow);">
                         <table id="usersTable" style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="border-bottom: 2px solid var(--border-color);">
@@ -435,7 +687,9 @@
                             </thead>
                             <tbody id="usersTableBody">
                                 <tr>
-                                    <td colspan="8" style="padding: 24px; text-align: center; color: var(--text-secondary);">Đang tải...</td>
+                                    <td colspan="8"
+                                        style="padding: 24px; text-align: center; color: var(--text-secondary);">Đang
+                                        tải...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -447,14 +701,15 @@
                     <div class="notifications-container">
                         <div class="notifications-header">
                             <h2>Notifications</h2>
-                            <button class="btn-secondary" onclick="markAllNotificationsAsRead()">Đánh dấu tất cả đã đọc</button>
+                            <button class="btn-secondary" onclick="markAllNotificationsAsRead()">Đánh dấu tất cả đã
+                                đọc</button>
                         </div>
                         <div id="notificationsList" class="notifications-list">
                             <div class="empty-state">Đang tải...</div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="boardView" class="view">
                     <div class="board-layout">
                         <div class="board-main">
@@ -464,124 +719,163 @@
                                 </select>
                                 <button class="btn-primary" id="btnCreateTask">+ New Task</button>
                             </div>
-                    <div class="project-summary-section" id="projectSummarySection" style="display: none;">
-                        <!-- Cột trái: Ngày yêu cầu và Tiến độ -->
-                        <div class="summary-left-column">
-                            <!-- Ngày yêu cầu hoàn thành - Card riêng -->
-                            <div class="summary-due-date-card">
-                                <label>Ngày yêu cầu hoàn thành</label>
-                                <span id="projectDueDateDisplay">--</span>
-                            </div>
-                            
-                            <!-- Tiến độ dự án - Card riêng, nằm dưới -->
-                            <div class="summary-progress-card">
-                                <label>Tiến độ dự án</label>
-                                <div class="summary-progress">
-                                    <div class="summary-progress-bar">
-                                        <div class="summary-progress-fill" id="projectProgressFill"></div>
+                            <div class="project-summary-section" id="projectSummarySection" style="display: none;">
+                                <!-- Cột trái: Ngày yêu cầu và Tiến độ -->
+                                <div class="summary-left-column">
+                                    <!-- Ngày yêu cầu hoàn thành - Card riêng -->
+                                    <div class="summary-due-date-card">
+                                        <label>Ngày yêu cầu hoàn thành</label>
+                                        <span id="projectDueDateDisplay">--</span>
                                     </div>
-                                    <span id="projectProgressText">0% (0/0)</span>
+
+                                    <!-- Tiến độ dự án - Card riêng, nằm dưới -->
+                                    <div class="summary-progress-card">
+                                        <label>Tiến độ dự án</label>
+                                        <div class="summary-progress">
+                                            <div class="summary-progress-bar">
+                                                <div class="summary-progress-fill" id="projectProgressFill"></div>
+                                            </div>
+                                            <span id="projectProgressText">0% (0/0)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cột phải: Activity Log Card -->
+                                <div class="activity-log-card" id="activityLogCard">
+                                    <div class="activity-header">
+                                        <h3>Activity Log</h3>
+                                    </div>
+                                    <div class="activity-list" id="activityList">
+                                        <div
+                                            style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 14px;">
+                                            Chưa có hoạt động nào.
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Cột phải: Activity Log Card -->
-                        <div class="activity-log-card" id="activityLogCard">
-                            <div class="activity-header">
-                                <h3>Activity Log</h3>
-                            </div>
-                            <div class="activity-list" id="activityList">
-                                <div style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 14px;">
-                                    Chưa có hoạt động nào.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                            
+
                             <!-- Board Tabs -->
                             <div class="board-tabs">
                                 <button class="board-tab active" data-tab="status">Status</button>
                                 <button class="board-tab" data-tab="timeline">Timeline</button>
                                 <button class="board-tab" data-tab="thread">Thread</button>
                             </div>
-                    
-                    <!-- Status Tab (Kanban Board) -->
-                    <div id="boardTabStatus" class="board-tab-content active">
-                        <div class="kanban-board" id="kanbanBoard">
-                            <div class="kanban-column" data-status="todo">
-                                <div class="column-header">
-                                    <h3>To Do</h3>
-                                    <span class="task-count" id="countTodo">0</span>
-                                </div>
-                                <div class="task-list" id="tasksTodo"></div>
-                            </div>
-                            <div class="kanban-column" data-status="in_progress">
-                                <div class="column-header">
-                                    <h3>In Progress</h3>
-                                    <span class="task-count" id="countInProgress">0</span>
-                                </div>
-                                <div class="task-list" id="tasksInProgress"></div>
-                            </div>
-                            <div class="kanban-column" data-status="done">
-                                <div class="column-header">
-                                    <h3>Done</h3>
-                                    <span class="task-count" id="countDone">0</span>
-                                </div>
-                                <div class="task-list" id="tasksDone"></div>
-                            </div>
-                            <div class="kanban-column" data-status="blocked">
-                                <div class="column-header">
-                                    <h3>Blocked</h3>
-                                    <span class="task-count" id="countBlocked">0</span>
-                                </div>
-                                <div class="task-list" id="tasksBlocked"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Timeline Tab (Gantt Chart) -->
-                    <div id="boardTabTimeline" class="board-tab-content">
-                        <div class="gantt-section">
-                            <div class="gantt-header">
-                                <h3>Timeline</h3>
-                                <div class="gantt-legend">
-                                    <span class="legend-item"><span class="legend-color todo"></span> To Do</span>
-                                    <span class="legend-item"><span class="legend-color in-progress"></span> In Progress</span>
-                                    <span class="legend-item"><span class="legend-color done"></span> Done</span>
-                                    <span class="legend-item"><span class="legend-color blocked"></span> Blocked</span>
-                                </div>
-                            </div>
-                            <div class="gantt-container">
-                                <div class="gantt-timeline" id="ganttTimeline"></div>
-                                <div class="gantt-chart" id="ganttChart"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Thread Tab (Discussion) -->
-                    <div id="boardTabThread" class="board-tab-content">
-                        <div class="thread-container">
-                            <div class="thread-messages" id="threadMessages">
-                                <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
-                                    Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
-                                </div>
-                            </div>
-                            <div class="thread-input-container">
-                                <div style="position: relative; flex: 1;">
-                                    <textarea id="threadInput" placeholder="Nhập tin nhắn... (Gõ @ để mention)" rows="3"></textarea>
-                                    <div id="mentionDropdown" class="mention-dropdown" style="display: none;"></div>
-                                </div>
-                                <button class="btn-primary" id="btnSendThread">Gửi</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-            </div>
+                            <!-- Status Tab (Kanban Board) -->
+                            <div id="boardTabStatus" class="board-tab-content active">
+                                <div class="kanban-board" id="kanbanBoard">
+                                    <div class="kanban-column" data-status="todo">
+                                        <div class="column-header">
+                                            <h3>To Do</h3>
+                                            <span class="task-count" id="countTodo">0</span>
+                                        </div>
+                                        <div class="task-list" id="tasksTodo"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="in_progress">
+                                        <div class="column-header">
+                                            <h3>In Progress</h3>
+                                            <span class="task-count" id="countInProgress">0</span>
+                                        </div>
+                                        <div class="task-list" id="tasksInProgress"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="done">
+                                        <div class="column-header">
+                                            <h3>Done</h3>
+                                            <span class="task-count" id="countDone">0</span>
+                                        </div>
+                                        <div class="task-list" id="tasksDone"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="blocked">
+                                        <div class="column-header">
+                                            <h3>Blocked</h3>
+                                            <span class="task-count" id="countBlocked">0</span>
+                                        </div>
+                                        <div class="task-list" id="tasksBlocked"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Timeline Tab (Gantt Chart) -->
+                            <div id="boardTabTimeline" class="board-tab-content">
+                                <div class="gantt-section">
+                                    <div class="gantt-header">
+                                        <h3>Timeline (Quý)</h3>
+                                        <div class="gantt-legend">
+                                            <span class="legend-item"><span class="legend-color todo"></span> To
+                                                Do</span>
+                                            <span class="legend-item"><span class="legend-color in-progress"></span> In
+                                                Progress</span>
+                                            <span class="legend-item"><span class="legend-color done"></span>
+                                                Done</span>
+                                            <span class="legend-item"><span class="legend-color blocked"></span>
+                                                Blocked</span>
+                                        </div>
+                                    </div>
+                                    <!-- Year selector for Quarterly view -->
+                                    <div class="quarterly-year-selector" id="quarterlyYearSelector">
+                                        <button class="btn-secondary" id="prevYearBtn">← Năm trước</button>
+                                        <span id="currentYearDisplay" class="year-display"></span>
+                                        <button class="btn-secondary" id="nextYearBtn">Năm sau →</button>
+                                    </div>
+                                    <div class="gantt-task-header-row">
+                                        <div class="gantt-task-title">Danh sách Task</div>
+                                        <div class="gantt-time-title">Timeline</div>
+                                    </div>
+                                    <div class="gantt-container">
+                                        <div class="gantt-timeline gantt-aligned" id="ganttTimeline"></div>
+                                        <div class="gantt-chart" id="ganttChart"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Thread Tab (Discussion) -->
+                            <div id="boardTabThread" class="board-tab-content">
+                                <div class="thread-container">
+                                    <div class="thread-messages" id="threadMessages">
+                                        <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
+                                            Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
+                                        </div>
+                                    </div>
+                                    <div class="thread-input-container">
+                                        <div class="thread-input-wrapper">
+                                            <textarea id="threadInput" placeholder="Nhập tin nhắn... (Gõ @ để mention)"
+                                                rows="3"></textarea>
+                                            <div id="mentionDropdown" class="mention-dropdown" style="display: none;">
+                                            </div>
+                                            <button type="button" id="emojiPickerBtn" class="emoji-picker-btn"
+                                                title="Chèn emoji">😊</button>
+                                        </div>
+                                        <button class="btn-primary" id="btnSendThread">Gửi</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
         </main>
     </div>
 
     <!-- Modals -->
+    <!-- Unauthorized Modal -->
+    <div id="unauthorizedModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <div
+                    style="width: 60px; height: 60px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                        stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+            </div>
+            <h3 style="color: #111827; margin-bottom: 8px;">Truy cập bị từ chối</h3>
+            <p style="color: #6b7280; margin-bottom: 24px;">Bạn không có quyền truy cập tính năng này.</p>
+            <button class="btn-primary" id="closeUnauthorizedModal" style="width: 100%;">Đã hiểu</button>
+        </div>
+    </div>
+
     <!-- Project Modal -->
     <div id="projectModal" class="modal">
         <div class="modal-content">
@@ -625,7 +919,7 @@
     </div>
 
     <!-- Task Modal -->
-    <div id="taskModal" class="modal">
+    <div id="taskModal" class="modal modal-wide">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="taskModalTitle">New Task</h2>
@@ -702,7 +996,7 @@
                     </div>
                 </div>
                 <input type="file" id="subtaskUploadInput" accept="image/*" style="display: none;">
-                
+
                 <!-- Comments Section -->
                 <div class="form-group" id="commentsSection" style="display: none;">
                     <label>Comments</label>
@@ -714,13 +1008,15 @@
                             <button type="button" class="btn-secondary" id="btnCommentAttachment">📎 Đính kèm</button>
                             <button type="button" class="btn-primary" id="btnAddComment">Gửi</button>
                         </div>
-                        <div id="commentAttachmentPreview" class="comment-attachment-preview" style="display: none;"></div>
+                        <div id="commentAttachmentPreview" class="comment-attachment-preview" style="display: none;">
+                        </div>
                     </div>
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" id="cancelTask">Cancel</button>
-                    <button type="button" class="btn-secondary" id="confirmTaskDone" style="display: none;">Xác nhận Done</button>
+                    <button type="button" class="btn-secondary" id="confirmTaskDone" style="display: none;">Xác nhận
+                        Done</button>
                     <button type="submit" class="btn-primary" id="saveTaskBtn">Save</button>
                 </div>
             </form>
@@ -748,6 +1044,10 @@
                     <label>Full Name</label>
                     <input type="text" id="userFullName">
                 </div>
+                <div class="form-group" id="userPasswordGroup">
+                    <label>Password</label>
+                    <input type="password" id="userPassword" placeholder="Mật khẩu cho user mới">
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Department</label>
@@ -769,8 +1069,10 @@
                 <div class="form-group">
                     <label>Avatar</label>
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                        <img id="userAvatarPreview" src="" alt="Avatar" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); display: none;">
-                        <input type="file" id="userAvatarInput" accept="image/png,image/jpeg,image/jpg" style="flex: 1;">
+                        <img id="userAvatarPreview" src="" alt="Avatar"
+                            style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); display: none;">
+                        <input type="file" id="userAvatarInput" accept="image/png,image/jpeg,image/jpg"
+                            style="flex: 1;">
                     </div>
                     <small class="input-hint">Chọn file PNG, JPG hoặc JPEG để upload avatar</small>
                 </div>
@@ -790,6 +1092,11 @@
                 <button class="modal-close" id="closeWorkLogLinkModal">×</button>
             </div>
             <div class="modal-body">
+                <div style="margin-bottom: 16px;">
+                    <button class="btn-primary" id="btnCreateNewWorkLog" style="width: 100%;">
+                        + Tạo Work Log mới và gắn vào Subtask
+                    </button>
+                </div>
                 <div id="workLogLinkList" class="worklog-link-list">
                     <div class="empty-state">Chưa có Work Log nào.</div>
                 </div>
@@ -797,8 +1104,115 @@
         </div>
     </div>
 
-    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-    <script src="/static/js/app.js"></script>
-</body>
-</html>
+    <!-- Meeting Content Editor Modal -->
+    <div id="meetingContentModal" class="modal">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <div>
+                    <h2 id="meetingContentModalTitle">Nội dung họp</h2>
+                    <p class="modal-subtitle" id="meetingContentSubtitle"></p>
+                </div>
+                <button class="modal-close" id="closeMeetingContentModal">×</button>
+            </div>
+            <div class="meeting-content-editor-body">
+                <div class="meeting-suggestions-section">
+                    <h4>Câu hỏi gợi ý:</h4>
+                    <div id="meetingSuggestions" class="meeting-suggestions-list"></div>
+                </div>
+                <div class="form-group">
+                    <label>Nội dung chi tiết</label>
+                    <div id="meetingContentEditor" class="quill-editor"></div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelMeetingContent">Hủy</button>
+                    <button type="button" class="btn-primary" id="saveMeetingContent">Lưu nội dung</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Meeting Report Modal -->
+    <div id="meetingReportModal" class="modal">
+        <div class="modal-content modal-wide">
+            <div class="modal-header no-print">
+                <div>
+                    <h2>Biên bản họp cá nhân</h2>
+                    <p class="modal-subtitle">Chi tiết nội dung và các thỏa thuận</p>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button class="btn-secondary" onclick="window.print()" style="padding: 8px 16px;">🖨️ In biên
+                        bản</button>
+                    <button class="modal-close" id="closeMeetingReportModal">×</button>
+                </div>
+            </div>
+            <div class="meeting-report-container" id="meetingReportContent">
+                <!-- Report content will be rendered here -->
+            </div>
+            <div class="modal-footer no-print">
+                <button type="button" class="btn-secondary" id="btnCloseMeetingReport">Đóng</button>
+                <button type="button" class="btn-primary" id="btnEditMeetingFromReport" style="display: none;">Chỉnh
+                    sửa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Task Detail Modal -->
+    <div id="timelineTaskModal" class="modal modal-wide">
+        <div class="modal-content timeline-task-modal">
+            <div class="modal-header">
+                <div>
+                    <p class="modal-subtitle">Chi tiết Task</p>
+                    <h2 id="timelineTaskTitle">--</h2>
+                </div>
+                <button class="modal-close" id="closeTimelineTaskModal">×</button>
+            </div>
+            <div class="timeline-task-body">
+                <section class="timeline-task-section">
+                    <h3>Mô tả</h3>
+                    <p id="timelineTaskDescription" class="timeline-task-description">Không có mô tả.</p>
+                </section>
+                <section class="timeline-task-meta-grid">
+                    <div>
+                        <p class="meta-label">Trạng thái</p>
+                        <span id="timelineTaskStatus" class="meta-chip">--</span>
+                    </div>
+                    <div>
+                        <p class="meta-label">Ưu tiên</p>
+                        <span id="timelineTaskPriority" class="meta-chip">--</span>
+                    </div>
+                    <div>
+                        <p class="meta-label">Tiến độ</p>
+                        <span id="timelineTaskProgress" class="meta-chip">--</span>
+                    </div>
+                    <div>
+                        <p class="meta-label">Deadline</p>
+                        <span id="timelineTaskDeadline" class="meta-chip">--</span>
+                    </div>
+                </section>
+                <section class="timeline-task-section">
+                    <h3>Người thực hiện</h3>
+                    <div id="timelineTaskAssignees" class="assignee-list empty-state">Chưa phân công.</div>
+                </section>
+                <section class="timeline-task-section">
+                    <h3>Subtask</h3>
+                    <div id="timelineTaskSubtasks" class="timeline-subtask-list empty-state">Chưa có subtask.</div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="threadImageViewer" class="thread-image-viewer" style="display: none;">
+        <div class="thread-image-viewer-backdrop"></div>
+        <div class="thread-image-viewer-content">
+            <button type="button" class="thread-image-viewer-close" id="closeThreadImageViewer">×</button>
+            <img id="threadImageViewerImg" src="" alt="Preview">
+            <p id="threadImageViewerCaption"></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@3.1.1/dist/index.min.js"></script>
+    <script src="/static/js/app.v2.js?v={{ get_file_version('static/js/app.v2.js') }}"></script>
+</body>
+
+</html>

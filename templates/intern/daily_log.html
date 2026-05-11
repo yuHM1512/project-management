@@ -1,0 +1,71 @@
+{% extends "intern/base.html" %}
+
+{% block title %}Daily Log - Stitch Design{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap justify-between gap-3 p-4">
+    <p class="text-[#0d121b] tracking-light text-[32px] font-bold leading-tight min-w-72">Daily Log</p>
+    {% if success %}
+    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 rounded-lg fade-in">
+        Log saved for {{ selected_date.strftime('%B %d, %Y') }}!
+    </div>
+    {% endif %}
+</div>
+<div class="flex flex-col md:flex-row gap-8 p-4">
+    <!-- Calendar Section -->
+    <div class="flex min-w-72 max-w-[336px] flex-col gap-0.5 bg-[#f8f9fc] rounded-2xl p-4 border border-[#cfd7e7]">
+        <div class="flex items-center p-1 justify-between">
+            <button class="hover:bg-gray-200 rounded-full p-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor"
+                    viewBox="0 0 256 256">
+                    <path
+                        d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z">
+                    </path>
+                </svg>
+            </button>
+            <p class="text-[#0d121b] text-base font-bold leading-tight flex-1 text-center">{{ selected_date.strftime('%B
+                %Y') }}</p>
+            <button class="hover:bg-gray-200 rounded-full p-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor"
+                    viewBox="0 0 256 256">
+                    <path
+                        d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-7 text-center">
+            {% for day in ["S", "M", "T", "W", "T", "F", "S"] %}
+            <p class="text-[#0d121b] text-[13px] font-bold leading-normal tracking-[0.015em] py-2">{{ day }}</p>
+            {% endfor %}
+
+            {% for d in range(1, 32) %}
+            <a href="/intern/daily-log?date={{ selected_date.year }}-{{ selected_date.month }}-{{ d }}"
+                class="h-10 w-full text-sm font-medium leading-normal flex items-center justify-center">
+                <div
+                    class="size-8 flex items-center justify-center rounded-full hover:bg-[#e7ebf3] transition-colors {% if d == selected_date.day %}bg-[#0d121b] text-white shadow-md{% else %}text-[#0d121b]{% endif %}">
+                    {{ d }}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Log Entry Section -->
+    <form action="/intern/daily-log" method="POST" class="flex-1 flex flex-col gap-4">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        <label class="flex flex-col w-full">
+            <p class="text-[#0d121b] text-lg font-bold pb-2">What did you learn today? ({{ selected_date.strftime('%A,
+                %B %d') }})</p>
+            <textarea name="content" placeholder="Record your achievements, shares, and learnings..."
+                class="form-input flex w-full min-w-0 flex-1 resize-none rounded-2xl text-[#0d121b] focus:outline-0 focus:ring-2 focus:ring-[#e7ebf3] border border-[#cfd7e7] bg-[#f8f9fc] focus:border-[#0d121b] min-h-[300px] placeholder:text-[#4c669a] p-6 text-base font-normal leading-relaxed transition-all shadow-sm">{{ log.content if log else '' }}</textarea>
+        </label>
+        <div class="flex justify-end">
+            <button type="submit"
+                class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-6 bg-[#0d121b] text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-opacity-80 transition-all shadow-lg active:scale-95">
+                <span class="truncate">Save Log</span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

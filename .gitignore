@@ -8,6 +8,7 @@ venv/
 env/
 ENV/
 .venv
+.venv312/
 
 # Database
 *.db
@@ -31,6 +32,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Generated uploads
+static/uploads/
 
 # Distribution
 dist/

@@ -1,0 +1,79 @@
+{% extends "intern/base.html" %}
+
+{% block title %}Overview - Stitch Design{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap justify-between gap-3 p-4">
+    <p class="text-[#0d121b] tracking-light text-[32px] font-bold leading-tight min-w-72">
+        Welcome, {{ profile.full_name.split(' ')[0] if profile else 'Sophia' }}!
+    </p>
+</div>
+
+<h2 class="text-[#0d121b] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Quick Access</h2>
+<div class="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 p-4">
+    <a href="/intern/personal-info"
+        class="flex flex-1 gap-3 rounded-lg border border-[#cfd7e7] bg-[#f8f9fc] p-4 items-center cursor-pointer hover:bg-[#e7ebf3] transition-colors">
+        <div class="text-[#0d121b]" data-icon="User" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                viewBox="0 0 256 256">
+                <path
+                    d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z">
+                </path>
+            </svg>
+        </div>
+        <h2 class="text-[#0d121b] text-base font-bold leading-tight">My Profile</h2>
+    </a>
+    <a href="/intern/hub"
+        class="flex flex-1 gap-3 rounded-lg border border-[#cfd7e7] bg-[#f8f9fc] p-4 items-center hover:bg-[#e7ebf3] transition-colors">
+        <div class="text-[#0d121b]" data-icon="BookOpen" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                viewBox="0 0 256 256">
+                <path
+                    d="M224,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h64a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z">
+                </path>
+            </svg>
+        </div>
+        <h2 class="text-[#0d121b] text-base font-bold leading-tight">Learning Resources</h2>
+    </a>
+    <a href="/intern/daily-log"
+        class="flex flex-1 gap-3 rounded-lg border border-[#cfd7e7] bg-[#f8f9fc] p-4 items-center hover:bg-[#e7ebf3] transition-colors">
+        <div class="text-[#0d121b]" data-icon="Pencil" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                viewBox="0 0 256 256">
+                <path
+                    d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM51.31,160,136,75.31,152.69,92,68,176.68ZM48,179.31,76.69,208H48Zm48,25.38L79.31,188,164,103.31,180.69,120Zm96-96L147.31,64l24-24L216,84.68Z">
+                </path>
+            </svg>
+        </div>
+        <h2 class="text-[#0d121b] text-base font-bold leading-tight">Daily Diary</h2>
+    </a>
+    <a href="/intern/qa-forum"
+        class="flex flex-1 gap-3 rounded-lg border border-[#cfd7e7] bg-[#f8f9fc] p-4 items-center hover:bg-[#e7ebf3] transition-colors">
+        <div class="text-[#0d121b]" data-icon="Question" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
+                viewBox="0 0 256 256">
+                <path
+                    d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z">
+                </path>
+            </svg>
+        </div>
+        <h2 class="text-[#0d121b] text-base font-bold leading-tight">Q&amp;A Forum</h2>
+    </a>
+</div>
+
+<h2 class="text-[#0d121b] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">We all start from scratch</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+    <div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg"
+        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCvqkvTgzUrgNqEQO2CxWk4T7Db5SLL24IIy7hwZSc3Jm9kTlufk-X-y9UiVKIMGsldjYRkJR86kRkrBqyAb62eUGigrzgcd4Lhr8OsMHptpq2WBFsfLzY5oAUmbBqfpiG55anZAFi50OUsLjAsUnzHo1FRvBq6UsKmcUjO74kq2DvX8EWkId4skKJvLLRBtZUfBpsM1ml2lbouKK_CVd5XbTN9hQOIV37dlx2DQZD2ggiiBGloB5e_zImy2D5rVkEFpOLxxQdPWS8V");'>
+    </div>
+    <div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg"
+        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBCY_mw3L1A3fkE4R4OKUM-_rYJ39pl_ZiFpFXwzWt2cX0-qjDCTAiLxp5C3KwslYnQOw1YQF7IhzOJSVgkDeE04FEPLUVSqi4JclVJ_PrNi4N0Zj3SWLW7_md67zmdtiYeIAKwlPbf94Qqvm-x7icx7mugxFTmKPYAhh4_BJMGwC-lUAgY6yPMvib6JrQ1TGdzFHxe5NoV4CZE6CUhwsI7tfrz0D2FoXftB9Us5A5HTkaNCT8Yzo4Mfsrl1tNGqtYErGK7awCieTEI");'>
+    </div>
+    <div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg"
+        style='background-image: url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80");'>
+    </div>
+    <div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg"
+        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCEF65B6iPOGlIKgkZ__VGt6xkzUc6o8Ct2pUnEt8weGC9lNwJp3jLAGig1GpJimf94mYmOIQCyef0XaKFzTT-zk7jvlv4Tv1XIvAgZ2bdnXtUu5-gz5i4Headb3Q7gVUSjaw_il9F0FwwHbCUd0Nc5KNeGlt-Ip76adwWC3EPFmwS74F4wbB-yMhYbDRWruhea-XxiebAANSbhMb21_mGF8TCDVOl7R5nj9TPRaeO2H1rlEKMvM2nw4mnM5ys6UP-WYQ5RfjjHeZiY");'>
+    </div>
+</div>
+{% endblock %}

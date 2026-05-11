@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
 import re
+import uuid
+import os
 
 from database import get_db
 from models import Thread, Project, User
@@ -11,6 +14,8 @@ from routers.auth import get_current_user
 from routers.notifications_helper import notify_mentioned_in_thread
 
 router = APIRouter()
+THREAD_UPLOAD_DIR = Path("static/uploads/threads")
+THREAD_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @router.get("/debug/parse-mentions")
@@ -278,6 +283,39 @@ def create_thread(
         print(f"DEBUG:   - Notification ID: {notif.id}, User ID: {notif.user_id}")
     
     return _enrich_thread(db_thread, db)
+
+
+@router.post("/upload")
+async def upload_thread_attachment(
+    project_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload ảnh dán trong thread và trả về URL"""
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    _ensure_project_access(project, current_user)
+    
+    if not file:
+        raise HTTPException(status_code=400, detail="File is required")
+    
+    content_type = (file.content_type or '').lower()
+    if not content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Only image files are supported")
+    
+    original_name = file.filename or 'thread-image'
+    extension = os.path.splitext(original_name)[1] or '.png'
+    filename = f"thread_{project_id}_{uuid.uuid4().hex}{extension}"
+    destination = THREAD_UPLOAD_DIR / filename
+    
+    content = await file.read()
+    with destination.open("wb") as buffer:
+        buffer.write(content)
+    
+    return {"url": f"/static/uploads/threads/{filename}"}
 
 
 @router.put("/{thread_id}", response_model=dict)

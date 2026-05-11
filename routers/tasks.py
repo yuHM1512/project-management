@@ -271,7 +271,9 @@ def update_task(
     # Xử lý assignee_ids nếu có
     assignee_ids = update_data.pop("assignee_ids", None)
     assignees_changed = False
-    if assignee_ids is not None:
+    
+    # Check if assignees actually changed
+    if assignee_ids is not None and set(old_assignee_ids) != set(assignee_ids):
         # Validate assignees
         assignees = []
         if assignee_ids:
@@ -288,13 +290,21 @@ def update_task(
             db.add(task_assignee)
         
         assignees_changed = True
+        print(f"DEBUG update_task: assignees changed to {assignee_ids}")
     
     # Xử lý các field khác
     for field, value in update_data.items():
         setattr(db_task, field, value)
 
-    db.commit()
-    db.refresh(db_task)
+    try:
+        db.commit()
+        db.refresh(db_task)
+    except Exception as e:
+        db.rollback()
+        print(f"DEBUG update_task: Error committing changes: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
     # Load task với relationships để dùng cho notifications
     db_task = db.query(Task).options(
@@ -302,8 +312,12 @@ def update_task(
         joinedload(Task.project)
     ).filter(Task.id == db_task.id).first()
     
+    if not db_task:
+        print(f"DEBUG update_task: Task {task_id} disappeared after refresh/reload!")
+        raise HTTPException(status_code=404, detail="Task not found after update")
+
     # Log activities
-    new_assignee_ids = [ta.user_id for ta in db_task.assignees]
+    new_assignee_ids = [ta.user_id for ta in db_task.assignees] if db_task.assignees else []
     
     # Log status change
     if "status" in update_data and update_data["status"] != old_status:
@@ -341,7 +355,7 @@ def update_task(
                 traceback.print_exc()
     
     # Log assignee change và tạo notifications
-    if assignee_ids is not None and set(old_assignee_ids) != set(new_assignee_ids):
+    if assignees_changed:
         assignee_names = [ta.user.full_name or ta.user.username for ta in db_task.assignees] if db_task.assignees else []
         assignee_name_str = ", ".join(assignee_names) if assignee_names else "Unassigned"
         
@@ -364,9 +378,11 @@ def update_task(
         notify_task_assigned(db, db_task, new_assignee_ids, current_user)
     
     # Log other updates và tạo notifications cho task updates
-    other_updates = {k: v for k, v in update_data.items() if k not in ["status", "assignee_ids"]}
-    if other_updates and not assignees_changed:
-        # Chỉ tạo notification nếu có update thực sự (không phải chỉ thay đổi assignees)
+    other_updates = {k: v for k, v in update_data.items() if k not in ["status"]}
+    if other_updates:
+        # Kiểm tra xem có thay đổi thực sự so với old values (nếu cần)
+        # Ở đây ta giả định update_data["title"] vv là có thay đổi hoặc user muốn lưu lại
+        
         update_description = "cập nhật task"
         if "title" in other_updates:
             update_description = "đổi tên task"
@@ -391,7 +407,6 @@ def update_task(
             print(f"DEBUG: ✗ Error logging activity: {e}")
             import traceback
             traceback.print_exc()
-        
         # Tạo notifications cho các assignees khác (trừ người update)
         notify_task_updated(db, db_task, current_user, update_description)
     

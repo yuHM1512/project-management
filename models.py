@@ -64,6 +64,8 @@ class User(Base):
     activity_logs = relationship("ActivityLog", back_populates="user")
     work_logs = relationship("WorkLog", back_populates="owner", cascade="all, delete-orphan")
     notes = relationship("Note", back_populates="owner", cascade="all, delete-orphan")
+    meetings_created = relationship("Meeting", foreign_keys="Meeting.creator_id", cascade="all, delete-orphan")
+    meetings_as_employee = relationship("Meeting", foreign_keys="Meeting.employee_id", cascade="all, delete-orphan")
 
 class Workspace(Base):
     __tablename__ = "workspaces"
@@ -318,3 +320,66 @@ class Notification(Base):
     project = relationship("Project", back_populates="notifications")
     task = relationship("Task", back_populates="notifications")
     thread = relationship("Thread", back_populates="notifications")
+
+
+class Meeting(Base):
+    __tablename__ = "meetings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Admin tạo cuộc họp
+    employee_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Nhân viên được review
+    time = Column(DateTime(timezone=True), nullable=False)
+    location = Column(String, nullable=False, default="Phòng họp")
+    department = Column(String, nullable=True)  # Đơn vị
+    team = Column(String, nullable=True)  # Bộ phận
+    contents = Column(JSON, nullable=True)  # List các content types: ["kpi", "strengths", ...]
+    content_data = Column(JSON, nullable=True)  # Dict chứa nội dung chi tiết: {"kpi": "<html>", "strengths": "<html>", ...}
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    creator = relationship("User", foreign_keys=[creator_id], back_populates="meetings_created")
+    employee = relationship("User", foreign_keys=[employee_id], back_populates="meetings_as_employee")
+
+
+class MESKPI(Base):
+    __tablename__ = "mes_kpis"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    icon = Column(String(50), nullable=False)
+    title = Column(String(100), nullable=False)
+    value = Column(String(50), nullable=False)
+    impact_label = Column(String(50), nullable=True)
+    impact_color = Column(String(50), nullable=True)  # Tailwind color class like "rose-500"
+    order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class MESMapNode(Base):
+    __tablename__ = "mes_map_nodes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    pillar = Column(Integer, nullable=False)
+    title = Column(String(100), nullable=False)
+    subtitle = Column(String(100), nullable=True)
+    description = Column(Text, nullable=True)
+    icon = Column(String(50), nullable=True)
+    color = Column(String(50), nullable=True)  # blue, pink, orange, etc.
+    status = Column(String(50), nullable=True)  # Active, Deploying, etc.
+    status_color = Column(String(50), nullable=True)  # emerald, purple, etc.
+    is_active = Column(Boolean, default=True)
+    order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class MESModuleDetail(Base):
+    __tablename__ = "mes_module_details"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    pillar = Column(Integer, nullable=False)
+    step_number = Column(String(20), nullable=False)  # "Step 01"
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+    icon = Column(String(50), nullable=True)
+    order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
