@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from database import init_db, get_db
 from sqlalchemy.orm import Session
-from routers import projects, tasks, teams, auth, users, subtasks, threads, comments, activities, worklogs, notes, todos, notifications, meetings
+from routers import projects, tasks, teams, auth, users, subtasks, threads, comments, activities, worklogs, notes, todos, notifications, meetings, mtcl
 from routers.auth import get_current_user_from_cookie
 from models import WorkLog
 import uvicorn
@@ -51,6 +51,7 @@ templates.env.globals['get_file_version'] = get_file_version
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
+app.include_router(mtcl.router, prefix="/api/mtcl", tags=["mtcl"])
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(teams.router, prefix="/api/teams", tags=["teams"])

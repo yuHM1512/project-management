@@ -72,6 +72,8 @@ def _run_main_schema_sync():
                 conn.execute(text("ALTER TABLE users ADD COLUMN position VARCHAR(255)"))
             if "field" not in user_columns:
                 conn.execute(text(f"ALTER TABLE users ADD COLUMN field {json_type}"))
+            if "chapter" not in user_columns:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN chapter {json_type}"))
             if "group" not in user_columns:
                 conn.execute(text(f'ALTER TABLE users ADD COLUMN "group" {json_type}'))
 
@@ -79,15 +81,17 @@ def _run_main_schema_sync():
                 conn.execute(text("""
                     UPDATE users
                     SET field = COALESCE(field, '[]'::jsonb),
+                        chapter = COALESCE(chapter, '[]'::jsonb),
                         "group" = COALESCE("group", '[]'::jsonb)
-                    WHERE field IS NULL OR "group" IS NULL
+                    WHERE field IS NULL OR chapter IS NULL OR "group" IS NULL
                 """))
             else:
                 conn.execute(text("""
                     UPDATE users
                     SET field = COALESCE(field, '[]'),
+                        chapter = COALESCE(chapter, '[]'),
                         "group" = COALESCE("group", '[]')
-                    WHERE field IS NULL OR "group" IS NULL
+                    WHERE field IS NULL OR chapter IS NULL OR "group" IS NULL
                 """))
 
         if _table_exists(inspector, "project_types"):
@@ -153,9 +157,18 @@ def _run_main_schema_sync():
 
         inspector = inspect(conn)
         if _table_exists(inspector, "projects"):
+            project_columns = _column_names(inspector, "projects")
+            if "objective_group" not in project_columns:
+                conn.execute(text("ALTER TABLE projects ADD COLUMN objective_group VARCHAR(255)"))
+            if "objective_description" not in project_columns:
+                conn.execute(text("ALTER TABLE projects ADD COLUMN objective_description TEXT"))
+
+            inspector = inspect(conn)
             project_indexes = _index_names(inspector, "projects")
             if "idx_projects_project_type_id" not in project_indexes:
                 conn.execute(text("CREATE INDEX idx_projects_project_type_id ON projects(project_type_id)"))
+            if "idx_projects_objective_group" not in project_indexes:
+                conn.execute(text("CREATE INDEX idx_projects_objective_group ON projects(objective_group)"))
 
 
 def _run_intern_schema_sync():

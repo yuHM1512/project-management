@@ -9,14 +9,20 @@ class UserFieldGroupEntry(BaseModel):
     group: Optional[str] = None
 
 
+class UserFieldChapterEntry(BaseModel):
+    field: str
+    chapters: List[str] = []
+
+
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
+    email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     department: Optional[str] = None
     team: Optional[str] = None
     position: Optional[str] = None
     field: Optional[List[str]] = None
+    chapter: Optional[List[UserFieldChapterEntry]] = None
     group: Optional[List[UserFieldGroupEntry]] = None
 
 class UserCreate(UserBase):
@@ -32,6 +38,7 @@ class UserUpdate(BaseModel):
     team: Optional[str] = None
     position: Optional[str] = None
     field: Optional[List[str]] = None
+    chapter: Optional[List[UserFieldChapterEntry]] = None
     group: Optional[List[UserFieldGroupEntry]] = None
     role: Optional[str] = None
 
@@ -44,6 +51,7 @@ class UserMeUpdate(BaseModel):
     team: Optional[str] = None
     position: Optional[str] = None
     field: Optional[List[str]] = None
+    chapter: Optional[List[UserFieldChapterEntry]] = None
     group: Optional[List[UserFieldGroupEntry]] = None
 
 class ChangePasswordRequest(BaseModel):
@@ -55,6 +63,30 @@ class UserResponse(UserBase):
     avatar_url: Optional[str] = None
     role: Optional[str] = None
     is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class MtclBase(BaseModel):
+    objective_group: str
+    units: List[str]
+    description: str
+
+
+class MtclCreate(MtclBase):
+    pass
+
+
+class MtclUpdate(BaseModel):
+    objective_group: Optional[str] = None
+    units: Optional[List[str]] = None
+    description: Optional[str] = None
+
+
+class MtclResponse(MtclBase):
+    id: int
     created_at: datetime
 
     class Config:
@@ -80,6 +112,8 @@ class WorkspaceResponse(WorkspaceBase):
 class ProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
+    objective_group: Optional[str] = None
+    objective_description: Optional[str] = None
     status: Optional[str] = ProjectStatus.ACTIVE.value
     color: Optional[str] = "#6366f1"
     workspace_id: Optional[int] = None
@@ -92,6 +126,8 @@ class ProjectCreate(ProjectBase):
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    objective_group: Optional[str] = None
+    objective_description: Optional[str] = None
     status: Optional[str] = None
     color: Optional[str] = None
     project_type_id: Optional[int] = None

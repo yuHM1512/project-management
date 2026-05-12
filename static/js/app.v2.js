@@ -69,6 +69,8 @@ let tasks = [];
 let dashboardTasks = [];
 let filteredTasks = [];
 let users = [];
+let mtclItems = [];
+let currentMtclId = null;
 let currentUser = null;
 let authToken = null;
 let currentProjectIsOwner = false;
@@ -76,6 +78,9 @@ let currentProject = null;
 let currentTaskData = null;
 let taskModalReadOnly = false;
 let currentPersonalSection = 'account';
+let currentSettingsTab = 'users';
+let projectObjectiveItems = [];
+let currentProjectObjectiveFilter = '';
 let workLogs = [];
 let currentWorkLogId = null;
 let workLogEditor = null;
@@ -93,6 +98,8 @@ let todos = [];
 let dashboardMonth = new Date();
 let quarterlyYear = new Date().getFullYear();
 let timelineTooltip = null;
+let projectMembers = [];
+let selectedProjectMemberId = null;
 
 const AT_RISK_DAYS_THRESHOLD = 5;
 const AT_RISK_PROGRESS_THRESHOLD = 0.7;
@@ -123,8 +130,11 @@ function getRouteFromURL() {
         };
     } else if (path === '/notifications') {
         return { view: 'notifications' };
-    } else if (path === '/users') {
-        return { view: 'users' };
+    } else if (path === '/settings' || path === '/users') {
+        return {
+            view: 'settings',
+            settingsTab: searchParams.get('tab') || 'users'
+        };
     } else if (path.startsWith('/personal')) {
         const section = searchParams.get('section') || 'account';
         const create = searchParams.get('create') === 'true';
@@ -162,8 +172,9 @@ function updateURL(view, params = {}) {
         case 'notifications':
             path = '/notifications';
             break;
-        case 'users':
-            path = '/users';
+        case 'settings':
+            path = '/settings';
+            if (params.settingsTab) searchParams.set('tab', params.settingsTab);
             break;
         case 'personal':
             path = '/personal';
@@ -183,13 +194,16 @@ function updateURL(view, params = {}) {
 }
 
 async function navigateToRoute(route) {
-    const { view, projectId, personalSection, createWorkLog, workLogProjectId, workLogTaskId, workLogSubtaskId } = route;
+    const { view, projectId, personalSection, settingsTab, createWorkLog, workLogProjectId, workLogTaskId, workLogSubtaskId } = route;
 
     if (projectId !== undefined) {
         currentProjectId = projectId;
     }
     if (personalSection !== undefined) {
         currentPersonalSection = personalSection;
+    }
+    if (settingsTab !== undefined) {
+        currentSettingsTab = settingsTab;
     }
 
     switchView(view, false);
@@ -332,6 +346,46 @@ function toggleSidebar() {
     localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
 }
 
+function getSidebarSectionState() {
+    try {
+        return JSON.parse(localStorage.getItem('sidebarSectionCollapsed') || '{}');
+    } catch (error) {
+        console.warn('Failed to parse sidebar section state', error);
+        return {};
+    }
+}
+
+function applySidebarSectionState(sectionName, isCollapsed) {
+    const section = document.querySelector(`.sidebar-section[data-section="${sectionName}"]`);
+    const toggle = document.querySelector(`[data-section-toggle="${sectionName}"]`);
+    if (!section || !toggle) return;
+
+    section.classList.toggle('is-collapsed', isCollapsed);
+    toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+}
+
+function toggleSidebarSection(sectionName) {
+    const section = document.querySelector(`.sidebar-section[data-section="${sectionName}"]`);
+    if (!section) return;
+
+    const isCollapsed = !section.classList.contains('is-collapsed');
+    applySidebarSectionState(sectionName, isCollapsed);
+
+    const sectionState = getSidebarSectionState();
+    sectionState[sectionName] = isCollapsed;
+    localStorage.setItem('sidebarSectionCollapsed', JSON.stringify(sectionState));
+}
+
+function initSidebarSectionToggles() {
+    const sectionState = getSidebarSectionState();
+
+    document.querySelectorAll('[data-section-toggle]').forEach(toggle => {
+        const sectionName = toggle.getAttribute('data-section-toggle');
+        applySidebarSectionState(sectionName, Boolean(sectionState[sectionName]));
+        toggle.addEventListener('click', () => toggleSidebarSection(sectionName));
+    });
+}
+
 // Event Listeners
 function initEventListeners() {
     // Sidebar toggle
@@ -348,6 +402,8 @@ function initEventListeners() {
             sidebar.classList.add('collapsed');
         }
     }
+
+    initSidebarSectionToggles();
     
     // Navigation
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -369,6 +425,9 @@ function initEventListeners() {
     document.getElementById('closeProjectModal').addEventListener('click', () => closeProjectModal());
     document.getElementById('cancelProject').addEventListener('click', () => closeProjectModal());
     document.getElementById('projectForm').addEventListener('submit', handleProjectSubmit);
+    document.getElementById('projectObjectiveFilter')?.addEventListener('change', handleProjectObjectiveFilterChange);
+    document.getElementById('projectObjectiveGroup')?.addEventListener('change', syncProjectObjectiveSelection);
+    localizeProjectModal();
 
     // Task buttons
     document.getElementById('btnCreateTask').addEventListener('click', () => openTaskModal());
@@ -410,6 +469,7 @@ function initEventListeners() {
             currentProjectId = null;
             currentProject = null;
             currentProjectIsOwner = false;
+            updateRecentProjectsVisibility();
             updateTaskButtonState();
             stopThreadPolling();
             document.getElementById('projectSummarySection').style.display = 'none';
@@ -431,6 +491,9 @@ function initEventListeners() {
     document.getElementById('userModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'userModal') closeUserModal();
     });
+    document.getElementById('mtclModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'mtclModal') closeMtclModal();
+    });
 
     // User management
     document.getElementById('btnCreateUser')?.addEventListener('click', () => openCreateUserModal());
@@ -439,6 +502,9 @@ function initEventListeners() {
     document.getElementById('userForm')?.addEventListener('submit', handleUserSubmit);
     document.getElementById('userAvatarInput')?.addEventListener('change', handleAvatarPreview);
     document.getElementById('btnAddUserFieldGroup')?.addEventListener('click', () => addUserFieldGroupRow());
+    document.getElementById('closeMtclModal')?.addEventListener('click', closeMtclModal);
+    document.getElementById('cancelMtcl')?.addEventListener('click', closeMtclModal);
+    document.getElementById('mtclForm')?.addEventListener('submit', handleMtclSubmit);
 
     // Board tabs
     document.querySelectorAll('.board-tab').forEach(tab => {
@@ -464,6 +530,7 @@ function initEventListeners() {
     }
 
     initPersonalNavigation();
+    initSettingsNavigation();
 
     document.getElementById('closeWorkLogLinkModal')?.addEventListener('click', closeWorkLogLinkModal);
     document.getElementById('workLogLinkModal')?.addEventListener('click', (e) => {
@@ -505,12 +572,20 @@ function handleSearchInput(event) {
     // Render based on active tab
     const statusTab = document.getElementById('boardTabStatus');
     const timelineTab = document.getElementById('boardTabTimeline');
+    const overviewTab = document.getElementById('boardTabOverview');
+    const workloadTab = document.getElementById('boardTabWorkload');
     
     if (statusTab && statusTab.classList.contains('active')) {
         renderTasks();
     }
     if (timelineTab && timelineTab.classList.contains('active')) {
         renderGanttChartQuy();
+    }
+    if (overviewTab && overviewTab.classList.contains('active')) {
+        renderTaskOverviewBoard();
+    }
+    if (workloadTab && workloadTab.classList.contains('active')) {
+        renderTeamWorkloadBoard();
     }
 }
 
@@ -533,6 +608,7 @@ function switchView(view, shouldUpdateURL = true) {
     if (activeView) {
         activeView.classList.add('active');
     }
+    updateRecentProjectsVisibility();
     
     // Update title
     const titles = {
@@ -540,7 +616,7 @@ function switchView(view, shouldUpdateURL = true) {
         projects: 'Projects',
         personal: 'Personal',
         board: 'Board',
-        users: 'User Management',
+        settings: 'Settings',
         notifications: 'Notifications'
     };
 
@@ -552,13 +628,13 @@ function switchView(view, shouldUpdateURL = true) {
         if (view === 'personal') {
             routeParams.personalSection = currentPersonalSection || 'account';
         }
+        if (view === 'settings') {
+            routeParams.settingsTab = currentSettingsTab || 'users';
+        }
         updateURL(view, routeParams);
     }
     
     // Load data for specific views
-    if (view === 'users' && currentUser?.role === 'admin') {
-        loadUsersList();
-    }
     document.getElementById('pageTitle').textContent = titles[view] || 'Dashboard';
     
     // Load view-specific data
@@ -580,6 +656,12 @@ function switchView(view, shouldUpdateURL = true) {
         stopActivityPolling();
         document.getElementById('projectSummarySection').style.display = 'none';
         showPersonalSection(currentPersonalSection || 'account', true, shouldUpdateURL);
+    } else if (view === 'settings') {
+        stopThreadPolling();
+        stopActivityPolling();
+        document.getElementById('projectSummarySection').style.display = 'none';
+        showPersonalSection(currentPersonalSection || 'account', false, false);
+        showSettingsTab(currentSettingsTab || 'users', shouldUpdateURL);
     } else {
         stopThreadPolling(); // Dừng polling khi chuyển sang view khác
         stopActivityPolling(); // Dừng activity polling
@@ -637,6 +719,46 @@ function initPersonalNavigation() {
     }
 
     showPersonalSection(currentPersonalSection, false, false);
+}
+
+function updateRecentProjectsVisibility() {
+    const recentProjectsSection = document.getElementById('recentProjectsSection');
+    if (!recentProjectsSection) return;
+    recentProjectsSection.style.display = currentView === 'board' && currentProjectId ? 'none' : '';
+}
+
+function initSettingsNavigation() {
+    const tabbar = document.getElementById('settingsTabbar');
+    if (!tabbar) return;
+
+    tabbar.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-settings-tab]');
+        if (!button) return;
+        const tab = button.getAttribute('data-settings-tab') || 'users';
+        showSettingsTab(tab);
+    });
+}
+
+function showSettingsTab(tab = 'users', shouldUpdateURL = true) {
+    currentSettingsTab = tab;
+
+    document.querySelectorAll('.settings-tab').forEach((button) => {
+        button.classList.toggle('active', button.getAttribute('data-settings-tab') === tab);
+    });
+
+    document.querySelectorAll('.settings-panel').forEach((panel) => panel.classList.remove('active'));
+    document.getElementById(`settingsPanel${tab.charAt(0).toUpperCase()}${tab.slice(1)}`)?.classList.add('active');
+
+    if (shouldUpdateURL && currentView === 'settings') {
+        updateURL('settings', { settingsTab: tab });
+    }
+
+    if (tab === 'users' && currentUser?.role === 'admin') {
+        loadUsersList();
+    }
+    if (tab === 'mtcl') {
+        loadMtclList();
+    }
 }
 
 function showPersonalSection(section = 'account', highlightNav = true, shouldUpdateURL = true) {
@@ -1712,6 +1834,7 @@ async function loadProjects() {
     const data = await apiCall('/projects/');
     if (data) {
         projects = data;
+        updateProjectObjectiveFilterOptions();
         renderProjects();
         updateProjectSelect();
     }
@@ -1753,19 +1876,93 @@ function updateAssigneesList() {
 function renderProjects() {
     const container = document.getElementById('projectsGrid');
     if (!container) return;
-    
-    container.innerHTML = projects.map(project => `
+
+    const filteredProjects = currentProjectObjectiveFilter
+        ? projects.filter((project) => (project.objective_group || '') === currentProjectObjectiveFilter)
+        : [...projects];
+
+    if (filteredProjects.length === 0) {
+        container.innerHTML = '<div class="empty-state">Không có dự án phù hợp với bộ lọc hiện tại.</div>';
+        return;
+    }
+
+    const groupedProjects = filteredProjects.reduce((acc, project) => {
+        const groupName = project.objective_group || 'Chưa gắn mục tiêu chất lượng';
+        if (!acc[groupName]) {
+            acc[groupName] = [];
+        }
+        acc[groupName].push(project);
+        return acc;
+    }, {});
+
+    const sortedGroupNames = Object.keys(groupedProjects).sort((a, b) => a.localeCompare(b, 'vi'));
+    container.innerHTML = sortedGroupNames.map((groupName) => `
+        <section class="project-group-section">
+            <div class="project-group-title">${escapeHtml(groupName)}</div>
+            <div class="projects-grid">
+                ${groupedProjects[groupName]
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'))
+                    .map((project) => renderProjectCard(project))
+                    .join('')}
+            </div>
+        </section>
+    `).join('');
+}
+
+function renderProjectCard(project) {
+    return `
         <div class="project-card" onclick="selectProject(${project.id})">
+            <div class="project-card-actions">
+                <button
+                    type="button"
+                    class="project-card-edit-btn"
+                    aria-label="Chỉnh sửa dự án"
+                    title="Chỉnh sửa dự án"
+                    onclick="openProjectEditModal(${project.id}, event)"
+                >
+                    <span class="material-symbols-outlined">edit</span>
+                </button>
+            </div>
             <div class="project-card-header">
                 <div class="project-color" style="background: ${project.color}"></div>
                 <h3>${escapeHtml(project.name)}</h3>
             </div>
-            <p>${escapeHtml(project.description || 'No description')}</p>
+            <p>${escapeHtml(project.description || 'Chưa có mô tả')}</p>
             <div class="project-meta">
-                <span>Status: ${project.status}</span>
+                <span>${escapeHtml(project.status || 'active')}</span>
+                ${project.objective_description ? `<span>${escapeHtml(project.objective_description)}</span>` : ''}
             </div>
         </div>
-    `).join('');
+    `;
+}
+
+function openProjectEditModal(projectId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    const project = projects.find((item) => item.id === projectId);
+    if (project) {
+        openProjectModal(project);
+    }
+}
+
+function updateProjectObjectiveFilterOptions() {
+    const filterSelect = document.getElementById('projectObjectiveFilter');
+    if (!filterSelect) return;
+
+    const currentValue = currentProjectObjectiveFilter;
+    const uniqueGroups = [...new Set(projects.map((project) => project.objective_group).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+
+    filterSelect.innerHTML = '<option value="">Tất cả mục tiêu chất lượng</option>' +
+        uniqueGroups.map((groupName) => `<option value="${escapeHtml(groupName)}">${escapeHtml(groupName)}</option>`).join('');
+
+    filterSelect.value = uniqueGroups.includes(currentValue) ? currentValue : '';
+    currentProjectObjectiveFilter = filterSelect.value;
+}
+
+function handleProjectObjectiveFilterChange(event) {
+    currentProjectObjectiveFilter = event.target.value || '';
+    renderProjects();
 }
 
 // Function removed - sidebar projects list has been removed
@@ -1792,6 +1989,7 @@ function updateProjectSelect() {
 
 async function selectProject(projectId, skipViewSwitch = false) {
     currentProjectId = projectId;
+    updateRecentProjectsVisibility();
     const projectSelectEl = document.getElementById('projectSelect');
     if (projectSelectEl) {
         projectSelectEl.value = projectId;
@@ -1843,6 +2041,10 @@ async function updateProject(projectId, projectData) {
     const data = await apiCall(`/projects/${projectId}`, 'PUT', projectData);
     if (data) {
         await Promise.all([loadProjects(), loadDashboard()]);
+        if (currentProjectId === projectId) {
+            currentProject = data;
+            updateProjectSummaryInfo();
+        }
         closeProjectModal();
     }
 }
@@ -1870,6 +2072,8 @@ async function loadTasks(projectId = null, assignedOnly = false) {
         // Render based on active tab
         const statusTab = document.getElementById('boardTabStatus');
         const timelineTab = document.getElementById('boardTabTimeline');
+        const overviewTab = document.getElementById('boardTabOverview');
+        const workloadTab = document.getElementById('boardTabWorkload');
         
         if (statusTab && statusTab.classList.contains('active')) {
             renderTasks();
@@ -1877,12 +2081,14 @@ async function loadTasks(projectId = null, assignedOnly = false) {
         if (timelineTab && timelineTab.classList.contains('active')) {
             renderGanttChart();
         }
-        
-        // Load threads nếu tab Thread đang active
-        const threadTab = document.getElementById('boardTabThread');
-        if (threadTab && threadTab.classList.contains('active')) {
-            loadThreads();
+        if (overviewTab && overviewTab.classList.contains('active')) {
+            renderTaskOverviewBoard();
         }
+        if (workloadTab && workloadTab.classList.contains('active')) {
+            renderTeamWorkloadBoard();
+        }
+
+        // Thread tab is hidden from the board UI for now, so do not trigger thread loading here.
     }
 }
 
@@ -1983,9 +2189,213 @@ function switchBoardTab(tabName) {
     } else if (tabName === 'status') {
         stopThreadPolling();
         renderTasks();
+    } else if (tabName === 'overview') {
+        stopThreadPolling();
+        renderTaskOverviewBoard();
+    } else if (tabName === 'workload') {
+        stopThreadPolling();
+        renderTeamWorkloadBoard();
     } else if (tabName === 'thread') {
-        startThreadPolling();
+        // Thread tab is intentionally hidden from the board UI until this flow is re-enabled.
+        stopThreadPolling();
     }
+}
+
+function renderTaskOverviewBoard() {
+    const container = document.getElementById('taskOverviewBoard');
+    const tab = document.getElementById('boardTabOverview');
+    if (!container || !tab || !tab.classList.contains('active')) return;
+
+    if (!currentProject || filteredTasks.length === 0) {
+        container.innerHTML = '<div class="board-insight-empty">Chưa có task nào để tổng hợp.</div>';
+        return;
+    }
+
+    const weeklyTasks = [];
+    const monthlyTasks = [];
+    filteredTasks
+        .slice()
+        .sort(compareTasksByDueDate)
+        .forEach((task) => {
+            if (isTaskDueWithinDays(task, 7)) {
+                weeklyTasks.push(task);
+            } else {
+                monthlyTasks.push(task);
+            }
+        });
+
+    container.innerHTML = `
+        <div class="board-insight-grid">
+            ${createTaskInsightSection('Công việc tuần này', 'Ưu tiên các task gần hạn hoặc cần xử lý sớm.', weeklyTasks)}
+            ${createTaskInsightSection('Kế hoạch tháng', 'Các task còn lại để theo dõi theo nhịp dài hơn.', monthlyTasks)}
+        </div>
+    `;
+
+    attachBoardInsightTaskEvents(container);
+}
+
+function renderTeamWorkloadBoard() {
+    const container = document.getElementById('teamWorkloadBoard');
+    const tab = document.getElementById('boardTabWorkload');
+    if (!container || !tab || !tab.classList.contains('active')) return;
+
+    if (!currentProject || filteredTasks.length === 0) {
+        container.innerHTML = '<div class="board-insight-empty">Chưa có task nào để phân theo nhân sự.</div>';
+        return;
+    }
+
+    const members = new Map();
+    filteredTasks.forEach((task) => {
+        const assignees = task.assignees || [];
+        if (!assignees.length) {
+            if (!members.has('unassigned')) {
+                members.set('unassigned', {
+                    key: 'unassigned',
+                    name: 'Chưa phân công',
+                    subtitle: 'Task chưa có người phụ trách',
+                    role: 'Unassigned',
+                    tasks: []
+                });
+            }
+            members.get('unassigned').tasks.push(task);
+            return;
+        }
+
+        assignees.forEach((assignee) => {
+            const key = `user-${assignee.id}`;
+            if (!members.has(key)) {
+                const memberMeta = projectMembers.find((member) => member.id === assignee.id);
+                members.set(key, {
+                    key,
+                    name: assignee.full_name || assignee.username || `User ${assignee.id}`,
+                    subtitle: [assignee.username, assignee.position].filter(Boolean).join(' · ') || 'Chưa cập nhật thông tin',
+                    role: formatProjectMemberRole(memberMeta?.role || 'assignee'),
+                    tasks: []
+                });
+            }
+            members.get(key).tasks.push(task);
+        });
+    });
+
+    const sortedMembers = Array.from(members.values()).sort((a, b) => {
+        if (a.key === 'unassigned') return 1;
+        if (b.key === 'unassigned') return -1;
+        return a.name.localeCompare(b.name, 'vi');
+    });
+
+    container.innerHTML = sortedMembers.map((member) => {
+        const weeklyTasks = member.tasks.filter((task) => isTaskDueWithinDays(task, 7)).sort(compareTasksByDueDate);
+        const monthlyTasks = member.tasks.filter((task) => !isTaskDueWithinDays(task, 7)).sort(compareTasksByDueDate);
+        return `
+            <section class="workload-member-card">
+                <div class="workload-member-head">
+                    <div>
+                        <h3>${escapeHtml(member.name)}</h3>
+                        <p>${escapeHtml(member.subtitle)}</p>
+                    </div>
+                    <span>${escapeHtml(member.role)}</span>
+                </div>
+                <div class="workload-member-columns">
+                    ${createMiniTaskColumn('Công việc tuần', weeklyTasks)}
+                    ${createMiniTaskColumn('Công việc tháng', monthlyTasks)}
+                </div>
+            </section>
+        `;
+    }).join('');
+
+    attachBoardInsightTaskEvents(container);
+}
+
+function createTaskInsightSection(title, description, taskList) {
+    return `
+        <section class="board-insight-card">
+            <div class="board-insight-head">
+                <div>
+                    <h3>${escapeHtml(title)}</h3>
+                    <p>${escapeHtml(description)}</p>
+                </div>
+                <strong>${taskList.length}</strong>
+            </div>
+            <div class="board-insight-list">
+                ${taskList.length ? taskList.map(createBoardInsightTaskRow).join('') : '<div class="board-insight-empty compact">Không có task phù hợp.</div>'}
+            </div>
+        </section>
+    `;
+}
+
+function createMiniTaskColumn(title, taskList) {
+    return `
+        <div class="mini-task-column">
+            <div class="mini-task-column-head">
+                <span>${escapeHtml(title)}</span>
+                <strong>${taskList.length}</strong>
+            </div>
+            <div class="mini-task-list">
+                ${taskList.length ? taskList.map(createBoardInsightTaskRow).join('') : '<div class="board-insight-empty compact">Chưa có task.</div>'}
+            </div>
+        </div>
+    `;
+}
+
+function createBoardInsightTaskRow(task) {
+    const statusInfo = getTaskInsightStatus(task.status);
+    const dueText = task.due_date ? formatDateDisplay(task.due_date) : 'Chưa có hạn';
+    const description = task.description || 'Chưa có mô tả công việc.';
+    return `
+        <button type="button" class="board-insight-task" data-task-id="${task.id}">
+            <div class="board-insight-task-main">
+                <strong>${escapeHtml(task.title || 'Task chưa đặt tên')}</strong>
+                <p>${escapeHtml(description)}</p>
+            </div>
+            <div class="board-insight-task-meta">
+                <span class="task-insight-status status-${statusInfo.key}">${escapeHtml(statusInfo.label)}</span>
+                <span>${escapeHtml(dueText)}</span>
+            </div>
+        </button>
+    `;
+}
+
+function getTaskInsightStatus(status) {
+    const statusMap = {
+        todo: { key: 'todo', label: 'Chưa thực hiện' },
+        in_progress: { key: 'in-progress', label: 'Đang thực hiện' },
+        done: { key: 'done', label: 'Hoàn thành' },
+        blocked: { key: 'blocked', label: 'Bị chặn' }
+    };
+    return statusMap[status] || { key: 'todo', label: status || 'Chưa rõ' };
+}
+
+function compareTasksByDueDate(a, b) {
+    const dueA = getTaskDueTime(a);
+    const dueB = getTaskDueTime(b);
+    return dueA - dueB || String(a.title || '').localeCompare(String(b.title || ''), 'vi');
+}
+
+function getTaskDueTime(task) {
+    if (!task?.due_date) return Number.MAX_SAFE_INTEGER;
+    const date = new Date(String(task.due_date).replace(' ', 'T'));
+    return Number.isNaN(date.getTime()) ? Number.MAX_SAFE_INTEGER : date.getTime();
+}
+
+function isTaskDueWithinDays(task, days) {
+    const dueTime = getTaskDueTime(task);
+    if (dueTime === Number.MAX_SAFE_INTEGER) return false;
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endWindow = startOfToday + (days * 24 * 60 * 60 * 1000);
+    return dueTime >= startOfToday && dueTime <= endWindow;
+}
+
+function attachBoardInsightTaskEvents(container) {
+    container.querySelectorAll('.board-insight-task').forEach((button) => {
+        button.addEventListener('click', () => {
+            const taskId = Number(button.dataset.taskId);
+            const task = tasks.find((item) => item.id === taskId);
+            if (task) {
+                openTaskModal(task, !canEditTask(task));
+            }
+        });
+    });
 }
 
 function renderGanttChart() {
@@ -2653,17 +3063,20 @@ async function toggleTodayTodo(todoId) {
 async function openProjectModal(project = null) {
     const modal = document.getElementById('projectModal');
     const form = document.getElementById('projectForm');
+    const modalContent = modal?.querySelector('.modal-content');
     
-    // Load project types vào dropdown
-    await loadProjectTypes();
+    // Load project types và MTCL vào dropdown
+    await Promise.all([loadProjectTypes(), loadProjectObjectives()]);
     
     if (project) {
-        document.getElementById('projectModalTitle').textContent = 'Edit Project';
+        document.getElementById('projectModalTitle').textContent = 'Chỉnh sửa dự án';
         document.getElementById('projectId').value = project.id;
         document.getElementById('projectName').value = project.name;
         document.getElementById('projectDescription').value = project.description || '';
         document.getElementById('projectColor').value = project.color || '#6366f1';
         document.getElementById('projectType').value = project.project_type_id || '';
+        document.getElementById('projectObjectiveGroup').value = project.objective_group || '';
+        syncProjectObjectiveSelection(project.objective_description || '');
         if (project.due_date) {
             const due = new Date(project.due_date);
             document.getElementById('projectDueDate').value = due.toISOString().slice(0, 10);
@@ -2671,15 +3084,76 @@ async function openProjectModal(project = null) {
             document.getElementById('projectDueDate').value = '';
         }
     } else {
-        document.getElementById('projectModalTitle').textContent = 'New Project';
+        document.getElementById('projectModalTitle').textContent = 'Tạo dự án';
         form.reset();
         document.getElementById('projectId').value = '';
         document.getElementById('projectColor').value = '#6366f1';
         document.getElementById('projectType').value = '';
+        document.getElementById('projectObjectiveGroup').value = '';
+        syncProjectObjectiveSelection();
         document.getElementById('projectDueDate').value = '';
     }
-    
+
     modal.classList.add('active');
+    if (modalContent) {
+        modalContent.scrollTop = 0;
+    }
+}
+
+function localizeProjectModal() {
+    const formGroups = Array.from(document.querySelectorAll('#projectModal .form-group'));
+    if (formGroups.length < 7) return;
+
+    const [nameGroup, descriptionGroup, typeGroup, objectiveGroup, objectiveDescriptionGroup, dueDateGroup, colorGroup] = formGroups;
+    const setGroupLabel = (group, text) => {
+        const label = group?.querySelector('label');
+        if (label) {
+            label.textContent = text;
+        }
+    };
+    const setHint = (group, text) => {
+        const hint = group?.querySelector('.input-hint');
+        if (hint) {
+            hint.textContent = text;
+        }
+    };
+
+    setGroupLabel(nameGroup, 'Tên dự án');
+    setGroupLabel(descriptionGroup, 'Mô tả dự án');
+    setGroupLabel(typeGroup, 'Loại dự án');
+    setHint(typeGroup, 'Phân loại dự án theo cấp độ (Công ty / Phòng ban).');
+
+    const objectiveLabels = objectiveGroup?.querySelectorAll('label') || [];
+    if (objectiveLabels.length > 1) {
+        objectiveLabels[0].remove();
+    }
+    setGroupLabel(objectiveGroup, 'Mục tiêu chất lượng');
+    setHint(objectiveGroup, 'Bước 1: chọn mục tiêu chất lượng duy nhất.');
+
+    setGroupLabel(objectiveDescriptionGroup, 'Mô tả mục tiêu chất lượng');
+    setHint(objectiveDescriptionGroup, 'Bước 2: chọn mô tả thuộc mục tiêu đã chọn.');
+
+    const dueDateInput = dueDateGroup?.querySelector('#projectDueDate');
+    if (dueDateGroup && dueDateInput) {
+        let dueDateLabel = dueDateGroup.querySelector('label');
+        if (!dueDateLabel) {
+            dueDateLabel = document.createElement('label');
+            dueDateGroup.insertBefore(dueDateLabel, dueDateInput);
+        }
+        dueDateLabel.textContent = 'Ngày hoàn thành dự kiến';
+    }
+    setHint(dueDateGroup, 'Dùng để theo dõi tiến độ hoàn thành dự án.');
+
+    setGroupLabel(colorGroup, 'Màu nhận diện');
+
+    const cancelButton = document.getElementById('cancelProject');
+    if (cancelButton) {
+        cancelButton.textContent = 'Hủy';
+    }
+    const submitButton = document.querySelector('#projectForm button[type="submit"]');
+    if (submitButton) {
+        submitButton.textContent = 'Lưu dự án';
+    }
 }
 
 async function loadProjectTypes() {
@@ -2709,6 +3183,60 @@ async function loadProjectTypes() {
         }
     } catch (error) {
         console.error('Error loading project types:', error);
+    }
+}
+
+async function loadProjectObjectives() {
+    try {
+        const objectiveSelect = document.getElementById('projectObjectiveGroup');
+        const descriptionSelect = document.getElementById('projectObjectiveDescription');
+        if (!objectiveSelect || !descriptionSelect) return;
+
+        const currentValue = objectiveSelect.value;
+        const mtclData = await apiCall('/mtcl/');
+        projectObjectiveItems = Array.isArray(mtclData) ? mtclData : [];
+        objectiveSelect.innerHTML = '<option value="">-- Chọn mục tiêu chất lượng --</option>';
+        descriptionSelect.innerHTML = '<option value="">-- Chọn mô tả mục tiêu chất lượng --</option>';
+
+        const uniqueGroups = [...new Set(projectObjectiveItems
+            .map((item) => item.objective_group)
+            .filter(Boolean))];
+
+        uniqueGroups.forEach((groupName) => {
+            const option = document.createElement('option');
+            option.value = groupName;
+            option.textContent = groupName;
+            objectiveSelect.appendChild(option);
+        });
+
+        if (currentValue) {
+            objectiveSelect.value = currentValue;
+        }
+    } catch (error) {
+        console.error('Error loading MTCL objectives:', error);
+    }
+}
+
+function syncProjectObjectiveSelection(selectedDescription = '') {
+    const objectiveSelect = document.getElementById('projectObjectiveGroup');
+    const descriptionSelect = document.getElementById('projectObjectiveDescription');
+    if (!objectiveSelect || !descriptionSelect) return;
+
+    const selectedGroup = objectiveSelect.value;
+    const descriptions = projectObjectiveItems.filter((item) => item.objective_group === selectedGroup);
+    descriptionSelect.innerHTML = '<option value="">-- Chọn mô tả mục tiêu chất lượng --</option>';
+
+    descriptions.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.description || '';
+        option.textContent = item.description || '';
+        descriptionSelect.appendChild(option);
+    });
+
+    if (selectedDescription && descriptions.some((item) => item.description === selectedDescription)) {
+        descriptionSelect.value = selectedDescription;
+    } else {
+        descriptionSelect.value = '';
     }
 }
 
@@ -2768,8 +3296,14 @@ function handleProjectSubmit(e) {
     e.preventDefault();
     const projectId = document.getElementById('projectId').value;
     const projectTypeId = document.getElementById('projectType').value;
+    const objectiveGroup = document.getElementById('projectObjectiveGroup').value;
+    const objectiveDescription = document.getElementById('projectObjectiveDescription').value;
     const dueDateValue = document.getElementById('projectDueDate').value;
     const normalizedDueDate = normalizeDateInput(dueDateValue);
+    if (objectiveGroup && !objectiveDescription) {
+        alert('Vui lòng chọn mô tả mục tiêu chất lượng tương ứng.');
+        return;
+    }
     if (dueDateValue && !normalizedDueDate) {
         alert('Ngày hoàn thành dự án không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy hoặc chọn ngày từ lịch.');
         return;
@@ -2777,6 +3311,8 @@ function handleProjectSubmit(e) {
     const projectData = {
         name: document.getElementById('projectName').value,
         description: document.getElementById('projectDescription').value,
+        objective_group: objectiveGroup || null,
+        objective_description: objectiveGroup ? objectiveDescription : null,
         color: document.getElementById('projectColor').value,
         project_type_id: projectTypeId ? parseInt(projectTypeId) : null,
         due_date: normalizedDueDate
@@ -2902,21 +3438,39 @@ function canEditTask(task) {
 
 function updateProjectSummaryInfo() {
     const summarySection = document.getElementById('projectSummarySection');
-    const dueLabel = document.getElementById('projectDueDateDisplay');
+    const descriptionLabel = document.getElementById('projectDescriptionDisplay');
+    const objectiveLabel = document.getElementById('projectObjectiveDisplay');
+    const timelineLabel = document.getElementById('projectTimelineDisplay');
     if (!summarySection) return;
     if (!currentProject) {
         summarySection.style.display = 'none';
-        if (dueLabel) dueLabel.textContent = '--';
+        if (descriptionLabel) descriptionLabel.textContent = '--';
+        if (objectiveLabel) objectiveLabel.innerHTML = '<span class="summary-pill muted">--</span>';
+        if (timelineLabel) timelineLabel.textContent = '--';
         updateProjectSummaryProgress(true);
+        projectMembers = [];
+        selectedProjectMemberId = null;
+        renderProjectGoals();
+        renderProjectMembers();
         return;
     }
     summarySection.style.display = 'grid';
-    console.log('updateProjectSummaryInfo currentProject due_date:', currentProject?.due_date);
-    if (dueLabel) {
-        dueLabel.textContent = currentProject.due_date
-            ? formatDateDisplay(currentProject.due_date)
-            : 'Chưa thiết lập';
+    if (descriptionLabel) {
+        descriptionLabel.textContent = currentProject.description || 'Chưa có mô tả dự án.';
     }
+    if (objectiveLabel) {
+        const pills = [];
+        if (currentProject.objective_group) {
+            pills.push(`<span class="summary-pill">${escapeHtml(currentProject.objective_group)}</span>`);
+        }
+        objectiveLabel.innerHTML = pills.join('') || '<span class="summary-pill muted">Chưa liên kết MTCL</span>';
+    }
+    if (timelineLabel) {
+        const startText = formatDateDisplay(currentProject.created_at);
+        const endText = currentProject.due_date ? formatDateDisplay(currentProject.due_date) : 'Chưa thiết lập';
+        timelineLabel.textContent = `${startText} - ${endText}`;
+    }
+    renderProjectGoals();
 }
 
 function updateProjectSummaryProgress(reset = false) {
@@ -3283,26 +3837,58 @@ async function loadUsersList() {
     }
 }
 
+async function loadMtclList() {
+    const data = await apiCall('/mtcl/');
+    if (data) {
+        mtclItems = data;
+        renderMtclTable();
+    }
+}
+
+function cleanMtclText(value = '') {
+    return String(value || '')
+        .replace(/\s*\[[^\]]+\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 function normalizeUserFieldGroups(user = {}) {
     const groupEntries = Array.isArray(user.group) ? user.group : [];
-    const normalizedGroups = groupEntries
-        .map((entry) => ({
-            field: (entry?.field || '').trim(),
-            group: (entry?.group || '').trim()
-        }))
-        .filter((entry) => entry.field || entry.group);
-
-    if (normalizedGroups.length > 0) {
-        return normalizedGroups;
-    }
-
+    const chapterEntries = Array.isArray(user.chapter) ? user.chapter : [];
     const fields = Array.isArray(user.field) ? user.field : [];
-    return fields
-        .map((fieldName) => ({
-            field: String(fieldName || '').trim(),
-            group: ''
-        }))
-        .filter((entry) => entry.field);
+
+    const groupMap = new Map();
+    groupEntries.forEach((entry) => {
+        const fieldName = String(entry?.field || '').trim().toUpperCase();
+        if (!fieldName) return;
+        groupMap.set(fieldName, String(entry?.group || '').trim());
+    });
+
+    const chapterMap = new Map();
+    chapterEntries.forEach((entry) => {
+        const fieldName = String(entry?.field || '').trim().toUpperCase();
+        if (!fieldName) return;
+        const chapters = Array.isArray(entry?.chapters)
+            ? entry.chapters.map((chapter) => String(chapter || '').trim()).filter(Boolean)
+            : [];
+        chapterMap.set(fieldName, chapters);
+    });
+
+    const fieldOrder = [];
+    const seenFields = new Set();
+    [...fields, ...groupEntries.map((entry) => entry?.field), ...chapterEntries.map((entry) => entry?.field)]
+        .forEach((fieldName) => {
+            const normalizedField = String(fieldName || '').trim().toUpperCase();
+            if (!normalizedField || seenFields.has(normalizedField)) return;
+            seenFields.add(normalizedField);
+            fieldOrder.push(normalizedField);
+        });
+
+    return fieldOrder.map((fieldName) => ({
+        field: fieldName,
+        group: groupMap.get(fieldName) || '',
+        chapters: chapterMap.get(fieldName) || []
+    }));
 }
 
 function renderUserFieldGroupSummary(user = {}) {
@@ -3312,22 +3898,58 @@ function renderUserFieldGroupSummary(user = {}) {
     }
 
     return entries
-        .map((entry) => entry.group ? `${entry.field} - ${entry.group}` : entry.field)
+        .map((entry) => {
+            const chaptersLabel = entry.chapters?.length ? entry.chapters.join('; ') : '--';
+            const groupLabel = entry.group || '--';
+            return `${entry.field} | ${chaptersLabel} | Group ${groupLabel}`;
+        })
         .join(', ');
 }
 
-function createUserFieldGroupRowMarkup(fieldValue = '', groupValue = '') {
+const USER_FIELD_OPTIONS = [
+    'OPEX',
+    'SSE',
+    'HRP',
+    'QUALITY',
+    'DPR',
+    'ADMANRI',
+    'ENV'
+];
+
+function createUserFieldGroupRowMarkup(fieldValue = '', groupValue = '', chapterValues = []) {
+    const normalizedFieldValue = String(fieldValue || '').trim().toUpperCase();
+    const fieldOptionsMarkup = USER_FIELD_OPTIONS
+        .map((option) => `<option value="${option}"${option === normalizedFieldValue ? ' selected' : ''}>${option}</option>`)
+        .join('');
+    const rowId = `user-field-row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const safeChapters = Array.isArray(chapterValues) && chapterValues.length > 0 ? chapterValues : [''];
+    const chapterInputsMarkup = safeChapters
+        .map((chapterValue) => createUserChapterInputMarkup(chapterValue))
+        .join('');
+
     return `
-        <div class="user-field-group-row">
+        <div class="user-field-group-row" data-row-id="${rowId}">
             <div class="form-group">
                 <label>Lĩnh vực</label>
-                <input type="text" class="user-field-input" value="${escapeHtml(fieldValue)}" placeholder="Ví dụ: Sales">
+                <select class="user-field-input">
+                    <option value="">Chọn lĩnh vực</option>
+                    ${fieldOptionsMarkup}
+                </select>
             </div>
             <div class="form-group">
                 <label>Nhóm</label>
-                <input type="text" class="user-group-input" value="${escapeHtml(groupValue)}" placeholder="Ví dụ: Enterprise">
+                <input type="number" min="0" step="1" inputmode="numeric" class="user-group-input" value="${escapeHtml(groupValue)}" placeholder="Nhập số nhóm">
             </div>
             <button type="button" class="btn-secondary danger user-field-group-remove" onclick="removeUserFieldGroupRow(this)">Remove</button>
+            <div class="user-chapter-section">
+                <div class="user-chapter-header">
+                    <label>Chapter</label>
+                    <button type="button" class="btn-secondary user-chapter-add" onclick="addUserChapterInput('${rowId}')">+ Add chapter</button>
+                </div>
+                <div class="user-chapter-list" data-chapter-container>
+                    ${chapterInputsMarkup}
+                </div>
+            </div>
         </div>
     `;
 }
@@ -3336,17 +3958,48 @@ function renderUserFieldGroupRows(entries = []) {
     const rowsContainer = document.getElementById('userFieldGroupRows');
     if (!rowsContainer) return;
 
-    const safeEntries = entries.length > 0 ? entries : [{ field: '', group: '' }];
+    const safeEntries = entries.length > 0 ? entries : [{ field: '', group: '', chapters: [''] }];
     rowsContainer.innerHTML = safeEntries
-        .map((entry) => createUserFieldGroupRowMarkup(entry.field || '', entry.group || ''))
+        .map((entry) => createUserFieldGroupRowMarkup(entry.field || '', entry.group || '', entry.chapters || []))
         .join('');
 }
 
-function addUserFieldGroupRow(fieldValue = '', groupValue = '') {
+function createUserChapterInputMarkup(chapterValue = '') {
+    return `
+        <div class="user-chapter-input-row">
+            <input type="text" class="user-chapter-input" value="${escapeHtml(chapterValue)}" placeholder="Ví dụ: Trục 1">
+            <button type="button" class="btn-secondary danger user-chapter-remove" onclick="removeUserChapterInput(this)">Remove</button>
+        </div>
+    `;
+}
+
+function addUserFieldGroupRow(fieldValue = '', groupValue = '', chapters = ['']) {
     const rowsContainer = document.getElementById('userFieldGroupRows');
     if (!rowsContainer) return;
 
-    rowsContainer.insertAdjacentHTML('beforeend', createUserFieldGroupRowMarkup(fieldValue, groupValue));
+    rowsContainer.insertAdjacentHTML('beforeend', createUserFieldGroupRowMarkup(fieldValue, groupValue, chapters));
+}
+
+function addUserChapterInput(rowId, chapterValue = '') {
+    const row = document.querySelector(`.user-field-group-row[data-row-id="${rowId}"]`);
+    const chapterContainer = row?.querySelector('[data-chapter-container]');
+    if (!chapterContainer) return;
+
+    chapterContainer.insertAdjacentHTML('beforeend', createUserChapterInputMarkup(chapterValue));
+}
+
+function removeUserChapterInput(button) {
+    const chapterContainer = button?.closest('[data-chapter-container]');
+    const chapterRow = button?.closest('.user-chapter-input-row');
+    if (!chapterContainer || !chapterRow) return;
+
+    if (chapterContainer.children.length === 1) {
+        const chapterInput = chapterRow.querySelector('.user-chapter-input');
+        if (chapterInput) chapterInput.value = '';
+        return;
+    }
+
+    chapterRow.remove();
 }
 
 function removeUserFieldGroupRow(button) {
@@ -3357,8 +4010,15 @@ function removeUserFieldGroupRow(button) {
     if (rowsContainer.children.length === 1) {
         const fieldInput = row.querySelector('.user-field-input');
         const groupInput = row.querySelector('.user-group-input');
+        const chapterInputs = row.querySelectorAll('.user-chapter-input');
         if (fieldInput) fieldInput.value = '';
         if (groupInput) groupInput.value = '';
+        chapterInputs.forEach((chapterInput, index) => {
+            chapterInput.value = '';
+            if (index > 0) {
+                chapterInput.closest('.user-chapter-input-row')?.remove();
+            }
+        });
         return;
     }
 
@@ -3371,49 +4031,175 @@ function collectUserFieldGroupData() {
     return rows
         .map((row) => ({
             field: row.querySelector('.user-field-input')?.value?.trim() || '',
-            group: row.querySelector('.user-group-input')?.value?.trim() || ''
+            group: row.querySelector('.user-group-input')?.value?.trim() || '',
+            chapters: Array.from(row.querySelectorAll('.user-chapter-input'))
+                .map((input) => input.value.trim())
+                .filter(Boolean)
         }))
         .filter((entry) => entry.field);
 }
 
+function renderUserAvatarMarkup(user) {
+    if (user.avatar_url) {
+        return `
+            <div class="user-directory-avatar">
+                <img src="${user.avatar_url}" alt="Avatar">
+            </div>
+        `;
+    }
+
+    const initials = ((user.full_name || user.username || 'U')
+        .split(' ')
+        .map((part) => part.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join('')) || 'U';
+
+    return `<div class="user-directory-avatar">${escapeHtml(initials)}</div>`;
+}
+
+function updateUsersDirectorySummary() {
+    const totalCount = users.length;
+    const adminCount = users.filter((user) => user.role === 'admin').length;
+    const departmentCount = new Set(
+        users
+            .map((user) => (user.department || '').trim())
+            .filter(Boolean)
+    ).size;
+
+    const totalNode = document.getElementById('usersTotalCount');
+    const adminNode = document.getElementById('usersAdminCount');
+    const departmentNode = document.getElementById('usersDepartmentCount');
+    if (totalNode) totalNode.textContent = String(totalCount);
+    if (adminNode) adminNode.textContent = String(adminCount);
+    if (departmentNode) departmentNode.textContent = String(departmentCount);
+
+    const meta = document.getElementById('usersDirectoryMeta');
+    const footerMeta = document.getElementById('usersDirectoryFooterMeta');
+    const metaText = totalCount === 0
+        ? 'Chưa có hồ sơ nào trong danh mục.'
+        : `${totalCount} hồ sơ • ${adminCount} admin • ${departmentCount} phòng ban`;
+    if (meta) {
+        meta.textContent = metaText;
+    }
+    if (footerMeta) footerMeta.textContent = metaText;
+}
+
+function renderMtclTable() {
+    const container = document.getElementById('mtclTableBody');
+    if (!container) return;
+
+    const recordCount = mtclItems.length;
+    const groupCount = new Set(mtclItems.map((item) => item.objective_group).filter(Boolean)).size;
+    const unitCount = new Set(mtclItems.flatMap((item) => Array.isArray(item.units) ? item.units : [])).size;
+
+    document.getElementById('mtclRecordCount').textContent = String(recordCount);
+    document.getElementById('mtclGroupCount').textContent = String(groupCount);
+    document.getElementById('mtclUnitCount').textContent = String(unitCount);
+
+    const meta = document.getElementById('mtclMeta');
+    if (meta) {
+        meta.textContent = recordCount === 0
+            ? 'No MTCL records available.'
+            : `${recordCount} records • ${groupCount} groups • ${unitCount} units`;
+    }
+
+    if (recordCount === 0) {
+        container.innerHTML = '<div class="users-empty-state">No MTCL data available.</div>';
+        return;
+    }
+
+    container.innerHTML = mtclItems.map((item) => `
+        <article class="mtcl-card">
+            <div class="mtcl-card-group">
+                <div class="mtcl-card-title">${escapeHtml(item.objective_group || '--')}</div>
+            </div>
+            <div class="mtcl-card-units">
+                ${(Array.isArray(item.units) ? item.units : []).map((unit) => `<span class="mtcl-unit-pill">${escapeHtml(unit)}</span>`).join('') || '<span class="mtcl-unit-pill">--</span>'}
+            </div>
+            <div class="mtcl-card-description">${escapeHtml(cleanMtclText(item.description || '--'))}</div>
+            <div class="mtcl-card-action">
+                <button class="btn-link" type="button" onclick="openMtclModal(${item.id})">Edit</button>
+            </div>
+        </article>
+    `).join('');
+}
+
+function openMtclModal(itemId) {
+    const item = mtclItems.find((entry) => entry.id === itemId);
+    if (!item) return;
+
+    currentMtclId = item.id;
+    document.getElementById('mtclId').value = String(item.id);
+    document.getElementById('mtclObjectiveGroup').value = cleanMtclText(item.objective_group || '');
+    document.getElementById('mtclUnits').value = Array.isArray(item.units) ? item.units.join(', ') : '';
+    document.getElementById('mtclDescription').value = cleanMtclText(item.description || '');
+    document.getElementById('mtclModal').classList.add('active');
+}
+
+function closeMtclModal() {
+    currentMtclId = null;
+    document.getElementById('mtclForm')?.reset();
+    document.getElementById('mtclModal')?.classList.remove('active');
+}
+
+async function handleMtclSubmit(event) {
+    event.preventDefault();
+    const itemId = currentMtclId || parseInt(document.getElementById('mtclId').value, 10);
+    if (!itemId) return;
+
+    const units = String(document.getElementById('mtclUnits').value || '')
+        .split(',')
+        .map((unit) => cleanMtclText(unit))
+        .filter(Boolean);
+
+    const payload = {
+        objective_group: cleanMtclText(document.getElementById('mtclObjectiveGroup').value || ''),
+        units,
+        description: cleanMtclText(document.getElementById('mtclDescription').value || ''),
+    };
+
+    const data = await apiCall(`/mtcl/${itemId}`, 'PUT', payload);
+    if (data) {
+        await loadMtclList();
+        closeMtclModal();
+    }
+}
+
 function renderUsersTable() {
-    const tbody = document.getElementById('usersTableBody');
-    if (!tbody) return;
+    const container = document.getElementById('usersTableBody');
+    if (!container) return;
+
+    updateUsersDirectorySummary();
     
     if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="padding: 24px; text-align: center; color: var(--text-secondary);">Không có user nào</td></tr>';
+        container.innerHTML = '<div class="users-empty-state">Chưa có user nào trong hệ thống.</div>';
         return;
     }
     
-    tbody.innerHTML = users.map(user => `
-        <tr style="border-bottom: 1px solid var(--border-color);">
-            <td style="padding: 12px;">
-                ${user.avatar_url 
-                    ? `<img src="${user.avatar_url}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);">`
-                    : '<div style="width: 40px; height: 40px; border-radius: 50%; background: var(--sidebar-bg); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-secondary);">' + 
-                      ((user.full_name || user.username || 'U').split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || '👤') + 
-                      '</div>'
-                }
-            </td>
-            <td style="padding: 12px; font-weight: 500;">${escapeHtml(user.username)}</td>
-            <td style="padding: 12px;">${escapeHtml(user.email)}</td>
-            <td style="padding: 12px;">${escapeHtml(user.full_name || '--')}</td>
-            <td style="padding: 12px;">${escapeHtml(user.position || '--')}</td>
-            <td style="padding: 12px;">${escapeHtml(user.department || '--')}</td>
-            <td style="padding: 12px;">${escapeHtml(user.team || '--')}</td>
-            <td style="padding: 12px;">${escapeHtml(renderUserFieldGroupSummary(user))}</td>
-            <td style="padding: 12px;">
-                <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; 
-                    ${user.role === 'admin' ? 'background: #fee2e2; color: #991b1b;' : 
-                      user.role === 'viewer' ? 'background: #e0e7ff; color: #3730a3;' : 
-                      'background: #dbeafe; color: #1e40af;'}">
-                    ${user.role || 'member'}
-                </span>
-            </td>
-            <td style="padding: 12px;">
-                <button class="btn-link" onclick="openUserModal(${user.id})" style="cursor: pointer;">Edit</button>
-            </td>
-        </tr>
+    container.innerHTML = users.map(user => `
+        <article class="user-directory-card">
+            <div class="user-directory-profile">
+                ${renderUserAvatarMarkup(user)}
+                <div class="user-directory-copy">
+                    <div class="user-directory-name">${escapeHtml(user.full_name || user.username || '--')}</div>
+                    <div class="user-directory-subline">@${escapeHtml(user.username || '--')} • ${escapeHtml(user.email || '--')}</div>
+                    <div class="user-directory-meta">${escapeHtml(user.position || 'Chưa có chức danh')}</div>
+                </div>
+            </div>
+            <div class="user-directory-meta">
+                <strong>${escapeHtml(user.department || '--')}</strong>
+                <span>${escapeHtml(user.team || 'Chưa có team')}</span>
+            </div>
+            <div class="user-directory-pillset">
+                ${normalizeUserFieldGroups(user).map((entry) => `
+                    <span class="user-directory-pill">${escapeHtml(entry.field)} • ${escapeHtml((entry.chapters || []).join('; ') || '--')} • G${escapeHtml(entry.group || '--')}</span>
+                `).join('') || '<span class="user-directory-pill">Chưa khai báo field</span>'}
+            </div>
+            <span class="user-directory-role role-${escapeHtml(user.role || 'member')}">${escapeHtml(user.role || 'member')}</span>
+            <div class="user-directory-action">
+                <button class="btn-link" onclick="openUserModal(${user.id})" type="button">Edit</button>
+            </div>
+        </article>
     `).join('');
 }
 
@@ -3508,13 +4294,20 @@ async function handleUserSubmit(e) {
     
     const userData = {
         username: document.getElementById('userUsername').value,
-        email: document.getElementById('userEmail').value,
+        email: document.getElementById('userEmail').value || null,
         full_name: document.getElementById('userFullName').value || null,
         department: document.getElementById('userDepartment').value || null,
         team: document.getElementById('userTeam').value || null,
         position: document.getElementById('userPosition').value || null,
         field: fieldGroupEntries.map((entry) => entry.field),
-        group: fieldGroupEntries,
+        chapter: fieldGroupEntries.map((entry) => ({
+            field: entry.field,
+            chapters: entry.chapters
+        })),
+        group: fieldGroupEntries.map((entry) => ({
+            field: entry.field,
+            group: entry.group
+        })),
         role: document.getElementById('userRole').value
     };
 
@@ -4480,27 +5273,204 @@ async function loadActivities(projectId) {
         document.getElementById('projectSummarySection').style.display = 'none';
         return;
     }
-    
-    const data = await apiCall(`/activities/?project_id=${projectId}&limit=50`);
-    if (data) {
-        projectActivities = data;
-        renderActivities();
-        
-        // Start polling for new activities
-        startActivityPolling(projectId);
+
+    projectActivities = [];
+    renderProjectGoals();
+    await loadProjectMembers(projectId);
+}
+
+async function loadProjectMembers(projectId) {
+    const memberList = document.getElementById('projectMembersList');
+    if (!memberList) return;
+
+    if (!projectId) {
+        projectMembers = [];
+        selectedProjectMemberId = null;
+        renderProjectMembers();
+        return;
     }
+
+    const roleMap = new Map();
+    if (currentProject?.owner_id) {
+        roleMap.set(currentProject.owner_id, 'owner');
+    }
+
+    try {
+        const data = await apiCall(`/teams/project/${projectId}`);
+        if (Array.isArray(data)) {
+            data.forEach((member) => {
+                if (member?.user_id) {
+                    roleMap.set(member.user_id, member.role || roleMap.get(member.user_id) || 'member');
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load project members:', error);
+    }
+
+    const taskAssigneeMap = new Map();
+    (tasks || []).forEach((task) => {
+        (task.assignees || []).forEach((assignee) => {
+            if (!assignee?.id) return;
+            if (!taskAssigneeMap.has(assignee.id)) {
+                taskAssigneeMap.set(assignee.id, assignee);
+            }
+            if (!roleMap.has(assignee.id)) {
+                roleMap.set(assignee.id, 'assignee');
+            }
+        });
+    });
+
+    const userLookup = new Map((users || []).map((user) => [user.id, user]));
+    taskAssigneeMap.forEach((value, key) => {
+        if (!userLookup.has(key)) {
+            userLookup.set(key, value);
+        }
+    });
+
+    projectMembers = Array.from(roleMap.entries()).map(([userId, role]) => {
+        const user = userLookup.get(userId) || { id: userId, username: `U${userId}` };
+        const ownedTasks = (tasks || []).filter((task) => (task.assignees || []).some((assignee) => assignee.id === userId));
+        return {
+            id: userId,
+            role,
+            user,
+            responsibilities: ownedTasks.map((task) => task.title),
+            responsibilityCount: ownedTasks.length
+        };
+    }).sort((a, b) => {
+        const roleOrder = { owner: 0, admin: 1, member: 2, assignee: 3 };
+        const roleDiff = (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9);
+        if (roleDiff !== 0) return roleDiff;
+        return (a.user.full_name || a.user.username || '').localeCompare((b.user.full_name || b.user.username || ''), 'vi');
+    });
+
+    if (!projectMembers.some((member) => member.id === selectedProjectMemberId)) {
+        selectedProjectMemberId = projectMembers[0]?.id || null;
+    }
+
+    renderProjectMembers();
+}
+
+function renderProjectGoals() {
+    const container = document.getElementById('activityList');
+    if (!container) return;
+
+    if (!currentProject) {
+        container.innerHTML = '<div class="project-members-empty">Chưa có mục tiêu nào.</div>';
+        return;
+    }
+
+    const goals = [];
+    if (currentProject.objective_group) {
+        goals.push({
+            title: 'MTCL liên kết',
+            body: currentProject.objective_group
+        });
+    }
+    if (currentProject.objective_description) {
+        goals.push({
+            title: 'Mô tả mục tiêu',
+            body: currentProject.objective_description
+        });
+    }
+    if (!goals.length) {
+        container.innerHTML = '<div class="project-members-empty">Chưa có mục tiêu nào.</div>';
+        return;
+    }
+
+    container.innerHTML = goals.map((goal) => `
+        <article class="goal-item">
+            <span class="goal-item-label">${escapeHtml(goal.title)}</span>
+            <p>${escapeHtml(goal.body || '--')}</p>
+        </article>
+    `).join('');
+}
+
+function renderProjectMembers() {
+    const list = document.getElementById('projectMembersList');
+    if (!list) return;
+
+    if (!projectMembers.length) {
+        list.innerHTML = '<div class="project-members-empty">Chưa có thành viên nào.</div>';
+        return;
+    }
+
+    list.innerHTML = `
+        <div class="project-members-table-head">
+            <span>Nhân sự</span>
+            <span>Đơn vị</span>
+            <span>Vai trò</span>
+            <span>Trạng thái</span>
+            <span>Trách nhiệm</span>
+        </div>
+        ${projectMembers.map((member) => {
+        const user = member.user || {};
+        const name = user.full_name || user.username || `User ${member.id}`;
+        const employeeCode = user.username || `U${member.id}`;
+        const roleText = formatProjectMemberRole(member.role);
+        const statusInfo = getProjectMemberStatusInfo(member);
+        const responsibilitySummary = getProjectMemberResponsibilitySummary(member);
+        return `
+            <button type="button" class="project-member-row status-${statusInfo.key}" data-member-id="${member.id}" title="${escapeHtml(responsibilitySummary)}">
+                <span class="project-member-person">
+                    <strong>${escapeHtml(name)}</strong>
+                    <small>${escapeHtml(employeeCode)} · ${escapeHtml(user.position || 'Chưa có chức danh')}</small>
+                </span>
+                <span class="project-member-unit">${escapeHtml(user.department || 'Chưa có đơn vị')}</span>
+                <span class="project-member-role-pill">${escapeHtml(roleText)}</span>
+                <span class="project-member-status-pill">
+                    <i></i>${escapeHtml(statusInfo.label)}
+                </span>
+                <span class="project-member-responsibility">${escapeHtml(responsibilitySummary)}</span>
+            </button>
+        `;
+        }).join('')}
+    `;
+}
+
+function getProjectMemberStatusInfo(member) {
+    if (member.role === 'owner') {
+        return { key: 'owner', label: 'Owner' };
+    }
+    if (member.responsibilityCount > 2) {
+        return { key: 'busy', label: 'Tải cao' };
+    }
+    if (member.responsibilityCount > 0) {
+        return { key: 'active', label: 'Đang xử lý' };
+    }
+    return { key: 'idle', label: 'Chưa giao' };
+}
+
+function getProjectMemberResponsibilitySummary(member) {
+    const responsibilities = member.responsibilities || [];
+    if (!responsibilities.length) {
+        return 'Chưa có task cụ thể';
+    }
+    const topItems = responsibilities.slice(0, 2).join(', ');
+    const remaining = responsibilities.length - 2;
+    return remaining > 0 ? `${topItems} +${remaining}` : topItems;
+}
+
+function formatProjectMemberRole(role) {
+    const roleMap = {
+        owner: 'Project Owner',
+        admin: 'Quản trị',
+        member: 'Thành viên',
+        assignee: 'Phụ trách task'
+    };
+    return roleMap[role] || role || 'Thành viên';
 }
 
 function renderActivities() {
-    const container = document.getElementById('activityList');
+    const container = document.getElementById('projectActivityList');
     if (!container) return;
     
     if (projectActivities.length === 0) {
-        container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-secondary);">Chưa có hoạt động nào.</div>';
+        container.innerHTML = '<div class="project-members-empty">Chưa có hoạt động nào.</div>';
         return;
     }
     
-    // Group activities by date
     const grouped = groupActivitiesByDate(projectActivities);
     
     container.innerHTML = Object.entries(grouped).map(([dateLabel, activities]) => `
@@ -4764,40 +5734,12 @@ function openTaskFromNotification(taskId) {
 }
 
 function openThreadFromNotification(projectId, threadId) {
-    // Chuyển đến project và board view
+    // Thread tab is temporarily hidden from the board UI.
+    // Keep the notification routing on the related project board instead of activating dormant thread UI.
     if (projectId) {
         currentProjectId = projectId;
         switchView('board');
-        
-        // Chuyển sang tab Thread
-        setTimeout(() => {
-            const threadTab = document.getElementById('boardTabThread');
-            if (threadTab) {
-                threadTab.click(); // Trigger click để switch tab
-            }
-            
-            // Đợi threads load xong rồi scroll đến thread
-            setTimeout(() => {
-                // Tìm thread element và scroll đến nó
-                const threadElement = document.querySelector(`[data-thread-id="${threadId}"]`);
-                if (threadElement) {
-                    const container = document.getElementById('threadMessages');
-                    if (container) {
-                        // Scroll container đến thread
-                        const threadTop = threadElement.offsetTop;
-                        const containerTop = container.offsetTop;
-                        container.scrollTop = threadTop - containerTop - 50;
-                        
-                        // Highlight thread
-                        threadElement.style.backgroundColor = 'rgba(35, 131, 226, 0.1)';
-                        threadElement.style.transition = 'background-color 0.3s';
-                        setTimeout(() => {
-                            threadElement.style.backgroundColor = '';
-                        }, 2000);
-                    }
-                }
-            }, 800); // Đợi threads load
-        }, 300);
+        switchBoardTab('status');
     }
 }
 

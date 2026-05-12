@@ -1,0 +1,3 @@
+STT|Họ & tên|Mã nhân viên|Đơn vị|Chức danh|Lĩnh vực|Chương|Nhóm|
+1|Hồ Anh Phát|P0872|P. Tổng hợp|KSHT|OPEX|Trục 1, Trục 2, Trục 3, Trục 4|None|
+2|Nguyễn Khắc Minh Huy|H3724|P. Tổng hợp|KSHT|OPEX|Trục 1|Nhóm 1|

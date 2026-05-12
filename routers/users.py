@@ -23,6 +23,12 @@ def serialize_user_groups(group_entries):
     return [entry.model_dump() if hasattr(entry, "model_dump") else entry for entry in group_entries]
 
 
+def serialize_user_chapters(chapter_entries):
+    if chapter_entries is None:
+        return None
+    return [entry.model_dump() if hasattr(entry, "model_dump") else entry for entry in chapter_entries]
+
+
 @router.post("/", response_model=UserResponse)
 def create_user(
     user_in: UserCreate,
@@ -36,9 +42,10 @@ def create_user(
         raise HTTPException(status_code=400, detail="Username already registered")
 
     # Kiểm tra email đã tồn tại
-    db_user = db.query(User).filter(User.email == user_in.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    if user_in.email:
+        db_user = db.query(User).filter(User.email == user_in.email).first()
+        if db_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
     # Tạo user mới
     hashed_password = get_password_hash(user_in.password)
@@ -51,6 +58,7 @@ def create_user(
         team=user_in.team,
         position=user_in.position,
         field=user_in.field,
+        chapter=serialize_user_chapters(user_in.chapter),
         group=serialize_user_groups(user_in.group),
         role=user_in.role or UserRole.MEMBER.value
     )
@@ -83,7 +91,7 @@ def update_me(
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    allowed_fields = {"email", "full_name", "avatar_url", "department", "team", "position", "field", "group"}
+    allowed_fields = {"email", "full_name", "avatar_url", "department", "team", "position", "field", "chapter", "group"}
     update_data = {
         key: value
         for key, value in user_update.dict(exclude_unset=True).items()
@@ -93,10 +101,12 @@ def update_me(
     if not update_data:
         return db_user
 
+    if "chapter" in update_data:
+        update_data["chapter"] = serialize_user_chapters(update_data["chapter"])
     if "group" in update_data:
         update_data["group"] = serialize_user_groups(update_data["group"])
 
-    if "email" in update_data and update_data["email"] != db_user.email:
+    if "email" in update_data and update_data["email"] and update_data["email"] != db_user.email:
         existing = db.query(User).filter(User.email == update_data["email"]).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already exists")
@@ -178,6 +188,8 @@ def update_user(
 
     # Cập nhật các trường
     update_data = user_update.dict(exclude_unset=True)
+    if "chapter" in update_data:
+        update_data["chapter"] = serialize_user_chapters(update_data["chapter"])
     if "group" in update_data:
         update_data["group"] = serialize_user_groups(update_data["group"])
     for key, value in update_data.items():

@@ -53,6 +53,7 @@ class User(Base):
     team = Column(String, nullable=True)
     position = Column(String, nullable=True)
     field = Column(JSON, nullable=True)
+    chapter = Column(JSON, nullable=True)
     group = Column("group", JSON, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -69,6 +70,16 @@ class User(Base):
     notes = relationship("Note", back_populates="owner", cascade="all, delete-orphan")
     meetings_created = relationship("Meeting", foreign_keys="Meeting.creator_id", cascade="all, delete-orphan")
     meetings_as_employee = relationship("Meeting", foreign_keys="Meeting.employee_id", cascade="all, delete-orphan")
+
+
+class Mtcl(Base):
+    __tablename__ = "mtcl"
+
+    id = Column(Integer, primary_key=True, index=True)
+    objective_group = Column(String(255), nullable=False, index=True)
+    units = Column(JSON, nullable=False, default=list)
+    description = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Workspace(Base):
     __tablename__ = "workspaces"
@@ -88,6 +99,8 @@ class Project(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(Text, nullable=True)
+    objective_group = Column(String(255), nullable=True, index=True)
+    objective_description = Column(Text, nullable=True)
     status = Column(String, default=ProjectStatus.ACTIVE.value)
     color = Column(String, default="#6366f1")  # Màu sắc cho project
     owner_id = Column(Integer, ForeignKey("users.id"))

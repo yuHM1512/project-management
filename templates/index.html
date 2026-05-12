@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -35,71 +35,75 @@
                 </button>
             </div>
 
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">
+            <div class="sidebar-section" data-section="main">
+                <button class="sidebar-section-title" type="button" data-section-toggle="main" aria-expanded="true">
                     <span>Main</span>
                     <span class="material-symbols-outlined sidebar-section-arrow">keyboard_arrow_down</span>
-                </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="#" data-view="dashboard" class="nav-link active">
+                </button>
+                <div class="sidebar-section-body" data-section-body="main">
+                    <nav class="sidebar-nav">
+                        <ul>
+                            <li><a href="#" data-view="dashboard" class="nav-link active">
                             <span class="material-symbols-outlined nav-icon icon">space_dashboard</span>
                             <span>Dashboard</span>
                         </a></li>
-                    <li><a href="#" data-view="projects" class="nav-link">
+                            <li><a href="#" data-view="projects" class="nav-link">
                             <span class="material-symbols-outlined nav-icon icon">workspaces</span>
                             <span>Projects</span>
                         </a></li>
-                    <li><a href="#" data-view="board" class="nav-link">
+                            <li><a href="#" data-view="board" class="nav-link">
                             <span class="material-symbols-outlined nav-icon icon">view_kanban</span>
                             <span>Board</span>
                         </a></li>
-                    <li><a href="#" data-view="notifications" class="nav-link">
+                            <li><a href="#" data-view="notifications" class="nav-link">
                             <div style="position: relative; display: inline-flex; align-items: center;">
                                 <span class="material-symbols-outlined nav-icon icon">notifications</span>
                                 <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
                             </div>
                             <span>Notifications</span>
                         </a></li>
-                    <li><a href="#" data-view="users" class="nav-link admin-only" style="display: none;">
-                            <span class="material-symbols-outlined nav-icon icon">group</span>
-                            <span>Users</span>
+                            <li><a href="#" data-view="settings" class="nav-link admin-only" style="display: none;">
+                            <span class="material-symbols-outlined nav-icon icon">settings</span>
+                            <span>Settings</span>
                         </a></li>
-                </ul>
-            </nav>
+                        </ul>
+                    </nav>
+                </div>
             </div>
 
-            <div class="sidebar-projects sidebar-section">
-                <div class="sidebar-section-title">
+            <div class="sidebar-projects sidebar-section" data-section="personal">
+                <button class="sidebar-section-title" type="button" data-section-toggle="personal" aria-expanded="true">
                     <span>Personal</span>
                     <span class="material-symbols-outlined sidebar-section-arrow">keyboard_arrow_down</span>
-                </div>
-                <ul id="personalList" class="personal-links">
-                    <li><a href="#" class="personal-link" data-personal="todos">
+                </button>
+                <div class="sidebar-section-body" data-section-body="personal">
+                    <ul id="personalList" class="personal-links">
+                        <li><a href="#" class="personal-link" data-personal="todos">
                             <span class="material-symbols-outlined nav-icon icon">checklist</span>
                             <span>To-do List</span>
                         </a></li>
-                    <li><a href="#" class="personal-link" data-personal="meeting">
+                        <li><a href="#" class="personal-link" data-personal="meeting">
                             <span class="material-symbols-outlined nav-icon icon">co_present</span>
                             <span>Meeting</span>
                         </a></li>
-                    <li><a href="#" class="personal-link" data-personal="notes">
+                        <li><a href="#" class="personal-link" data-personal="notes">
                             <span class="material-symbols-outlined nav-icon icon">sticky_note_2</span>
                             <span>My Notes</span>
                         </a></li>
-                    <li><a href="#" class="personal-link" data-personal="work">
+                        <li><a href="#" class="personal-link" data-personal="work">
                             <span class="material-symbols-outlined nav-icon icon">contract_edit</span>
                             <span>Work Log</span>
                         </a></li>
-                    <li><a href="#" class="personal-link" id="navInternHub">
+                        <li><a href="#" class="personal-link" id="navInternHub">
                             <span class="material-symbols-outlined nav-icon icon">school</span>
                             <span>Intern Hub</span>
                         </a></li>
-                    <li><a href="#" class="personal-link" data-personal="account">
+                        <li><a href="#" class="personal-link" data-personal="account">
                             <span class="material-symbols-outlined nav-icon icon">manage_accounts</span>
                             <span>Account</span>
                         </a></li>
-                </ul>
+                    </ul>
+                </div>
             </div>
 
             <div class="sidebar-utility-card">
@@ -240,6 +244,7 @@
                                 <div id="todayTasksList" class="today-tasks-table-body">
                                     <div class="empty-state">Đang tải...</div>
                                 </div>
+                                </div>
                             </div>
                         </div>
                         <!-- Upcoming Deadlines Widget -->
@@ -256,7 +261,7 @@
                         </div>
                     </div>
 
-                    <div class="recent-projects">
+                    <div class="recent-projects" id="recentProjectsSection">
                         <h3>Recent Projects</h3>
                         <div id="recentProjectsList" class="projects-grid"></div>
                     </div>
@@ -283,6 +288,14 @@
                         </div>
                         <button class="btn-primary" id="btnCreateProject">+ New Project</button>
                     </div>
+                    <div class="projects-toolbar">
+                        <div class="projects-filter-group">
+                            <label for="projectObjectiveFilter">Lọc theo mục tiêu chất lượng</label>
+                            <select id="projectObjectiveFilter" class="project-objective-filter">
+                                <option value="">Tất cả mục tiêu chất lượng</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="mes-block-container" style="margin-bottom: 2rem;">
                         <a href="/mes" class="mes-block-link" style="text-decoration: none; display: block;">
                             <div class="project-card" style="background: linear-gradient(135deg, #1a73e8 0%, #0f9d58 100%); color: white; border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(26, 115, 232, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow=''">
@@ -298,7 +311,7 @@
                             </div>
                         </a>
                     </div>
-                    <div id="projectsGrid" class="projects-grid"></div>
+                    <div id="projectsGrid" class="project-groups"></div>
                 </div>
 
                 <!-- Personal View -->
@@ -718,37 +731,165 @@
                     </div>
                 </div>
 
-                <!-- Users View -->
-                <div id="usersView" class="view">
-                    <div class="view-header">
-                        <h2>User Management</h2>
-                        <button class="btn-primary" id="btnCreateUser">+ Create User</button>
+                <!-- Settings View -->
+                <div id="settingsView" class="view">
+                    <div class="settings-view-shell">
+                        <div class="view-header settings-view-header">
+                            <div class="view-title-stack">
+                                <span class="view-kicker">System Settings</span>
+                                <h2>Settings</h2>
+                                <p>Manage people data and MTCL mappings in one administrative workspace.</p>
+                            </div>
+                        </div>
+                        <div class="settings-tabbar" id="settingsTabbar">
+                            <button type="button" class="settings-tab active" data-settings-tab="users">
+                                <span class="material-symbols-outlined">group</span>
+                                <span>Users</span>
+                            </button>
+                            <button type="button" class="settings-tab" data-settings-tab="mtcl">
+                                <span class="material-symbols-outlined">track_changes</span>
+                                <span>MTCL</span>
+                            </button>
+                        </div>
+                        <div id="settingsPanelUsers" class="settings-panel active">
+                            <div class="users-view-shell">
+                                <div class="view-header users-view-header">
+                                    <div class="view-title-stack">
+                                        <span class="view-kicker">People Directory</span>
+                                        <h2>User Management</h2>
+                                        <p>Manage people profiles, field ownership, chapters, and group structure in one clear workspace directory.</p>
+                                    </div>
+                                    <button class="btn-primary" id="btnCreateUser">+ Create User</button>
+                                </div>
+                                <div class="users-summary-grid">
+                                    <div class="users-summary-card users-summary-card-primary">
+                                        <div class="users-summary-card-head">
+                                            <span>Tong ho so</span>
+                                            <span class="material-symbols-outlined users-summary-card-icon">badge</span>
+                                        </div>
+                                        <strong id="usersTotalCount">0</strong>
+                                    </div>
+                                    <div class="users-summary-card">
+                                        <div class="users-summary-card-head">
+                                            <span>Quan tri</span>
+                                            <span class="material-symbols-outlined users-summary-card-icon">shield_person</span>
+                                        </div>
+                                        <strong id="usersAdminCount">0</strong>
+                                    </div>
+                                    <div class="users-summary-card">
+                                        <div class="users-summary-card-head">
+                                            <span>Phong ban</span>
+                                            <span class="material-symbols-outlined users-summary-card-icon">apartment</span>
+                                        </div>
+                                        <strong id="usersDepartmentCount">0</strong>
+                                    </div>
+                                </div>
+                                <div id="usersTableContainer" class="users-directory-shell">
+                                    <div class="users-directory-head">
+                                        <div>
+                                            <span class="users-directory-kicker">Editorial Directory</span>
+                                            <h3>People, role and capability matrix</h3>
+                                        </div>
+                                        <p id="usersDirectoryMeta">Loading user directory...</p>
+                                    </div>
+                                    <div class="users-directory-columns">
+                                        <span>Profile</span>
+                                        <span>Department</span>
+                                        <span>Field / Chapter / Group</span>
+                                        <span>Role</span>
+                                        <span>Actions</span>
+                                    </div>
+                                    <div id="usersTableBody" class="users-directory-list">
+                                        <div class="users-empty-state">Loading...</div>
+                                    </div>
+                                    <div class="users-directory-footer">
+                                        <span class="users-directory-footer-label">Directory status</span>
+                                        <span id="usersDirectoryFooterMeta">Loading user directory...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="settingsPanelMtcl" class="settings-panel">
+                            <div class="mtcl-view-shell">
+                                <div class="view-header mtcl-view-header">
+                                    <div class="view-title-stack">
+                                        <span class="view-kicker">Muc tieu chat luong</span>
+                                        <h2>MTCL</h2>
+                                        <p>Quality objective groups mapped to responsible units and target details.</p>
+                                    </div>
+                                </div>
+                                <div class="mtcl-summary-grid">
+                                    <div class="users-summary-card users-summary-card-primary">
+                                        <div class="users-summary-card-head">
+                                            <span>Nhom muc tieu</span>
+                                            <span class="material-symbols-outlined users-summary-card-icon">flag</span>
+                                        </div>
+                                        <strong id="mtclGroupCount">0</strong>
+                                    </div>
+                                    <div class="users-summary-card">
+                                        <div class="users-summary-card-head">
+                                            <span>Don vi</span>
+                                            <span class="material-symbols-outlined users-summary-card-icon">domain</span>
+                                        </div>
+                                        <strong id="mtclUnitCount">0</strong>
+                                    </div>
+                                    <div class="users-summary-card">
+                                        <div class="users-summary-card-head">
+                                            <span>Ban ghi</span>
+                                            <span class="material-symbols-outlined users-summary-card-icon">library_books</span>
+                                        </div>
+                                        <strong id="mtclRecordCount">0</strong>
+                                    </div>
+                                </div>
+                                <div class="mtcl-directory-shell">
+                                    <div class="users-directory-head">
+                                        <div>
+                                            <span class="users-directory-kicker">Quality Mapping</span>
+                                            <h3>Groups, units and objective details</h3>
+                                        </div>
+                                        <p id="mtclMeta">Loading MTCL data...</p>
+                                    </div>
+                                    <div class="mtcl-directory-columns">
+                                        <span>Nhom muc tieu</span>
+                                        <span>Don vi</span>
+                                        <span>Chi tiet muc tieu</span>
+                                        <span>Actions</span>
+                                    </div>
+                                    <div id="mtclTableBody" class="mtcl-directory-list">
+                                        <div class="users-empty-state">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="usersTableContainer"
-                        style="background: white; border-radius: 8px; padding: 24px; box-shadow: var(--shadow);">
-                        <table id="usersTable" style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--border-color);">
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Avatar</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Username</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Email</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Full Name</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Position</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Department</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Team</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Field / Group</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Role</th>
-                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <tr>
-                                    <td colspan="10"
-                                        style="padding: 24px; text-align: center; color: var(--text-secondary);">Đang
-                                        tải...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                </div>
+
+                <div id="mtclModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Edit MTCL</h2>
+                            <button class="modal-close" id="closeMtclModal">×</button>
+                        </div>
+                        <form id="mtclForm">
+                            <input type="hidden" id="mtclId">
+                            <div class="form-group">
+                                <label>Nhóm mục tiêu</label>
+                                <input type="text" id="mtclObjectiveGroup">
+                            </div>
+                            <div class="form-group">
+                                <label>Đơn vị</label>
+                                <input type="text" id="mtclUnits" placeholder="XN1-V1, XN3, P. QLCL">
+                                <small class="input-hint">Ngăn cách nhiều đơn vị bằng dấu phẩy.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Chi tiết mục tiêu</label>
+                                <textarea id="mtclDescription"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" id="cancelMtcl">Cancel</button>
+                                <button type="submit" class="btn-primary">Save</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -783,35 +924,64 @@
                                 </div>
                             </div>
                             <div class="project-summary-section" id="projectSummarySection" style="display: none;">
-                                <!-- Cột trái: Ngày yêu cầu và Tiến độ -->
                                 <div class="summary-left-column">
-                                    <!-- Ngày yêu cầu hoàn thành - Card riêng -->
-                                    <div class="summary-due-date-card">
-                                        <label>Ngày yêu cầu hoàn thành</label>
-                                        <span id="projectDueDateDisplay">--</span>
-                                    </div>
-
-                                    <!-- Tiến độ dự án - Card riêng, nằm dưới -->
-                                    <div class="summary-progress-card">
-                                        <label>Tiến độ dự án</label>
-                                        <div class="summary-progress">
-                                            <div class="summary-progress-bar">
-                                                <div class="summary-progress-fill" id="projectProgressFill"></div>
+                                    <div class="summary-overview-card">
+                                        <div class="summary-card-header">
+                                            <h3>Thông tin chung</h3>
+                                        </div>
+                                        <div class="summary-field">
+                                            <label>Mô tả dự án</label>
+                                            <p id="projectDescriptionDisplay">--</p>
+                                        </div>
+                                        <div class="summary-field">
+                                            <label>Liên kết mục tiêu</label>
+                                            <div id="projectObjectiveDisplay" class="summary-pill-list">
+                                                <span class="summary-pill muted">--</span>
                                             </div>
-                                            <span id="projectProgressText">0% (0/0)</span>
+                                        </div>
+                                    </div>
+                                    <div class="summary-metrics-grid">
+                                        <div class="summary-date-card">
+                                            <label>Thời gian</label>
+                                            <div id="projectTimelineDisplay" class="summary-timeline-text">--</div>
+                                        </div>
+                                        <div class="summary-progress-card">
+                                            <label>Tiến độ dự án</label>
+                                            <div class="summary-progress">
+                                                <div class="summary-progress-bar">
+                                                    <div class="summary-progress-fill" id="projectProgressFill"></div>
+                                                </div>
+                                                <span id="projectProgressText">0% (0/0)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="activity-log-card summary-activity-card" id="activityLogCard">
+                                        <div class="activity-header">
+                                            <h3>Activity log</h3>
+                                        </div>
+                                        <div class="activity-list summary-activity-list" id="projectActivityList">
+                                            <div class="project-members-empty">Chưa có hoạt động nào.</div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Cột phải: Activity Log Card -->
-                                <div class="activity-log-card" id="activityLogCard">
-                                    <div class="activity-header">
-                                        <h3>Activity Log</h3>
+                                <div class="summary-right-column">
+                                    <div class="activity-log-card project-goals-card">
+                                        <div class="activity-header">
+                                            <h3>Mục tiêu dự án</h3>
+                                        </div>
+                                        <div class="activity-list goal-list" id="activityList">
+                                            <div class="project-members-empty">Chưa có mục tiêu nào.</div>
+                                        </div>
                                     </div>
-                                    <div class="activity-list" id="activityList">
-                                        <div
-                                            style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 14px;">
-                                            Chưa có hoạt động nào.
+                                    <div class="activity-log-card member-directory-card" id="projectMembersCard">
+                                        <div class="activity-header">
+                                            <h3>Thành viên</h3>
+                                        </div>
+                                        <div class="project-members-shell">
+                                            <div class="project-members-table" id="projectMembersList">
+                                                <div class="project-members-empty">Chưa có thành viên nào.</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -821,7 +991,10 @@
                             <div class="board-tabs">
                                 <button class="board-tab active" data-tab="status">Status</button>
                                 <button class="board-tab" data-tab="timeline">Timeline</button>
-                                <button class="board-tab" data-tab="thread">Thread</button>
+                                <button class="board-tab" data-tab="overview">Task Overview</button>
+                                <button class="board-tab" data-tab="workload">Team Workload</button>
+                                <!-- Thread tab is temporarily hidden because this board flow no longer uses discussion threads. -->
+                                <!-- <button class="board-tab" data-tab="thread">Thread</button> -->
                             </div>
 
                             <!-- Status Tab (Kanban Board) -->
@@ -829,28 +1002,40 @@
                                 <div class="kanban-board" id="kanbanBoard">
                                     <div class="kanban-column" data-status="todo">
                                         <div class="column-header">
-                                            <h3>To Do</h3>
+                                            <div class="column-heading-stack">
+                                                <span class="column-kicker">Queue</span>
+                                                <h3>To Do</h3>
+                                            </div>
                                             <span class="task-count" id="countTodo">0</span>
                                         </div>
                                         <div class="task-list" id="tasksTodo"></div>
                                     </div>
                                     <div class="kanban-column" data-status="in_progress">
                                         <div class="column-header">
-                                            <h3>In Progress</h3>
+                                            <div class="column-heading-stack">
+                                                <span class="column-kicker">Active Work</span>
+                                                <h3>In Progress</h3>
+                                            </div>
                                             <span class="task-count" id="countInProgress">0</span>
                                         </div>
                                         <div class="task-list" id="tasksInProgress"></div>
                                     </div>
                                     <div class="kanban-column" data-status="done">
                                         <div class="column-header">
-                                            <h3>Done</h3>
+                                            <div class="column-heading-stack">
+                                                <span class="column-kicker">Released</span>
+                                                <h3>Done</h3>
+                                            </div>
                                             <span class="task-count" id="countDone">0</span>
                                         </div>
                                         <div class="task-list" id="tasksDone"></div>
                                     </div>
                                     <div class="kanban-column" data-status="blocked">
                                         <div class="column-header">
-                                            <h3>Blocked</h3>
+                                            <div class="column-heading-stack">
+                                                <span class="column-kicker">Needs Attention</span>
+                                                <h3>Blocked</h3>
+                                            </div>
                                             <span class="task-count" id="countBlocked">0</span>
                                         </div>
                                         <div class="task-list" id="tasksBlocked"></div>
@@ -891,7 +1076,17 @@
                                 </div>
                             </div>
 
-                            <!-- Thread Tab (Discussion) -->
+                            <!-- Task Overview Tab -->
+                            <div id="boardTabOverview" class="board-tab-content">
+                                <div class="task-overview-shell" id="taskOverviewBoard"></div>
+                            </div>
+
+                            <!-- Team Workload Tab -->
+                            <div id="boardTabWorkload" class="board-tab-content">
+                                <div class="team-workload-shell" id="teamWorkloadBoard"></div>
+                            </div>
+
+                            <!-- Thread Tab (Discussion) - temporarily hidden from UI, markup retained for possible reuse. -->
                             <div id="boardTabThread" class="board-tab-content">
                                 <div class="thread-container">
                                     <div class="thread-messages" id="threadMessages">
@@ -943,21 +1138,21 @@
     <div id="projectModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="projectModalTitle">New Project</h2>
+                <h2 id="projectModalTitle">Tạo dự án</h2>
                 <button class="modal-close" id="closeProjectModal">×</button>
             </div>
             <form id="projectForm">
                 <input type="hidden" id="projectId">
                 <div class="form-group">
-                    <label>Project Name</label>
+                    <label>Tên dự án</label>
                     <input type="text" id="projectName" required>
                 </div>
                 <div class="form-group">
-                    <label>Description</label>
+                    <label>Mô tả dự án</label>
                     <textarea id="projectDescription" rows="3"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Project Type</label>
+                    <label>Loại dự án</label>
                     <select id="projectType" required>
                         <option value="">-- Chọn loại dự án --</option>
                         <!-- Options sẽ được load bằng JavaScript -->
@@ -966,16 +1161,29 @@
                 </div>
                 <div class="form-group">
                     <label>Ngày hoàn thành dự kiến</label>
+                    <label>Mục tiêu chất lượng</label>
+                    <select id="projectObjectiveGroup">
+                        <option value="">-- Chọn mục tiêu chất lượng --</option>
+                    </select>
+                    <small class="input-hint">Chọn nhóm mục tiêu để tự động gắn mô tả chất lượng tương ứng.</small>
+                </div>
+                <div class="form-group">
+                    <label>Mô tả mục tiêu chất lượng</label>
+                    <select id="projectObjectiveDescription">
+                        <option value="">-- Chọn mô tả mục tiêu chất lượng --</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <input type="date" id="projectDueDate">
                     <small class="input-hint">Dùng để theo dõi tiến độ hoàn thành dự án</small>
                 </div>
                 <div class="form-group">
-                    <label>Color</label>
+                    <label>Màu nhận diện</label>
                     <input type="color" id="projectColor" value="#6366f1">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary" id="cancelProject">Cancel</button>
-                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" id="cancelProject">Hủy</button>
+                    <button type="submit" class="btn-primary">Lưu dự án</button>
                 </div>
             </form>
         </div>
@@ -1101,7 +1309,7 @@
                 </div>
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" id="userEmail" required>
+                    <input type="email" id="userEmail">
                 </div>
                 <div class="form-group">
                     <label>Full Name</label>
@@ -1127,11 +1335,11 @@
                 </div>
                 <div class="form-group">
                     <div class="field-group-header">
-                        <label style="margin-bottom: 0;">Lĩnh vực và nhóm</label>
+                        <label style="margin-bottom: 0;">Lĩnh vực, chapter và nhóm</label>
                         <button type="button" class="btn-secondary field-group-add-btn" id="btnAddUserFieldGroup">+ Add field</button>
                     </div>
                     <div id="userFieldGroupRows" class="user-field-group-rows"></div>
-                    <small class="input-hint">Mỗi dòng gồm 1 lĩnh vực và nhóm tương ứng. Dữ liệu sẽ lưu theo cặp field-group.</small>
+                    <small class="input-hint">Mỗi field chỉ có 1 group, nhưng có thể thêm nhiều chapter bằng nút + Add chapter trong từng dòng.</small>
                 </div>
                 <div class="form-group">
                     <label>Role</label>
