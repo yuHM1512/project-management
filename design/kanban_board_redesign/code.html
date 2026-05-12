@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#2f3035",
+                    "on-secondary-container": "#2a4486",
+                    "tertiary-fixed-dim": "#ffb59d",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-primary": "#b2c5ff",
+                    "primary-container": "#002b73",
+                    "on-surface": "#191c1d",
+                    "secondary-container": "#9cb4fe",
+                    "tertiary": "#390c00",
+                    "primary-fixed": "#dae2ff",
+                    "surface-container-low": "#f4f3fa",
+                    "surface-dim": "#dad9e0",
+                    "secondary": "#435b9f",
+                    "on-tertiary-container": "#ff9c7a",
+                    "tertiary-container": "#822803",
+                    "on-primary-container": "#98b3ff",
+                    "background": "#faf8ff",
+                    "on-primary-fixed": "#001848",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "surface-variant": "#e3e2e8",
+                    "on-surface-variant": "#424654",
+                    "surface-container-high": "#e8e7ee",
+                    "surface-bright": "#faf8ff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-background": "#1a1b20",
+                    "primary": "#001848",
+                    "outline": "#747784",
+                    "on-primary-fixed-variant": "#23438b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#00174a",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-tertiary-fixed-variant": "#7b2e12",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed": "#390c00",
+                    "error-container": "#ffdad6",
+                    "outline-variant": "rgba(25, 28, 29, 0.2)",
+                    "inverse-on-surface": "#f1f0f7",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#3e5ba4",
+                    "on-secondary-fixed-variant": "#2a4386",
+                    "surface-container": "#eeedf4",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "surface": "#f8f9fa"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "2": "0.5rem",
+                    "16": "5.5rem",
+                    "4": "1.5rem",
+                    "1": "0.25rem",
+                    "8": "2.75rem"
+            },
+            "fontFamily": {
+                    "display-lg-mobile": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Manrope"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["28px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.01em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-nav {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #001848 0%, #002b73 100%);
+        }
+        .shadow-cloud {
+            box-shadow: 0px 20px 40px rgba(25, 28, 29, 0.05);
+        }
+        body {
+            background-color: #faf8ff;
+        }
+    </style>
+</head>
+<body class="font-body-lg text-on-surface">
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 w-full z-40 bg-surface/80 glass-nav shadow-sm shadow-on-surface/5 flex justify-between items-center h-16 px-8 w-full">
+<div class="flex items-center gap-8">
+<span class="font-display-lg text-headline-md font-extrabold text-primary">Curator PM</span>
+<nav class="hidden md:flex items-center space-x-8">
+<a class="font-body-lg text-on-surface-variant hover:text-on-surface transition-colors duration-300" href="#">Workspace</a>
+<a class="font-body-lg text-primary font-bold border-b-2 border-primary" href="#">Projects</a>
+<a class="font-body-lg text-on-surface-variant hover:text-on-surface transition-colors duration-300" href="#">Editorial Sprint</a>
+</nav>
+</div>
+<div class="flex items-center space-x-6">
+<div class="hidden lg:flex items-center bg-surface-container-low px-4 py-2 rounded-full">
+<span class="material-symbols-outlined text-outline mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-label-md placeholder-outline" placeholder="Search project..." type="text"/>
+</div>
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full cursor-pointer transition-all" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full cursor-pointer transition-all" data-icon="history">history</span>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant/20">
+<img alt="Senior Curator Profile" data-alt="Close-up professional portrait of a senior creative professional in a bright, modern studio. The lighting is soft and high-key, reflecting a minimalist editorial aesthetic with clean lines and a focused, serene atmosphere. The overall palette is neutral with soft grays and crisp whites to match a premium digital publication style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_RcMNilHJ5kRqtDuSxDR5KupCODdbAj0qr90ZdzCyNLYq6rNLIfge_OdKgc69vH0WblOVZIlca12Op2n0sg8KvsnGT5phdGkFhcePup5R52jy1bj9iSLkjoxHvchIQeR4BZuOE0pVMLxdVKMWApda8I78TQsSC1v-uOIw3_lKettx8T97-gF1ZieWrwlh0ZbbM7hX1zgWpYqWf-vcI65_0de2hTEmxEzdZUtBSjC4XpZbbucBjnjpwzwVVmNRCQqZHmqvh48W9jJu"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low hidden lg:flex flex-col py-8 px-4 space-y-8 z-30">
+<div class="mt-16 px-4 pt-8">
+<h2 class="font-display-lg text-headline-md font-bold text-primary">The Curator</h2>
+<p class="text-on-surface-variant text-label-md">Architectural PM</p>
+</div>
+<nav class="flex-grow space-y-2">
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="home">home</span>
+<span class="font-body-lg">Home</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="task_alt">task_alt</span>
+<span class="font-body-lg">My Tasks</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="all_inbox">all_inbox</span>
+<span class="font-body-lg">Inbox</span>
+</a>
+<a class="flex items-center px-4 py-3 bg-surface-container-highest text-primary rounded-lg font-semibold shadow-sm" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="layers">layers</span>
+<span class="font-body-lg">Projects</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+<span class="font-body-lg">Settings</span>
+</a>
+</nav>
+<button class="primary-gradient text-on-primary py-4 px-6 rounded-lg font-bold flex items-center justify-center space-x-2 active:scale-[0.98] transition-transform shadow-cloud">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span>Create Entry</span>
+</button>
+<div class="pt-8 border-t border-outline-variant/10 space-y-2">
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="help">help</span>
+<span class="font-body-lg">Help Center</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="delete">delete</span>
+<span class="font-body-lg">Trash</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="lg:ml-72 pt-16 min-h-screen">
+<div class="max-w-[1400px] mx-auto px-8 py-16">
+<!-- Header Section -->
+<section class="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div>
+<span class="text-primary font-bold text-label-md tracking-widest uppercase mb-4 block">Editorial Sprint / Q4</span>
+<h1 class="font-display-lg text-display-lg text-on-surface tracking-tight max-w-2xl">Refining the Architectural Infrastructure</h1>
+</div>
+<div class="flex space-x-4">
+<button class="px-6 py-3 rounded-md bg-surface-container-low text-primary font-semibold hover:bg-surface-container transition-all">
+                        Board Settings
+                    </button>
+<button class="px-6 py-3 rounded-md primary-gradient text-on-primary font-semibold shadow-cloud active:scale-[0.99] transition-all">
+                        Add Column
+                    </button>
+</div>
+</section>
+<!-- Kanban Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+<!-- Column: To Do -->
+<div class="flex flex-col space-y-8">
+<div class="flex items-center justify-between px-2">
+<div class="flex items-center space-x-3">
+<h3 class="font-display-lg text-headline-md text-on-surface">To Do</h3>
+<span class="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-label-md font-bold">3</span>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary" data-icon="more_horiz">more_horiz</span>
+</div>
+<div class="space-y-4">
+<!-- Task Card 1 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl shadow-cloud group hover:ring-1 hover:ring-primary/20 transition-all cursor-grab active:cursor-grabbing">
+<div class="flex justify-between items-start mb-6">
+<span class="primary-gradient text-on-primary px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">High Priority</span>
+<span class="material-symbols-outlined text-outline-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug mb-4">Define API specifications</h4>
+<p class="text-on-surface-variant text-body-lg line-clamp-2 mb-6">Establish the RESTful guidelines and documentation standards for the upcoming microservices architecture.</p>
+<div class="flex items-center justify-between pt-4">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-high overflow-hidden">
+<img alt="User" data-alt="A detailed, close-up portrait of a professional developer in a bright, modern office setting. The mood is calm and focused, utilizing a soft blue and white color palette consistent with a high-end corporate learning environment. The lighting is natural and diffuse." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdaQydjTf0TVqnNyK62aQ4Awe_rZAW3L7HUgLYkpnOMiSuqnrPeIzo4pya2xuQGwazfAwAAtLCxXHmA5iEq5RJPJUYLP89q1L6nyPR9HGd3bVb-cRd2uINJl0i6ifaEueSiMceqV3NRkDIS5JzVsGq2_YmiI9TBifK_YuMCgB6wmpud1Ger8Kpmf9Z6LWPYrnx3OQ6SqgGQsMcuz9vsGxhRCfntdGABpWvrZBDuYXs1CyAnv3DEjzZKD8Qxgs6lnZ3FOL-4XKzlUSG"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-high flex items-center justify-center">
+<span class="text-[10px] font-bold text-on-surface-variant">+2</span>
+</div>
+</div>
+<div class="flex items-center text-outline text-label-md space-x-2">
+<span class="material-symbols-outlined text-body-lg" data-icon="calendar_today">calendar_today</span>
+<span>Oct 24</span>
+</div>
+</div>
+</article>
+<!-- Task Card 2 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl shadow-cloud group hover:ring-1 hover:ring-primary/20 transition-all">
+<div class="flex justify-between items-start mb-6">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Research</span>
+<span class="material-symbols-outlined text-outline-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug mb-4">UI Library Audit</h4>
+<p class="text-on-surface-variant text-body-lg mb-6">Review current component library against new editorial design guidelines for accessibility compliance.</p>
+<div class="flex items-center justify-between pt-4">
+<div class="flex items-center text-outline text-label-md space-x-4">
+<span class="flex items-center"><span class="material-symbols-outlined text-body-lg mr-1" data-icon="chat_bubble_outline">chat_bubble_outline</span> 12</span>
+<span class="flex items-center"><span class="material-symbols-outlined text-body-lg mr-1" data-icon="attach_file">attach_file</span> 3</span>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-high overflow-hidden">
+<img alt="User" data-alt="A minimalist professional portrait of a creative lead with a focus on clean aesthetic and architectural breathing room. Soft, natural light illuminates the subject against a neutral backdrop, reinforcing the persona of a digital curator within a premium educational ecosystem." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvXf1GYw1bnm24hV4VzlwBQ0Ih15XVOHeL4wS0sgMz6HHNNjPzQTragZ1Pxtjhm8TiJ4CCvAhgdqWozAemG1c5jmY9C6lQR63Cak88w9U42mEqKKZ4y7mANgFnOiKEWNP9uZMyFRilqd2jNmJ1nzJvoTu6fU3OZLwVsh9qSoFPhE8pUD0-7W8PNYhXaj09XWiZVtputgL2kT_23pAN0Lu77foLIvrZqIaa7rWeC5bSljR_lKKDenDQdpYez7HYoll0Y7m_kZpCl44Y"/>
+</div>
+</div>
+</article>
+<!-- Task Card 3 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl shadow-cloud group hover:ring-1 hover:ring-primary/20 transition-all">
+<div class="flex justify-between items-start mb-6">
+<span class="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Dev</span>
+<span class="material-symbols-outlined text-outline-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug mb-4">Integrate Auth0 Logic</h4>
+<p class="text-on-surface-variant text-body-lg mb-6">Move authentication flow to centralized provider for multi-workspace support.</p>
+</article>
+</div>
+</div>
+<!-- Column: In Progress -->
+<div class="flex flex-col space-y-8">
+<div class="flex items-center justify-between px-2">
+<div class="flex items-center space-x-3">
+<h3 class="font-display-lg text-headline-md text-on-surface">In Progress</h3>
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-label-md font-bold">2</span>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary" data-icon="more_horiz">more_horiz</span>
+</div>
+<div class="space-y-4">
+<!-- Task Card 4 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl shadow-cloud group hover:ring-1 hover:ring-primary/20 transition-all">
+<div class="flex justify-between items-start mb-6">
+<span class="primary-gradient text-on-primary px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Critical</span>
+<span class="material-symbols-outlined text-outline-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug mb-4">Migration of user database</h4>
+<div class="w-full bg-surface-container h-1.5 rounded-full mb-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full w-[65%] primary-gradient rounded-full"></div>
+</div>
+<div class="flex items-center justify-between pt-4">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-high overflow-hidden">
+<img alt="User" data-alt="A sharp, clear image of a senior systems architect in a high-tech, minimalist environment. The aesthetic is clean and modern, using a palette of deep navy and white. The mood is one of quiet efficiency and focused calm, fitting for a professional digital curator." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQiKT91Qh9j504nKM73s05e2aa-lIDytfRnzTMUhAxFJJe5_p4QoShcJaSUpKi15VL9YNe2E0sFSLcZIv3ZqKwqTD2Y90CrJMCvvtXYf5SEazTqj45HLXVvD1HPdRDUAYwYpKdwV6bB9TCwJ7ceg9ejyLPP1NVJvZmZkVfbc6NvXinQz5dtMYdO1VUPQJoGKR3x1DtJDZ-I2Edqle9MrYYJ4zvhZRyKZnQBLhRf5DUwwnNOUYKx7GHArhK_l7ZvA67SuR-nrey8_AZ"/>
+</div>
+<div class="flex items-center text-primary text-label-md font-bold">
+                                    65% Complete
+                                </div>
+</div>
+</article>
+<!-- Task Card 5 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl shadow-cloud group hover:ring-1 hover:ring-primary/20 transition-all">
+<div class="flex justify-between items-start mb-6">
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Compliance</span>
+<span class="material-symbols-outlined text-outline-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug mb-4">Security audit</h4>
+<p class="text-on-surface-variant text-body-lg mb-6">Penetration testing and vulnerability assessment of the production environment.</p>
+<div class="flex items-center justify-between pt-4">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-high overflow-hidden">
+<img alt="User" data-alt="A modern professional portrait of a cybersecurity expert in a crisp, bright office space. The design style is editorial minimalism with significant vertical separation. The palette features tonal layering of grays and whites with subtle blue accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiM3ZMZ94TWOO3625VyKBynmzVM8joufnCS4EVf2r0oQOFK-AkOfDP3tKQM6RHdDpsTxkx28oi-s6EtHaH062UEtIUwb14Fl7UAd_E6ZTQt83Qj4enoHCPvtvQQgvsSl8BKlSyoJIZQ_b2ryGZcv5SlhGtocBPbIpOCC7EmJHov-Jh9pcfpslL4HkDnV7bv5N_CM9miJdF8bm030R5PPLJugZ3kkGtE2xWIWlPmxHUJS83m3LAPjZrwtaZN4OnbeIjasRMp_qAHYkB"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-high overflow-hidden">
+<img alt="User" data-alt="Close up image of a professional woman working in a high-end, glass-walled office environment. The lighting is serene and diffuse. The visual language is defined by intentional asymmetry and architectural breathing room, reflecting a state of focused calm." src="https://lh3.googleusercontent.com/aida-public/AB6AXuABsZk9CFB0F8z1sXOQ7GwhzAxvTuCP8hnpRJwOH6VQxuSwlE-hJMeOnHwHqcX1Ho7NZ2W0MG9sdfc3Y9lLYae_oxL6x4tP036nPxj5QNVYY8Qr02ZaPN6hbasIqLPixhoSoHIA6ZlHs3_4Lu4YloK38Gqpvvt_-Z0vkeaN8zqwXuercouuJyNPh1o1Gkq0z4aT28oW88g1mzwZGL9x6vTiBCZoNOIqwZaQkdIZpMI9-jdBfXSvtcaidc442vV5jFDowFByPlRegrfq"/>
+</div>
+</div>
+<div class="flex items-center text-outline text-label-md space-x-2">
+<span class="material-symbols-outlined text-body-lg" data-icon="schedule">schedule</span>
+<span>2d left</span>
+</div>
+</div>
+</article>
+</div>
+</div>
+<!-- Column: Completed -->
+<div class="flex flex-col space-y-8">
+<div class="flex items-center justify-between px-2">
+<div class="flex items-center space-x-3">
+<h3 class="font-display-lg text-headline-md text-on-surface">Completed</h3>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-md font-bold">1</span>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary" data-icon="more_horiz">more_horiz</span>
+</div>
+<div class="space-y-4 opacity-75">
+<!-- Task Card 6 -->
+<article class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/20 group hover:ring-1 hover:ring-primary/20 transition-all">
+<div class="flex justify-between items-start mb-6">
+<span class="bg-secondary-container/50 text-on-secondary-container px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Design</span>
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug mb-4 line-through decoration-outline-variant">Typography Selection</h4>
+<p class="text-on-surface-variant text-body-lg mb-6">Finalize the pairing of Manrope and Inter for the Editorial UI system.</p>
+<div class="bg-surface-variant/30 p-4 -mx-6 -mb-6 rounded-b-xl flex items-center justify-between">
+<span class="text-label-md text-on-surface-variant font-bold">Closed Oct 18</span>
+<span class="material-symbols-outlined text-body-lg text-outline" data-icon="archive">archive</span>
+</div>
+</article>
+<!-- Add Task Ghost Button -->
+<button class="w-full py-8 border-2 border-dashed border-outline-variant/30 rounded-xl flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all hover:border-primary/50 group">
+<span class="material-symbols-outlined text-display-lg text-outline-variant group-hover:text-primary mb-2" data-icon="add_circle">add_circle</span>
+<span class="font-body-lg font-semibold">Drop entry here</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB - Only for Home/Dashboards, but relevant here as "Board Actions" -->
+<div class="fixed bottom-8 right-8 flex flex-col items-end space-y-4">
+<button class="primary-gradient text-on-primary h-14 w-14 rounded-full shadow-cloud flex items-center justify-center hover:scale-105 transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+<!-- Progress Float -->
+<div class="fixed bottom-0 left-0 w-full z-50 px-8 py-4 bg-surface/80 glass-nav border-t border-outline-variant/10 md:left-72 md:w-[calc(100%-18rem)]">
+<div class="max-w-[1400px] mx-auto flex items-center justify-between">
+<div class="flex items-center space-x-4">
+<span class="text-label-md font-bold text-primary uppercase tracking-widest">Sprint Velocity</span>
+<div class="h-2 w-48 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full w-3/4 primary-gradient"></div>
+</div>
+<span class="text-label-md font-bold text-on-surface-variant">75%</span>
+</div>
+<div class="hidden md:flex items-center space-x-6 text-on-surface-variant text-label-md">
+<span class="flex items-center"><span class="material-symbols-outlined text-body-lg mr-1" data-icon="pending">pending</span> 6 Remaining</span>
+<span class="flex items-center text-primary font-bold"><span class="material-symbols-outlined text-body-lg mr-1" data-icon="check_circle">check_circle</span> 14 Finalized</span>
+</div>
+</div>
+</div>
+</body></html>

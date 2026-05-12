@@ -46,12 +46,12 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    
+
     # Kiểm tra email đã tồn tại
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     # Tạo user mới
     hashed_password = get_password_hash(user.password)
     db_user = User(
@@ -67,12 +67,12 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), 
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
     remember_me: bool = Form(False)
 ):
     """Đăng nhập
-    
+
     Args:
         remember_me: Nếu True, token sẽ có hiệu lực 1 năm. Nếu False, token hết hạn sau 30 phút.
     """
@@ -83,22 +83,22 @@ def login(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Nếu remember_me = True, token hết hạn sau 1 năm, nếu không thì 30 phút
     if remember_me:
         access_token_expires = timedelta(days=REMEMBER_ME_EXPIRE_DAYS)
     else:
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    
+
     from fastapi.responses import JSONResponse
     response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
     response.set_cookie(
-        key="access_token", 
-        value=f"Bearer {access_token}", 
+        key="access_token",
+        value=f"Bearer {access_token}",
         httponly=True,
         max_age=int(access_token_expires.total_seconds()),
         expires=int(access_token_expires.total_seconds())
@@ -119,7 +119,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    
+
     user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise credentials_exception
@@ -130,10 +130,10 @@ async def get_current_user_from_cookie(request: Request, db: Session = Depends(g
     token = request.cookies.get("access_token")
     if not token:
         return None
-    
+
     if token.startswith("Bearer "):
         token = token.split(" ")[1]
-        
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -141,7 +141,7 @@ async def get_current_user_from_cookie(request: Request, db: Session = Depends(g
             return None
     except JWTError:
         return None
-    
+
     user = db.query(User).filter(User.username == username).first()
     return user
 
@@ -158,4 +158,3 @@ def require_admin(current_user: User = Depends(get_current_user)):
             detail="Only admin can perform this action"
         )
     return current_user
-

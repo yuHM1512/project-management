@@ -22,7 +22,7 @@ class InternProfile(Base):
     internship_from = Column(Date)
     internship_to = Column(Date)
     position = Column(String)
-    
+
     phone = Column(String, nullable=True)
     address = Column(Text, nullable=True)
     gender = Column(String, nullable=True) # New field
@@ -32,7 +32,7 @@ class InternProfile(Base):
 
 class Resource(Base):
     __tablename__ = "resources"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     category = Column(String) # Technical, Soft Skills, etc.
     title = Column(String)
@@ -42,7 +42,7 @@ class Resource(Base):
 
 class DailyLog(Base):
     __tablename__ = "daily_logs"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer)
     date = Column(Date, default=datetime.utcnow().date)
@@ -51,19 +51,19 @@ class DailyLog(Base):
 
 class Question(Base):
     __tablename__ = "questions"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer)
     author_name = Column(String)
     title = Column(String)
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     answers = relationship("Answer", back_populates="question")
 
 class Answer(Base):
     __tablename__ = "answers"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     question_id = Column(Integer, ForeignKey("questions.id"))
     user_id = Column(Integer)
@@ -71,12 +71,12 @@ class Answer(Base):
     author_role = Column(String) # Mentor, Trainer, etc.
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     question = relationship("Question", back_populates="answers")
 
 class Roadmap(Base):
     __tablename__ = "roadmaps"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     stage = Column(String) # e.g. "Week 1", "Phase 1"
     title = Column(String)
@@ -85,6 +85,6 @@ class Roadmap(Base):
     end_date = Column(Date, nullable=True)
     position = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     # Many-to-many relationship with resources
     resources = relationship("Resource", secondary=roadmap_resources, backref="roadmaps")

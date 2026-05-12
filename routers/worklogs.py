@@ -130,31 +130,27 @@ def delete_worklog(
 ):
     worklog = _get_worklog_or_404(db, worklog_id)
     _ensure_worklog_permission(worklog, current_user)
-    
-    # Lưu subtask_id trước khi sync (vì có thể bị thay đổi)
+
     subtask_id = worklog.subtask_id
-    
-    # Xóa liên kết với subtask trước khi xóa worklog
+
     try:
         _sync_worklog_subtask(db, worklog, None, current_user)
         db.commit()
-    except Exception as e:
-        # Nếu có lỗi khi sync, rollback và thử xóa liên kết trực tiếp
+    except Exception:
         db.rollback()
         if subtask_id:
             subtask = db.query(SubTask).filter(SubTask.id == subtask_id).first()
             if subtask and subtask.work_log_id == worklog_id:
                 subtask.work_log_id = None
                 db.commit()
-    
-    # Xóa worklog
+
     try:
         db.delete(worklog)
         db.commit()
-    except Exception as e:
+    except Exception as exc:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to delete work log: {str(e)}")
-    
+        raise HTTPException(status_code=500, detail=f"Failed to delete work log: {str(exc)}")
+
     return {"message": "Work log deleted"}
 
 

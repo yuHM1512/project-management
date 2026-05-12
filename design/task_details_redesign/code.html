@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task Detail - Implement real-time collaboration engine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#2f3035",
+                    "on-secondary-container": "#2a4486",
+                    "tertiary-fixed-dim": "#ffb59d",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-primary": "#b2c5ff",
+                    "primary-container": "#002b73",
+                    "on-surface": "#191c1d",
+                    "secondary-container": "#9cb4fe",
+                    "tertiary": "#390c00",
+                    "primary-fixed": "#dae2ff",
+                    "surface-container-low": "#f4f3fa",
+                    "surface-dim": "#dad9e0",
+                    "secondary": "#435b9f",
+                    "on-tertiary-container": "#ff9c7a",
+                    "tertiary-container": "#822803",
+                    "on-primary-container": "#98b3ff",
+                    "background": "#faf8ff",
+                    "on-primary-fixed": "#001848",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "surface-variant": "#e3e2e8",
+                    "on-surface-variant": "#424654",
+                    "surface-container-high": "#e8e7ee",
+                    "surface-bright": "#faf8ff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-background": "#1a1b20",
+                    "primary": "#001848",
+                    "outline": "#747784",
+                    "on-primary-fixed-variant": "#23438b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#00174a",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-tertiary-fixed-variant": "#7b2e12",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed": "#390c00",
+                    "error-container": "#ffdad6",
+                    "outline-variant": "rgba(25, 28, 29, 0.2)",
+                    "inverse-on-surface": "#f1f0f7",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#3e5ba4",
+                    "on-secondary-fixed-variant": "#2a4386",
+                    "surface-container": "#eeedf4",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "surface": "#f8f9fa"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "2": "0.5rem",
+                    "16": "5.5rem",
+                    "4": "1.5rem",
+                    "1": "0.25rem",
+                    "8": "2.75rem"
+            },
+            "fontFamily": {
+                    "display-lg-mobile": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Manrope"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["28px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.01em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #faf8ff;
+            color: #191c1d;
+        }
+    </style>
+</head>
+<body class="font-body-lg text-body-lg">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 w-full z-40 bg-surface/80 backdrop-blur-xl shadow-sm shadow-on-surface/5 flex justify-between items-center h-16 px-8 w-full">
+<div class="flex items-center gap-8">
+<span class="font-display-lg text-headline-md font-bold text-primary">Curator PM</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-300 px-3 py-1 rounded-lg" href="#">Workspace</a>
+<a class="text-primary font-bold border-b-2 border-primary px-3 py-1" href="#">Projects</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-300 px-3 py-1 rounded-lg" href="#">Editorial Sprint</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-all">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-all">history</button>
+<img alt="Senior Curator Profile" class="w-8 h-8 rounded-full object-cover" data-alt="A professional headshot of a senior project manager in a high-end corporate setting. The lighting is soft and natural, coming from a large window. The background is a blurred modern office with glass walls and minimalist furniture. The subject has a confident, calm expression, reflecting the Digital Curator persona. The image is crisp and clean, with a neutral color palette that matches the light-mode UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV_dtmmexbecBjZ8YAC_8vP6E2PksGsrI7UaGydPBWBGRUhUfEG-ZjWhj4VHk76rVFU2E0Uv2Z2_2bgHu9NvufY6wIRLb3_d2RtAk3uCJQvmyNuN2OKaNYyRC_gDW8vIvOKpUjeFZCJ5ApPN_g6ldRDCwA40h2mDA7nedB-Esj1GyjQxMAywJMbXN9z_kwCrOpku2gxIMV0MOcja34s6EO5hzCwI_tlia5_9xBYM47gY-TA-1JTlEx3JQrLp0y1JCqcjope_8nYXXv"/>
+</div>
+</header>
+<main class="pt-16 min-h-screen flex">
+<!-- Sidebar Navigation -->
+<aside class="hidden lg:flex fixed left-0 top-16 h-[calc(100vh-4rem)] w-72 flex-col py-8 px-4 space-y-8 bg-surface-container-low">
+<div class="px-4">
+<h2 class="font-display-lg text-headline-md font-bold text-primary">The Curator</h2>
+<p class="text-label-md text-on-surface-variant">Architectural PM</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-medium">Home</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 bg-surface-container-highest text-primary rounded-lg font-semibold transition-all" href="#">
+<span class="material-symbols-outlined">task_alt</span>
+<span class="font-medium">My Tasks</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">all_inbox</span>
+<span class="font-medium">Inbox</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-medium">Projects</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+<button class="bg-[linear-gradient(135deg,#001848,#23438b)] text-white py-4 rounded-md font-bold shadow-sm hover:opacity-90 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add</span>
+<span>Create Entry</span>
+</button>
+<div class="space-y-1">
+<a class="flex items-center gap-4 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-sm">Help Center</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">delete</span>
+<span class="text-sm">Trash</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<section class="flex-1 lg:ml-72 p-8 md:p-16 flex flex-col xl:flex-row gap-16">
+<!-- Left Column: Primary Task Details -->
+<div class="flex-1 max-w-4xl">
+<!-- Task Header -->
+<nav class="flex items-center gap-2 mb-8 text-on-surface-variant text-label-md">
+<span>Projects</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span>Collaboration Engine</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-primary font-medium">Core Infrastructure</span>
+</nav>
+<h1 class="font-display-lg text-display-lg mb-8 text-on-surface leading-tight">Implement real-time collaboration engine</h1>
+<!-- Metadata Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 p-8 bg-surface-container-lowest rounded-xl">
+<div>
+<p class="text-label-md text-on-surface-variant mb-2 font-medium">ASSIGNEE</p>
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full" data-alt="A minimalist avatar portrait of a lead software engineer, looking directly at the camera with a neutral, professional expression. The background is a soft, solid gray, emphasizing clarity and focus. The lighting is diffused and even, fitting a high-end digital workplace aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkRuRJbrAnsBbjdzTn9Hm6-kP2GFDebg3fVcPb5o3hGbdZ7zEN4FC9_QcKdaLf8KcqRoSJ-AUFBDe_ujOlcsibEAVbLJzFJFCvfdIc5Pv2CSuMvs8O58l7mtGl0tHSz4o3q5wh0KNPLasVquh3phb_ZznpXVtCnAWpvxHCCH8maNzVHaTT8VILSd2SxopAnu1h_68D8vWMUgfmwBsH06uAh06X18W8KA5Y3QOhl5ScAiXsRGXcglcwIvLoMezqMaeZ-DxPbF6lXgI5"/>
+<span class="font-medium text-primary">Alex Chen</span>
+</div>
+</div>
+<div>
+<p class="text-label-md text-on-surface-variant mb-2 font-medium">DUE DATE</p>
+<span class="font-medium text-on-surface">Oct 24, 2024</span>
+</div>
+<div>
+<p class="text-label-md text-on-surface-variant mb-2 font-medium">PRIORITY</p>
+<span class="px-3 py-1 bg-error-container text-on-error-container rounded-full text-label-md font-bold">CRITICAL</span>
+</div>
+<div>
+<p class="text-label-md text-on-surface-variant mb-2 font-medium">LABELS</p>
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 bg-surface-container-high rounded text-[10px] font-bold">BACKEND</span>
+<span class="px-2 py-0.5 bg-surface-container-high rounded text-[10px] font-bold">WEBSOCKETS</span>
+</div>
+</div>
+</div>
+<!-- Description -->
+<div class="mb-16">
+<h3 class="font-display-lg text-headline-md mb-4 text-primary">Contextual Overview</h3>
+<p class="text-on-surface leading-relaxed max-w-2xl">
+                        The collaboration engine serves as the central nervous system of the Curator PM platform. We need to implement a robust WebSocket-driven architecture that supports concurrent editing, operational transformation (OT) for text fields, and presence awareness across all workspace modules.
+                    </p>
+</div>
+<!-- Requirements Checklist -->
+<div class="mb-16">
+<h3 class="font-display-lg text-headline-md mb-8 text-primary">Key Requirements</h3>
+<div class="space-y-4">
+<div class="flex items-start gap-4 p-4 bg-secondary-container/20 rounded-lg group hover:bg-secondary-container/30 transition-all">
+<span class="material-symbols-outlined text-on-secondary-container" data-weight="fill">check_circle</span>
+<div class="flex-1">
+<p class="font-medium text-on-secondary-container">Define WebSocket protocol handshake &amp; authentication</p>
+<p class="text-sm text-on-surface-variant opacity-80">Ensure secure session tokens are passed during upgrade</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 hover:bg-surface-container-low rounded-lg transition-all">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<div class="flex-1">
+<p class="font-medium text-on-surface">Implement CRDT for multi-user document syncing</p>
+<p class="text-sm text-on-surface-variant">Prioritize local-first conflict resolution</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 hover:bg-surface-container-low rounded-lg transition-all">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<div class="flex-1">
+<p class="font-medium text-on-surface">Global 'Presence' state broadcasting</p>
+<p class="text-sm text-on-surface-variant">Showing active cursors and navigation paths</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Discussion Area -->
+<div class="mb-16">
+<h3 class="font-display-lg text-headline-md mb-8 text-primary">Discussion &amp; Feedback</h3>
+<div class="space-y-8">
+<div class="flex gap-6">
+<img class="w-10 h-10 rounded-full shrink-0" data-alt="A portrait of a senior creative director with a refined, artistic style. The background is a blurred minimalist studio with soft natural light. The color palette is composed of warm neutrals and soft pastels, matching the professional and supportive tone of the learning environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCy7p0j1xEDJSsGKJs_-RvVP9kcF3-f_Tbt4ASJqn7Yno3kGVZE5yw7FhXm9KT1_jQm108WxPV06xUsKuf_A6wXYhfNUL8_4VBcJgibdYbfTsBMHC2-q2wwrsIqigqS0osAvlbq4wesjdL50VaC8bfK89uRbQwarX8rVGEAB_xjOIFydjyPithmyTGFUcT1yI_C95QQPXVDBr_1x_2G099pvjqGmKx2cqVuuB9SuAaEcTOZmIjnaC6hxoVxAQ79sxtmbqIAYM-neJgt"/>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="font-bold text-on-surface">Elena Rodriguez</span>
+<span class="text-label-md text-on-surface-variant">2 hours ago</span>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl rounded-tl-none">
+<p class="text-on-surface">Should we consider Y.js for the CRDT implementation or build a custom solution targeting our specific data structures? I'm worried about the memory overhead for larger editorial sprints.</p>
+</div>
+</div>
+</div>
+<!-- Reply Input -->
+<div class="flex gap-6 mt-8">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shrink-0">AC</div>
+<div class="flex-1 relative">
+<textarea class="w-full bg-surface-container-low border-none rounded-xl p-4 focus:ring-0 focus:bg-surface-container-lowest transition-all placeholder:text-on-surface-variant/50" placeholder="Add a sophisticated response..." rows="3"></textarea>
+<div class="absolute bottom-4 right-4 flex gap-2">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">attach_file</button>
+<button class="bg-primary text-white px-6 py-2 rounded-md font-bold text-sm">Post</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Activity Log -->
+<div class="xl:w-96">
+<div class="sticky top-24">
+<div class="mb-8 flex justify-between items-center">
+<h3 class="font-display-lg text-headline-md text-primary">Activity Log</h3>
+<button class="material-symbols-outlined text-on-surface-variant">filter_list</button>
+</div>
+<div class="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-surface-container-high">
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-surface-container-high border-4 border-background flex items-center justify-center z-10">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<p class="text-sm font-medium text-on-surface">Alex Chen moved to 'In Progress'</p>
+<p class="text-label-md text-on-surface-variant">Today at 9:42 AM</p>
+</div>
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-surface-container-high border-4 border-background flex items-center justify-center z-10">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+</div>
+<p class="text-sm font-medium text-on-surface">Elena Rodriguez added a comment</p>
+<p class="text-label-md text-on-surface-variant">Today at 11:15 AM</p>
+</div>
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-surface-container-high border-4 border-background flex items-center justify-center z-10">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+</div>
+<p class="text-sm font-medium text-on-surface">New attachment: 'socket-schema.json'</p>
+<p class="text-label-md text-on-surface-variant">Yesterday at 4:30 PM</p>
+</div>
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-surface-container-high border-4 border-background flex items-center justify-center z-10">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+</div>
+<p class="text-sm font-medium text-on-surface">Requirement verified: WebSocket Auth</p>
+<p class="text-label-md text-on-surface-variant">Oct 21 at 10:20 AM</p>
+</div>
+</div>
+<!-- Progress Float Contextual Integration -->
+<div class="mt-16 p-6 bg-surface-container-lowest rounded-xl shadow-sm shadow-on-surface/5">
+<div class="flex justify-between items-end mb-4">
+<div>
+<p class="text-label-md text-on-surface-variant mb-1">TOTAL COMPLETION</p>
+<span class="font-display-lg text-headline-md text-primary">35%</span>
+</div>
+<span class="text-label-md font-bold text-on-surface-variant">1 OF 3 REQS</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-[35%] h-full bg-primary transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Progress Float (Sticky Learning Indicator) -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] md:w-[600px] z-50">
+<div class="bg-surface/80 backdrop-blur-xl p-4 rounded-xl shadow-2xl flex items-center justify-between border-t border-white/10">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<p class="text-sm font-bold text-primary">Sprint Progress</p>
+<p class="text-[10px] text-on-surface-variant">Next milestone: Protocol Alpha</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:block w-32 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-[45%] h-full bg-primary"></div>
+</div>
+<button class="bg-primary text-white px-4 py-2 rounded-md text-sm font-bold shadow-md active:scale-95 transition-all">
+                    Finalize Stage
+                </button>
+</div>
+</div>
+</div>
+</body></html>

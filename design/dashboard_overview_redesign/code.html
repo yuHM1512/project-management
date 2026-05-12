@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Curator PM - Dashboard Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .font-display { font-family: 'Manrope', sans-serif; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2f3035",
+                        "on-secondary-container": "#2a4486",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#b2c5ff",
+                        "primary-container": "#002b73",
+                        "on-surface": "#191c1d",
+                        "secondary-container": "#9cb4fe",
+                        "tertiary": "#390c00",
+                        "primary-fixed": "#dae2ff",
+                        "surface-container-low": "#f4f3fa",
+                        "surface-dim": "#dad9e0",
+                        "secondary": "#435b9f",
+                        "on-tertiary-container": "#ff9c7a",
+                        "tertiary-container": "#822803",
+                        "on-primary-container": "#98b3ff",
+                        "background": "#faf8ff",
+                        "on-primary-fixed": "#001848",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "surface-variant": "#e3e2e8",
+                        "on-surface-variant": "#424654",
+                        "surface-container-high": "#e8e7ee",
+                        "surface-bright": "#faf8ff",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-background": "#1a1b20",
+                        "primary": "#001848",
+                        "outline": "#747784",
+                        "on-primary-fixed-variant": "#23438b",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#00174a",
+                        "tertiary-fixed": "#ffdbd0",
+                        "on-tertiary-fixed-variant": "#7b2e12",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#390c00",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "rgba(25, 28, 29, 0.2)",
+                        "inverse-on-surface": "#f1f0f7",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#3e5ba4",
+                        "on-secondary-fixed-variant": "#2a4386",
+                        "surface-container": "#eeedf4",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface": "#f8f9fa"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "2": "0.5rem",
+                        "16": "5.5rem",
+                        "4": "1.5rem",
+                        "1": "0.25rem",
+                        "8": "2.75rem"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Manrope"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["28px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.01em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-40 bg-surface/80 backdrop-blur-xl shadow-sm shadow-on-surface/5 flex justify-between items-center h-16 px-8 w-full">
+<div class="flex items-center gap-8">
+<span class="font-display-lg text-headline-md font-bold text-primary">Curator PM</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="font-body-lg text-body-lg text-primary font-bold border-b-2 border-primary" href="#">Workspace</a>
+<a class="font-body-lg text-body-lg text-on-surface-variant hover:bg-surface-container-low transition-colors duration-300 px-3 py-1 rounded-lg" href="#">Projects</a>
+<a class="font-body-lg text-body-lg text-on-surface-variant hover:bg-surface-container-low transition-colors duration-300 px-3 py-1 rounded-lg" href="#">Editorial Sprint</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-body-lg focus:bg-surface-container-lowest focus:ring-0 w-64" placeholder="Search entries..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full transition-colors">history</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high ml-2">
+<img alt="Senior Curator Profile" data-alt="A professional portrait of a woman with a confident expression, set against a softly blurred minimalist studio background. The lighting is bright and clean, reflecting a high-end editorial aesthetic with a sophisticated and focused calm atmosphere. Her attire is professional yet modern, fitting the Curator PM brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzdUd707DAqLl9gNviguSPLlYLtdp8UVoIeVGD8GhZVOHzBFywlYLI5GBRyYb4lKd2kHoJU2NTxYstAIux4CsLTc_qbhDO34mce8wLV8qiJkwOLUx8UgZjFydmrauDuT-YEDc3CrMITts6oRXHKxxXOYbevruAnsE6rsGJuy_5hRpK8yocOUYVkpcKL_Uwk6zyvjsEQK1UBnB6aiH8mWf9Wp-QYJGlorRrJQf3C0GGOfvUrhUpnGLfSoYRjBM7DVVqQTGX9Ro5tHTu"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Desktop Only) -->
+<aside class="hidden lg:flex fixed left-0 top-0 h-full w-72 flex-col bg-surface-container-low py-8 px-4 space-y-8 z-30 pt-24">
+<div class="px-4">
+<h2 class="font-display-lg text-headline-md font-bold text-primary">The Curator</h2>
+<p class="text-on-surface-variant font-label-md">Architectural PM</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 bg-surface-container-highest text-primary rounded-lg font-semibold transition-transform active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-body-lg">Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">task_alt</span>
+<span class="font-body-lg">My Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">all_inbox</span>
+<span class="font-body-lg">Inbox</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-body-lg">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-lg">Settings</span>
+</a>
+</nav>
+<button class="mx-4 py-4 px-6 bg-gradient-to-r from-primary to-secondary text-on-primary rounded-md font-semibold text-center transition-all active:opacity-80 active:scale-[0.99]">
+            Create Entry
+        </button>
+<div class="border-t border-outline-variant/10 pt-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-lg">Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">delete</span>
+<span class="font-body-lg">Trash</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-72 pt-16 px-4 md:px-8 max-w-[1400px]">
+<section class="py-16">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-16">
+<div>
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface mb-2">Welcome back, Sarah</h1>
+<p class="text-on-surface-variant font-body-lg max-w-xl">Your workspace is harmonized. You have 12 active projects and several key milestones approaching this week.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 font-body-lg text-primary hover:bg-surface-container-low transition-colors rounded-full">View Schedule</button>
+<button class="px-8 py-3 bg-gradient-to-br from-primary to-secondary text-on-primary rounded-lg font-semibold shadow-xl shadow-primary/10">Quick Action</button>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col gap-4">
+<span class="font-label-md text-on-surface-variant uppercase tracking-wider">Active Projects</span>
+<div class="flex items-baseline gap-2">
+<span class="font-display text-display-lg text-primary">12</span>
+<span class="text-on-surface-variant font-body-lg">in progress</span>
+</div>
+<div class="mt-4 h-1 bg-surface-container-low rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-primary"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col gap-4">
+<span class="font-label-md text-on-surface-variant uppercase tracking-wider">Pending Tasks</span>
+<div class="flex items-baseline gap-2">
+<span class="font-display text-display-lg text-secondary">48</span>
+<span class="text-on-surface-variant font-body-lg">to review</span>
+</div>
+<div class="mt-4 h-1 bg-surface-container-low rounded-full overflow-hidden">
+<div class="w-1/2 h-full bg-secondary"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col gap-4">
+<span class="font-label-md text-on-surface-variant uppercase tracking-wider">Velocity</span>
+<div class="flex items-baseline gap-2">
+<span class="font-display text-display-lg text-on-tertiary-container">31</span>
+<span class="text-on-surface-variant font-body-lg">Completed this week</span>
+</div>
+<div class="mt-4 h-1 bg-surface-container-low rounded-full overflow-hidden">
+<div class="w-full h-full bg-tertiary-container"></div>
+</div>
+</div>
+</div>
+<!-- Bento Grid - Pinned Projects & Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
+<!-- Pinned Projects -->
+<div class="lg:col-span-8 flex flex-col gap-8">
+<div class="flex items-center justify-between">
+<h3 class="font-display text-headline-md">Pinned Projects</h3>
+<a class="text-primary font-body-lg hover:underline underline-offset-4" href="#">Browse all</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="bg-surface-container-lowest overflow-hidden rounded-xl group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden">
+<img class="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" data-alt="A minimalist architectural interior with clean lines, large glass windows, and soft natural lighting. The color palette consists of neutral tones and deep charcoal accents, reflecting the Curator brand's editorial aesthetic. The scene is quiet, focused, and highlights the beauty of architectural geometry." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmwhmSwdZTWrv8_BPvuxVl5TyqV_352PYC55_2p8Lj_FJXDjslfn-PNJotYerqanLWZ4JhNpaU2JfmTej1hoL4smWfU_ZtsjNA2RTrvm-TjQABvFiT82_zSH3PoUbpjqXQiF1hEwOzF-QYDndqlL73GUCWCtJyihVeQKZXJsBfqn37nsQYPxoR-tClwhM6lEspFx8bHKP9Pwm2FfxOPLDiIbGyl49bOsPhkpmUdRjcxivIB2zR8glPgkrXOgCTO1eJE6eMgM1ietk2"/>
+</div>
+<div class="p-8">
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full text-xs font-semibold mb-4 inline-block">Q4 Redesign</span>
+<h4 class="font-display text-headline-md text-on-surface mb-2">Brand Redesign 2024</h4>
+<p class="text-on-surface-variant font-body-lg mb-6">Harmonizing digital touchpoints across the editorial ecosystem.</p>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-dim"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-variant"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest flex items-center justify-center bg-primary text-[10px] text-on-primary">+3</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest overflow-hidden rounded-xl group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden">
+<img class="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" data-alt="An abstract visualization of digital infrastructure, featuring glowing fiber optic strands and dark, atmospheric lighting. The design uses cool blue and deep black tones to suggest high-tech engineering and systematic precision, perfectly aligning with an architectural PM aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYb8VnGWyxNtS_Qkz-MZSNcLMwdvLIWqsnKhs70Gu9t8gNd1FJ_FAr-zyajPZ78eKnLknVGuB30WMJXySC4ZpGBQ9do_eynlAjrlmFJpXBzEK32dUWNl79TkCaCX2DXRoo9hPozZ3zZX4In6ueYFpiAGp6zPGo1iHxB1MsLeE1xkJmTsx3KTpceqqcuO7AlY5If5EDiqyI9xuXOEKyq9YlrTseOvZUt_ewDR_7g8CFdyGDMz8gO2I-U2qoAfx5aXzp34x4PnCJdMwW"/>
+</div>
+<div class="p-8">
+<span class="bg-tertiary-container/20 text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-xs font-semibold mb-4 inline-block">Infrastructure</span>
+<h4 class="font-display text-headline-md text-on-surface mb-2">API Infrastructure</h4>
+<p class="text-on-surface-variant font-body-lg mb-6">Restructuring the core backend delivery systems for scale.</p>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-dim"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-primary-container"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity / Task Summary -->
+<div class="lg:col-span-4 flex flex-col gap-8">
+<h3 class="font-display text-headline-md">Activity</h3>
+<div class="bg-surface-container-low p-8 rounded-xl flex-1 space-y-8">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">edit_square</span>
+</div>
+<div>
+<p class="font-body-lg font-semibold text-on-surface">Updated Brand Assets</p>
+<p class="text-sm text-on-surface-variant">2 hours ago in Brand Redesign</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<div>
+<p class="font-body-lg font-semibold text-on-surface">New Comment by James</p>
+<p class="text-sm text-on-surface-variant">5 hours ago on API Specs</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<p class="font-body-lg font-semibold text-on-surface">Task Completed</p>
+<p class="text-sm text-on-surface-variant">Yesterday by Editorial Team</p>
+</div>
+</div>
+<div class="pt-8">
+<div class="p-6 bg-surface-container-lowest rounded-lg">
+<p class="text-sm text-on-surface-variant mb-2">Weekly Goal Progress</p>
+<div class="flex items-center justify-between mb-4">
+<span class="font-display text-headline-md">82%</span>
+<span class="material-symbols-outlined text-primary">trending_up</span>
+</div>
+<div class="w-full h-2 bg-surface-container-low rounded-full">
+<div class="h-full bg-primary rounded-full w-[82%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- My Tasks Table -->
+<div class="space-y-8 pb-16">
+<div class="flex items-center justify-between">
+<h3 class="font-display text-headline-md">My Tasks</h3>
+<div class="flex gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined">filter_list</span></button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined">sort</span></button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-8 py-4 text-left font-label-md text-on-surface-variant uppercase tracking-wider">Task Name</th>
+<th class="px-8 py-4 text-left font-label-md text-on-surface-variant uppercase tracking-wider">Project</th>
+<th class="px-8 py-4 text-left font-label-md text-on-surface-variant uppercase tracking-wider">Due Date</th>
+<th class="px-8 py-4 text-left font-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="px-8 py-4 text-right font-label-md text-on-surface-variant uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<tr class="hover:bg-surface/50 transition-colors">
+<td class="px-8 py-6">
+<p class="font-body-lg font-semibold text-on-surface">Finalize Typography Scale</p>
+<p class="text-sm text-on-surface-variant">Part of the visual audit</p>
+</td>
+<td class="px-8 py-6">
+<span class="text-on-surface font-body-lg">Brand Redesign 2024</span>
+</td>
+<td class="px-8 py-6">
+<span class="text-on-surface-variant font-body-lg">Oct 12, 2023</span>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-container/20 text-on-secondary-container rounded-full text-xs font-semibold">In Review</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-surface/50 transition-colors">
+<td class="px-8 py-6">
+<p class="font-body-lg font-semibold text-on-surface">Endpoint Security Review</p>
+<p class="text-sm text-on-surface-variant">Critical compliance check</p>
+</td>
+<td class="px-8 py-6">
+<span class="text-on-surface font-body-lg">API Infrastructure</span>
+</td>
+<td class="px-8 py-6">
+<span class="text-on-surface-variant font-body-lg">Oct 14, 2023</span>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-full text-xs font-semibold">Scheduled</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-surface/50 transition-colors">
+<td class="px-8 py-6">
+<p class="font-body-lg font-semibold text-on-surface">Editorial Content Audit</p>
+<p class="text-sm text-on-surface-variant">Reviewing Q3 performance</p>
+</td>
+<td class="px-8 py-6">
+<span class="text-on-surface font-body-lg">Editorial Sprint</span>
+</td>
+<td class="px-8 py-6">
+<span class="text-error font-body-lg font-semibold">Overdue (2d)</span>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-error-container text-on-error-container rounded-full text-xs font-semibold">Urgent</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="bg-surface-variant px-8 py-4 text-center">
+<button class="text-on-surface-variant font-label-md hover:text-on-surface transition-colors">Load more tasks</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Progress Indicator (Editorial System) -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-4xl bg-surface/80 backdrop-blur-xl py-4 px-8 rounded-full shadow-2xl flex items-center justify-between z-50">
+<div class="flex items-center gap-4">
+<span class="font-display font-bold text-primary">Daily Progress</span>
+<div class="w-48 h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="w-3/5 h-full bg-primary"></div>
+</div>
+<span class="text-on-surface-variant font-label-md">60% Harmonized</span>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-on-surface-variant">chat_bubble</button>
+<button class="material-symbols-outlined text-on-surface-variant">share</button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-full font-semibold text-sm">Focus Mode</button>
+</div>
+</div>
+</body></html>

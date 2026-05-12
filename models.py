@@ -13,12 +13,12 @@ class ProjectStatus(str, enum.Enum):
 
 class ProjectType(Base):
     __tablename__ = "project_types"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     projects = relationship("Project", back_populates="project_type")
 
@@ -41,7 +41,7 @@ class UserRole(str, enum.Enum):
 
 class User(Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
@@ -51,9 +51,12 @@ class User(Base):
     role = Column(String, default=UserRole.MEMBER.value)  # admin, member, viewer
     department = Column(String, nullable=True)
     team = Column(String, nullable=True)
+    position = Column(String, nullable=True)
+    field = Column(JSON, nullable=True)
+    group = Column("group", JSON, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     projects = relationship("Project", back_populates="owner")
     task_assignees = relationship("TaskAssignee", back_populates="user")
@@ -69,19 +72,19 @@ class User(Base):
 
 class Workspace(Base):
     __tablename__ = "workspaces"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(Text, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     projects = relationship("Project", back_populates="workspace")
 
 class Project(Base):
     __tablename__ = "projects"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(Text, nullable=True)
@@ -93,7 +96,7 @@ class Project(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     due_date = Column(DateTime(timezone=True), nullable=True)
-    
+
     # Relationships
     owner = relationship("User", back_populates="projects")
     project_type = relationship("ProjectType", back_populates="projects")
@@ -108,32 +111,32 @@ class Project(Base):
 
 class TeamMember(Base):
     __tablename__ = "team_members"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
     role = Column(String, default=UserRole.MEMBER.value)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     project = relationship("Project", back_populates="team_members")
     user = relationship("User", back_populates="team_memberships")
 
 class TaskAssignee(Base):
     __tablename__ = "task_assignees"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     assigned_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     task = relationship("Task", back_populates="assignees")
     user = relationship("User", back_populates="task_assignees")
 
 class Task(Base):
     __tablename__ = "tasks"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(Text, nullable=True)
@@ -145,7 +148,7 @@ class Task(Base):
     position = Column(Integer, default=0)  # Vị trí trong board
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     project = relationship("Project", back_populates="tasks")
     assignees = relationship("TaskAssignee", back_populates="task", cascade="all, delete-orphan")
@@ -157,7 +160,7 @@ class Task(Base):
 
 class SubTask(Base):
     __tablename__ = "subtasks"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"))
     title = Column(String, nullable=False)
@@ -179,7 +182,7 @@ class SubTask(Base):
 
 class Thread(Base):
     __tablename__ = "threads"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -190,7 +193,7 @@ class Thread(Base):
     is_deleted = Column(Boolean, default=False)  # Soft delete
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     project = relationship("Project", back_populates="threads")
     user = relationship("User", back_populates="threads")
@@ -200,7 +203,7 @@ class Thread(Base):
 
 class TaskComment(Base):
     __tablename__ = "task_comments"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -210,7 +213,7 @@ class TaskComment(Base):
     is_deleted = Column(Boolean, default=False)  # Soft delete
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     task = relationship("Task", back_populates="comments")
     user = relationship("User", back_populates="task_comments")
@@ -280,7 +283,7 @@ class Todo(Base):
 
 class ActivityLog(Base):
     __tablename__ = "activity_logs"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -290,7 +293,7 @@ class ActivityLog(Base):
     description = Column(Text, nullable=False)  # Mô tả activity: "User A đã tạo task 'X'"
     activity_metadata = Column(JSON, nullable=True)  # Thông tin bổ sung
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     project = relationship("Project", back_populates="activity_logs")
     user = relationship("User", back_populates="activity_logs")
@@ -298,7 +301,7 @@ class ActivityLog(Base):
 
 class Notification(Base):
     __tablename__ = "notifications"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     type = Column(String, nullable=False)  # task_assigned, mentioned, task_updated, deadline_reminder
@@ -306,15 +309,15 @@ class Notification(Base):
     message = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False)
     read_at = Column(DateTime(timezone=True), nullable=True)
-    
+
     # Metadata để link đến object liên quan
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True)
     thread_id = Column(Integer, ForeignKey("threads.id", ondelete="CASCADE"), nullable=True)
     activity_id = Column(Integer, ForeignKey("activity_logs.id", ondelete="SET NULL"), nullable=True)
-    
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     user = relationship("User", back_populates="notifications")
     project = relationship("Project", back_populates="notifications")
@@ -324,7 +327,7 @@ class Notification(Base):
 
 class Meeting(Base):
     __tablename__ = "meetings"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Admin tạo cuộc họp
     employee_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Nhân viên được review
@@ -336,7 +339,7 @@ class Meeting(Base):
     content_data = Column(JSON, nullable=True)  # Dict chứa nội dung chi tiết: {"kpi": "<html>", "strengths": "<html>", ...}
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     creator = relationship("User", foreign_keys=[creator_id], back_populates="meetings_created")
     employee = relationship("User", foreign_keys=[employee_id], back_populates="meetings_as_employee")
@@ -344,29 +347,29 @@ class Meeting(Base):
 
 class MESKPI(Base):
     __tablename__ = "mes_kpis"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     icon = Column(String(50), nullable=False)
     title = Column(String(100), nullable=False)
     value = Column(String(50), nullable=False)
     impact_label = Column(String(50), nullable=True)
-    impact_color = Column(String(50), nullable=True)  # Tailwind color class like "rose-500"
+    impact_color = Column(String(50), nullable=True)
     order = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class MESMapNode(Base):
     __tablename__ = "mes_map_nodes"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     pillar = Column(Integer, nullable=False)
     title = Column(String(100), nullable=False)
     subtitle = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
     icon = Column(String(50), nullable=True)
-    color = Column(String(50), nullable=True)  # blue, pink, orange, etc.
-    status = Column(String(50), nullable=True)  # Active, Deploying, etc.
-    status_color = Column(String(50), nullable=True)  # emerald, purple, etc.
+    color = Column(String(50), nullable=True)
+    status = Column(String(50), nullable=True)
+    status_color = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True)
     order = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -374,10 +377,10 @@ class MESMapNode(Base):
 
 class MESModuleDetail(Base):
     __tablename__ = "mes_module_details"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     pillar = Column(Integer, nullable=False)
-    step_number = Column(String(20), nullable=False)  # "Step 01"
+    step_number = Column(String(20), nullable=False)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=False)
     icon = Column(String(50), nullable=True)

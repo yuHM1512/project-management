@@ -4,12 +4,20 @@ from datetime import datetime
 from models import ProjectStatus, TaskStatus, TaskPriority, UserRole
 
 # User Schemas
+class UserFieldGroupEntry(BaseModel):
+    field: str
+    group: Optional[str] = None
+
+
 class UserBase(BaseModel):
     username: str
     email: EmailStr
     full_name: Optional[str] = None
     department: Optional[str] = None
     team: Optional[str] = None
+    position: Optional[str] = None
+    field: Optional[List[str]] = None
+    group: Optional[List[UserFieldGroupEntry]] = None
 
 class UserCreate(UserBase):
     password: str
@@ -22,6 +30,9 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
     department: Optional[str] = None
     team: Optional[str] = None
+    position: Optional[str] = None
+    field: Optional[List[str]] = None
+    group: Optional[List[UserFieldGroupEntry]] = None
     role: Optional[str] = None
 
 
@@ -31,6 +42,9 @@ class UserMeUpdate(BaseModel):
     avatar_url: Optional[str] = None
     department: Optional[str] = None
     team: Optional[str] = None
+    position: Optional[str] = None
+    field: Optional[List[str]] = None
+    group: Optional[List[UserFieldGroupEntry]] = None
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
@@ -42,7 +56,7 @@ class UserResponse(UserBase):
     role: Optional[str] = None
     is_active: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -58,7 +72,7 @@ class WorkspaceResponse(WorkspaceBase):
     id: int
     owner_id: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -88,7 +102,7 @@ class ProjectResponse(ProjectBase):
     owner_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -250,14 +264,14 @@ class TaskResponse(TaskBase):
     completed_subtasks: int = 0
     total_subtasks: int = 0
     assignees: Optional[List[UserResponse]] = []  # Danh sách assignees với thông tin user
-    
+
     @model_validator(mode='before')
     @classmethod
     def serialize_assignees(cls, data):
         """Serialize assignees từ SQLAlchemy relationship sang list UserResponse"""
         if isinstance(data, dict):
             return data
-        
+
         # Nếu data là SQLAlchemy model instance
         if hasattr(data, 'assignees'):
             assignees_relationship = getattr(data, 'assignees', [])
@@ -299,7 +313,7 @@ class TaskResponse(TaskBase):
                 }
                 return data_dict
         return data
-    
+
     class Config:
         from_attributes = True
 
@@ -316,7 +330,7 @@ class TeamMemberResponse(TeamMemberBase):
     project_id: int
     user_id: int
     joined_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -355,7 +369,7 @@ class ThreadResponse(ThreadBase):
     updated_at: Optional[datetime] = None
     user: Optional[UserResponse] = None  # Thông tin người gửi
     replies: List['ThreadResponse'] = []  # Danh sách replies
-    
+
     class Config:
         from_attributes = True
 
@@ -383,7 +397,7 @@ class TaskCommentResponse(TaskCommentBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     user: Optional[UserResponse] = None  # Thông tin người comment
-    
+
     class Config:
         from_attributes = True
 
@@ -399,7 +413,7 @@ class ActivityLogResponse(BaseModel):
     metadata: Optional[dict] = None
     created_at: datetime
     user: Optional[UserResponse] = None  # Thông tin user thực hiện activity
-    
+
     class Config:
         from_attributes = True
 
@@ -420,7 +434,7 @@ class NotificationResponse(NotificationBase):
     is_read: bool
     read_at: Optional[datetime] = None
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -458,12 +472,11 @@ class MeetingResponse(MeetingBase):
     creator_name: Optional[str] = None  # Tên người tạo
     employee_name: Optional[str] = None  # Tên nhân viên
     employee_username: Optional[str] = None  # Username của nhân viên
-    
+
     class Config:
         from_attributes = True
 
 
-# MES Schemas
 class MESKPIBase(BaseModel):
     icon: str
     title: str
@@ -472,8 +485,10 @@ class MESKPIBase(BaseModel):
     impact_color: Optional[str] = None
     order: Optional[int] = 0
 
+
 class MESKPICreate(MESKPIBase):
     pass
+
 
 class MESKPIUpdate(BaseModel):
     icon: Optional[str] = None
@@ -483,10 +498,11 @@ class MESKPIUpdate(BaseModel):
     impact_color: Optional[str] = None
     order: Optional[int] = None
 
+
 class MESKPIResponse(MESKPIBase):
     id: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -503,8 +519,10 @@ class MESMapNodeBase(BaseModel):
     is_active: Optional[bool] = True
     order: Optional[int] = 0
 
+
 class MESMapNodeCreate(MESMapNodeBase):
     pass
+
 
 class MESMapNodeUpdate(BaseModel):
     pillar: Optional[int] = None
@@ -518,10 +536,11 @@ class MESMapNodeUpdate(BaseModel):
     is_active: Optional[bool] = None
     order: Optional[int] = None
 
+
 class MESMapNodeResponse(MESMapNodeBase):
     id: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -534,8 +553,10 @@ class MESModuleDetailBase(BaseModel):
     icon: Optional[str] = None
     order: Optional[int] = 0
 
+
 class MESModuleDetailCreate(MESModuleDetailBase):
     pass
+
 
 class MESModuleDetailUpdate(BaseModel):
     pillar: Optional[int] = None
@@ -545,10 +566,11 @@ class MESModuleDetailUpdate(BaseModel):
     icon: Optional[str] = None
     order: Optional[int] = None
 
+
 class MESModuleDetailResponse(MESModuleDetailBase):
     id: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

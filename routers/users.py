@@ -17,6 +17,12 @@ UPLOAD_DIR = Path("static/uploads/avatars")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def serialize_user_groups(group_entries):
+    if group_entries is None:
+        return None
+    return [entry.model_dump() if hasattr(entry, "model_dump") else entry for entry in group_entries]
+
+
 @router.post("/", response_model=UserResponse)
 def create_user(
     user_in: UserCreate,
@@ -28,12 +34,12 @@ def create_user(
     db_user = db.query(User).filter(User.username == user_in.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    
+
     # Kiểm tra email đã tồn tại
     db_user = db.query(User).filter(User.email == user_in.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     # Tạo user mới
     hashed_password = get_password_hash(user_in.password)
     db_user = User(
@@ -43,6 +49,9 @@ def create_user(
         full_name=user_in.full_name,
         department=user_in.department,
         team=user_in.team,
+        position=user_in.position,
+        field=user_in.field,
+        group=serialize_user_groups(user_in.group),
         role=user_in.role or UserRole.MEMBER.value
     )
     db.add(db_user)
@@ -74,7 +83,7 @@ def update_me(
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    allowed_fields = {"email", "full_name", "avatar_url", "department", "team"}
+    allowed_fields = {"email", "full_name", "avatar_url", "department", "team", "position", "field", "group"}
     update_data = {
         key: value
         for key, value in user_update.dict(exclude_unset=True).items()
@@ -83,6 +92,9 @@ def update_me(
 
     if not update_data:
         return db_user
+
+    if "group" in update_data:
+        update_data["group"] = serialize_user_groups(update_data["group"])
 
     if "email" in update_data and update_data["email"] != db_user.email:
         existing = db.query(User).filter(User.email == update_data["email"]).first()
@@ -107,23 +119,23 @@ def change_password(
     db_user = db.query(User).filter(User.id == current_user.id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Kiểm tra mật khẩu hiện tại
     if not verify_password(password_data.current_password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    
+
     # Kiểm tra mật khẩu mới không trùng với mật khẩu cũ
     if verify_password(password_data.new_password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="New password must be different from current password")
-    
+
     # Kiểm tra độ dài mật khẩu mới
     if len(password_data.new_password) < 6:
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
-    
+
     # Cập nhật mật khẩu mới
     db_user.hashed_password = get_password_hash(password_data.new_password)
     db.commit()
-    
+
     return {"message": "Password changed successfully"}
 
 
@@ -151,24 +163,26 @@ def update_user(
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Kiểm tra username unique (nếu đổi username)
     if user_update.username and user_update.username != db_user.username:
         existing = db.query(User).filter(User.username == user_update.username).first()
         if existing:
             raise HTTPException(status_code=400, detail="Username already exists")
-    
+
     # Kiểm tra email unique (nếu đổi email)
     if user_update.email and user_update.email != db_user.email:
         existing = db.query(User).filter(User.email == user_update.email).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already exists")
-    
+
     # Cập nhật các trường
     update_data = user_update.dict(exclude_unset=True)
+    if "group" in update_data:
+        update_data["group"] = serialize_user_groups(update_data["group"])
     for key, value in update_data.items():
         setattr(db_user, key, value)
-    
+
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -185,32 +199,31 @@ async def upload_user_avatar(
     # Kiểm tra file type
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
-    
+
     # Kiểm tra extension
     filename = file.filename or ""
     if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
         raise HTTPException(status_code=400, detail="File must be PNG, JPG or JPEG")
-    
+
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Xóa avatar cũ nếu có
     if db_user.avatar_url:
         old_path = Path("static") / db_user.avatar_url.replace("/static/", "")
         if old_path.exists():
             old_path.unlink()
-    
+
     # Lưu file mới
     extension = os.path.splitext(filename)[1] or ".png"
     new_filename = f"user_{user_id}_{uuid.uuid4().hex}{extension}"
     destination = UPLOAD_DIR / new_filename
-    
+
     with destination.open("wb") as buffer:
         buffer.write(await file.read())
-    
+
     db_user.avatar_url = f"/static/uploads/avatars/{new_filename}"
     db.commit()
     db.refresh(db_user)
     return db_user
-

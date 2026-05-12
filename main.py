@@ -32,7 +32,7 @@ def get_file_version(file_path: str) -> str:
         if not full_path.is_absolute():
             # Nếu là relative path, tìm từ root của project
             full_path = Path(__file__).parent / file_path
-        
+
         if full_path.exists():
             # Lấy thời gian sửa đổi và kích thước file
             stat = full_path.stat()
@@ -81,7 +81,6 @@ async def login_page(request: Request):
 
 @app.get("/mes", response_class=HTMLResponse)
 async def mes_page(request: Request, db: Session = Depends(get_db)):
-    """Trang MES System"""
     user = await get_current_user_from_cookie(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/mes")
@@ -90,16 +89,14 @@ async def mes_page(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/mes-update", response_class=HTMLResponse)
 async def mes_update_page(request: Request, db: Session = Depends(get_db)):
-    """Trang quản trị MES Content"""
     user = await get_current_user_from_cookie(request, db)
     if not user:
         return RedirectResponse(url="/login?next=/mes-update")
-    
-    # Chỉ admin mới được truy cập
+
     from models import UserRole
     if user.role != UserRole.ADMIN.value:
         return RedirectResponse(url="/mes")
-        
+
     return templates.TemplateResponse("mes_update.html", {"request": request, "user": user})
 
 
@@ -144,4 +141,3 @@ async def catch_all(request: Request, path: str):
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8004, reload=True)
-

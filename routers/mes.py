@@ -17,7 +17,7 @@ def get_all_mes_content(db: Session = Depends(get_db)):
     kpis = db.query(models.MESKPI).order_by(models.MESKPI.order).all()
     map_nodes = db.query(models.MESMapNode).order_by(models.MESMapNode.order).all()
     details = db.query(models.MESModuleDetail).order_by(models.MESModuleDetail.pillar, models.MESModuleDetail.order).all()
-    
+
     return {
         "kpis": kpis,
         "map_nodes": map_nodes,
@@ -43,11 +43,11 @@ def update_kpi(kpi_id: int, kpi: schemas.MESKPIUpdate, db: Session = Depends(get
     db_kpi = db.query(models.MESKPI).filter(models.MESKPI.id == kpi_id).first()
     if not db_kpi:
         raise HTTPException(status_code=404, detail="KPI not found")
-    
+
     update_data = kpi.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_kpi, key, value)
-    
+
     db.commit()
     db.refresh(db_kpi)
     return db_kpi
@@ -80,11 +80,11 @@ def update_map_node(node_id: int, node: schemas.MESMapNodeUpdate, db: Session = 
     db_node = db.query(models.MESMapNode).filter(models.MESMapNode.id == node_id).first()
     if not db_node:
         raise HTTPException(status_code=404, detail="Map node not found")
-    
+
     update_data = node.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_node, key, value)
-    
+
     db.commit()
     db.refresh(db_node)
     return db_node
@@ -117,11 +117,11 @@ def update_module_detail(detail_id: int, detail: schemas.MESModuleDetailUpdate, 
     db_detail = db.query(models.MESModuleDetail).filter(models.MESModuleDetail.id == detail_id).first()
     if not db_detail:
         raise HTTPException(status_code=404, detail="Module detail not found")
-    
+
     update_data = detail.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_detail, key, value)
-    
+
     db.commit()
     db.refresh(db_detail)
     return db_detail

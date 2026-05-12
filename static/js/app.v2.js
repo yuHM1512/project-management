@@ -1,14 +1,13 @@
-// API Base URL
+﻿// API Base URL
 const API_BASE = '/api';
 
 // Version Management - Auto update check
 (function () {
     'use strict';
 
-    // Lấy version hiện tại từ script tag
     function getCurrentVersion() {
         const scripts = document.getElementsByTagName('script');
-        for (let script of scripts) {
+        for (const script of scripts) {
             if (script.src && script.src.includes('app.v2.js')) {
                 const url = new URL(script.src, window.location.origin);
                 return url.searchParams.get('v') || null;
@@ -17,74 +16,48 @@ const API_BASE = '/api';
         return null;
     }
 
-    // Kiểm tra version mới từ server
     async function checkForUpdate() {
         try {
             const response = await fetch(`${API_BASE}/version/js?t=${Date.now()}`);
             if (!response.ok) return;
 
             const data = await response.json();
-            const currentVersion = getCurrentVersion();
             const storedVersion = localStorage.getItem('app_js_version');
-
-            // Nếu version mới khác với version đã lưu, reload trang
             if (data.version && data.version !== storedVersion) {
-                // Nếu đây là lần đầu tiên, chỉ lưu version
                 if (!storedVersion) {
                     localStorage.setItem('app_js_version', data.version);
                     return;
                 }
 
-                // Nếu version đã thay đổi, thông báo và reload
-                console.log('Phát hiện phiên bản mới, đang tải lại...');
-
-                // Lưu flag để tránh reload liên tục
                 const reloadFlag = sessionStorage.getItem('app_reload_flag');
                 if (!reloadFlag) {
                     sessionStorage.setItem('app_reload_flag', 'true');
                     localStorage.setItem('app_js_version', data.version);
-
-                    // Thông báo cho user (optional)
                     const shouldReload = confirm('Có phiên bản mới của ứng dụng. Bạn có muốn tải lại ngay bây giờ?');
                     if (shouldReload) {
                         window.location.reload();
                     } else {
-                        // Vẫn reload sau 30 giây
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 30000);
+                        setTimeout(() => window.location.reload(), 30000);
                     }
                 }
             } else if (data.version) {
-                // Cập nhật version đã lưu
                 localStorage.setItem('app_js_version', data.version);
             }
         } catch (error) {
-            // Silent fail - không làm gián đoạn app
             console.debug('Version check failed:', error);
         }
     }
 
-    // Kiểm tra version ngay khi load
     const currentVersion = getCurrentVersion();
     if (currentVersion) {
         localStorage.setItem('app_js_version', currentVersion);
     }
 
-    // Kiểm tra version định kỳ mỗi 5 phút
     setInterval(checkForUpdate, 5 * 60 * 1000);
-
-    // Kiểm tra khi tab được focus lại
     document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-            checkForUpdate();
-        }
+        if (!document.hidden) checkForUpdate();
     });
-
-    // Kiểm tra khi window được focus
     window.addEventListener('focus', checkForUpdate);
-
-    // Xóa reload flag khi page load
     sessionStorage.removeItem('app_reload_flag');
 })();
 
@@ -134,12 +107,10 @@ const TILE_COLORS = [
     { bg: '#f5d0fe', text: '#701a75' }
 ];
 
-// Router Functions
 function getRouteFromURL() {
     const path = window.location.pathname;
     const searchParams = new URLSearchParams(window.location.search);
 
-    // Parse path
     if (path === '/' || path === '/dashboard') {
         return { view: 'dashboard' };
     } else if (path === '/projects') {
@@ -148,7 +119,7 @@ function getRouteFromURL() {
         const projectId = searchParams.get('project');
         return {
             view: 'board',
-            projectId: projectId ? parseInt(projectId) : null
+            projectId: projectId ? parseInt(projectId, 10) : null
         };
     } else if (path === '/notifications') {
         return { view: 'notifications' };
@@ -164,18 +135,17 @@ function getRouteFromURL() {
             view: 'personal',
             personalSection: section,
             createWorkLog: create,
-            workLogProjectId: projectId ? parseInt(projectId) : null,
-            workLogTaskId: taskId ? parseInt(taskId) : null,
-            workLogSubtaskId: subtaskId ? parseInt(subtaskId) : null
+            workLogProjectId: projectId ? parseInt(projectId, 10) : null,
+            workLogTaskId: taskId ? parseInt(taskId, 10) : null,
+            workLogSubtaskId: subtaskId ? parseInt(subtaskId, 10) : null
         };
     }
 
-    // Default to dashboard
     return { view: 'dashboard' };
 }
 
 function updateURL(view, params = {}) {
-    let path = '/';
+    let path = '/dashboard';
     const searchParams = new URLSearchParams();
 
     switch (view) {
@@ -187,9 +157,7 @@ function updateURL(view, params = {}) {
             break;
         case 'board':
             path = '/board';
-            if (params.projectId) {
-                searchParams.set('project', params.projectId);
-            }
+            if (params.projectId) searchParams.set('project', params.projectId);
             break;
         case 'notifications':
             path = '/notifications';
@@ -199,9 +167,11 @@ function updateURL(view, params = {}) {
             break;
         case 'personal':
             path = '/personal';
-            if (params.personalSection) {
-                searchParams.set('section', params.personalSection);
-            }
+            if (params.personalSection) searchParams.set('section', params.personalSection);
+            if (params.createWorkLog) searchParams.set('create', 'true');
+            if (params.workLogProjectId) searchParams.set('project_id', params.workLogProjectId);
+            if (params.workLogTaskId) searchParams.set('task_id', params.workLogTaskId);
+            if (params.workLogSubtaskId) searchParams.set('subtask_id', params.workLogSubtaskId);
             break;
         default:
             path = '/dashboard';
@@ -209,15 +179,12 @@ function updateURL(view, params = {}) {
 
     const queryString = searchParams.toString();
     const newURL = queryString ? `${path}?${queryString}` : path;
-
-    // Update URL without reloading page
     window.history.pushState({ view, ...params }, '', newURL);
 }
 
 async function navigateToRoute(route) {
     const { view, projectId, personalSection, createWorkLog, workLogProjectId, workLogTaskId, workLogSubtaskId } = route;
 
-    // Update current state
     if (projectId !== undefined) {
         currentProjectId = projectId;
     }
@@ -225,44 +192,29 @@ async function navigateToRoute(route) {
         currentPersonalSection = personalSection;
     }
 
-    // Switch to the view
-    switchView(view, false); // false = don't update URL (we already did)
+    switchView(view, false);
 
-    // Handle project selection for board view
     if (view === 'board' && projectId) {
         const projectSelect = document.getElementById('projectSelect');
         if (projectSelect) {
             projectSelect.value = projectId;
-            // Skip view switch since we already switched to board view
             selectProject(projectId, true);
         }
     }
 
-    // Handle worklog creation from subtask
     if (view === 'personal' && personalSection === 'work' && createWorkLog && workLogProjectId && workLogTaskId && workLogSubtaskId) {
-        // Đợi một chút để đảm bảo DOM đã sẵn sàng
         await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Đảm bảo worklog section đã được khởi tạo
         await ensureWorkLogSection();
-
-        // Chuyển sang tab form
         setWorklogTab('form', { skipReset: true });
-
-        // Reset form trước
         resetWorkLogForm(false);
-
-        // Pre-fill project, task, subtask
-        const result = populateWorkLogSelectors(workLogProjectId, workLogTaskId) || {};
+        populateWorkLogSelectors(workLogProjectId, workLogTaskId);
         await populateWorkLogSubtasks(workLogTaskId, workLogSubtaskId);
 
-        // Lấy subtask title từ danh sách subtasks đã load
-        // Sử dụng endpoint GET /subtasks/task/{task_id} để lấy danh sách subtasks
         try {
             const subtasks = await apiCall(`/subtasks/task/${workLogTaskId}`);
-            if (subtasks && Array.isArray(subtasks)) {
+            if (Array.isArray(subtasks)) {
                 const subtask = subtasks.find(s => s.id === workLogSubtaskId);
-                if (subtask && subtask.title) {
+                if (subtask?.title) {
                     const titleInput = document.getElementById('workLogTitle');
                     if (titleInput) {
                         titleInput.value = subtask.title;
@@ -270,19 +222,14 @@ async function navigateToRoute(route) {
                 }
             }
         } catch (error) {
-            // Không hiển thị alert, chỉ log error
             console.warn('Failed to fetch subtask title, continuing without pre-fill:', error);
         }
 
-        // Lưu subtaskId để sau khi tạo worklog, tự động gắn vào subtask
         linkingSubtaskId = workLogSubtaskId;
-
-        // Focus vào title input để user có thể bắt đầu nhập ngay
         setTimeout(() => {
             const titleInput = document.getElementById('workLogTitle');
             if (titleInput) {
                 titleInput.focus();
-                // Select text để user có thể thay đổi dễ dàng
                 titleInput.select();
             }
         }, 300);
@@ -292,23 +239,36 @@ async function navigateToRoute(route) {
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
     if (!(await initAuth())) return;
-    ensureLogoLoaded();
+    syncEditorialIcons();
     initTimelineTooltip();
+    initThreadImageViewer();
     initEventListeners();
     updateTaskButtonState();
-
-    // Initialize router - read URL and navigate to correct view
     const route = getRouteFromURL();
     navigateToRoute(route);
-
-    // Handle browser back/forward buttons
-    window.addEventListener('popstate', (e) => {
-        const route = getRouteFromURL();
-        navigateToRoute(route);
+    window.addEventListener('popstate', () => {
+        navigateToRoute(getRouteFromURL());
     });
-
     await Promise.all([loadProjects(), loadDashboard(), loadUsers(), loadNotificationCount(), loadProjectTypes()]);
 });
+
+function syncEditorialIcons() {
+    const emojiBtn = document.getElementById('emojiPickerBtn');
+    if (emojiBtn) {
+        emojiBtn.innerHTML = '<span class="material-symbols-outlined">sentiment_satisfied</span>';
+        emojiBtn.setAttribute('title', 'Chèn emoji');
+    }
+
+    const attachmentBtn = document.getElementById('btnCommentAttachment');
+    if (attachmentBtn) {
+        attachmentBtn.innerHTML = '<span class="material-symbols-outlined">attach_file</span> Đính kèm';
+    }
+
+    const printBtn = document.querySelector('#meetingReportModal .btn-secondary[onclick="window.print()"]');
+    if (printBtn) {
+        printBtn.innerHTML = '<span class="material-symbols-outlined">print</span> In biên bản';
+    }
+}
 
 async function initAuth() {
     authToken = localStorage.getItem('pm_token');
@@ -328,41 +288,11 @@ async function initAuth() {
     return true;
 }
 
-function ensureLogoLoaded() {
-    const logoImg = document.querySelector('.logo-img');
-    if (!logoImg) return;
-
-    // Kiểm tra nếu logo không load được, thử các đường dẫn khác
-    logoImg.addEventListener('error', function () {
-        const currentSrc = this.src;
-        // Thử đường dẫn tuyệt đối nếu đang dùng relative
-        if (!currentSrc.startsWith('http') && !currentSrc.startsWith('/')) {
-            this.src = '/static/Logo.png';
-        } else if (currentSrc.includes('/static/Logo.png')) {
-            // Thử đường dẫn khác nếu static không hoạt động
-            this.src = '/assets/Logo.png';
-        } else if (currentSrc.includes('/assets/Logo.png')) {
-            // Fallback cuối cùng: thử từ templates
-            this.src = '/templates/Logo.png';
-        }
-    });
-
-    // Kiểm tra nếu logo đã load thành công
-    if (logoImg.complete && logoImg.naturalHeight === 0) {
-        // Logo không load được, thử lại
-        const originalSrc = logoImg.src;
-        logoImg.src = '';
-        setTimeout(() => {
-            logoImg.src = originalSrc || '/static/Logo.png';
-        }, 100);
-    }
-}
-
 function updateUserBadge() {
     const avatar = document.getElementById('userAvatar');
     const nameLabel = document.getElementById('userDisplayName');
     if (!currentUser) return;
-
+    
     // Hiển thị avatar nếu có
     if (avatar) {
         if (currentUser.avatar_url) {
@@ -379,7 +309,7 @@ function updateUserBadge() {
     if (nameLabel) {
         nameLabel.textContent = currentUser.full_name || currentUser.username;
     }
-
+    
     // Show/hide admin features
     const adminOnly = document.querySelectorAll('.admin-only');
     const isAdmin = currentUser.role === 'admin';
@@ -396,7 +326,7 @@ function forceLogout() {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
-
+    
     sidebar.classList.toggle('collapsed');
     const isCollapsed = sidebar.classList.contains('collapsed');
     localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
@@ -409,7 +339,7 @@ function initEventListeners() {
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', toggleSidebar);
     }
-
+    
     // Load sidebar state from localStorage
     const sidebarState = localStorage.getItem('sidebarCollapsed');
     if (sidebarState === 'true') {
@@ -418,7 +348,7 @@ function initEventListeners() {
             sidebar.classList.add('collapsed');
         }
     }
-
+    
     // Navigation
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -427,17 +357,11 @@ function initEventListeners() {
             switchView(view);
         });
     });
-
-    // Logo link - navigate to root (dashboard)
-    const logoLink = document.getElementById('logoLink');
-    if (logoLink) {
-        logoLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Navigate to root URL and switch to dashboard view
-            window.history.pushState({ view: 'dashboard' }, '', '/');
-            switchView('dashboard', false); // false = don't update URL (we already did)
-        });
-    }
+    document.getElementById('logoLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.history.pushState({ view: 'dashboard' }, '', '/');
+        switchView('dashboard', false);
+    });
 
     // Project buttons
     document.getElementById('btnNewProject').addEventListener('click', () => openProjectModal());
@@ -469,7 +393,7 @@ function initEventListeners() {
     if (confirmTaskDoneBtn) {
         confirmTaskDoneBtn.addEventListener('click', confirmTaskCompletion);
     }
-
+    
     // Comments
     document.getElementById('btnAddComment')?.addEventListener('click', handleAddComment);
     document.getElementById('btnCommentAttachment')?.addEventListener('click', () => {
@@ -489,10 +413,6 @@ function initEventListeners() {
             updateTaskButtonState();
             stopThreadPolling();
             document.getElementById('projectSummarySection').style.display = 'none';
-            // Update URL to remove project parameter
-            if (currentView === 'board') {
-                updateURL('board', {});
-            }
         }
     });
 
@@ -513,11 +433,12 @@ function initEventListeners() {
     });
 
     // User management
+    document.getElementById('btnCreateUser')?.addEventListener('click', () => openCreateUserModal());
     document.getElementById('closeUserModal')?.addEventListener('click', () => closeUserModal());
     document.getElementById('cancelUser')?.addEventListener('click', () => closeUserModal());
     document.getElementById('userForm')?.addEventListener('submit', handleUserSubmit);
     document.getElementById('userAvatarInput')?.addEventListener('change', handleAvatarPreview);
-    document.getElementById('btnCreateUser')?.addEventListener('click', () => openUserModal());
+    document.getElementById('btnAddUserFieldGroup')?.addEventListener('click', () => addUserFieldGroupRow());
 
     // Board tabs
     document.querySelectorAll('.board-tab').forEach(tab => {
@@ -525,16 +446,6 @@ function initEventListeners() {
             const tabName = e.target.getAttribute('data-tab');
             switchBoardTab(tabName);
         });
-    });
-
-    // Quarterly view year navigation
-    document.getElementById('prevYearBtn')?.addEventListener('click', () => {
-        quarterlyYear--;
-        renderGanttChartQuy();
-    });
-    document.getElementById('nextYearBtn')?.addEventListener('click', () => {
-        quarterlyYear++;
-        renderGanttChartQuy();
     });
 
     // Thread
@@ -551,24 +462,12 @@ function initEventListeners() {
         threadInput.addEventListener('keydown', handleThreadInputKeydown);
         threadInput.addEventListener('paste', handleThreadPaste);
     }
-    initEmojiPicker();
-    initThreadImageViewer();
 
     initPersonalNavigation();
 
     document.getElementById('closeWorkLogLinkModal')?.addEventListener('click', closeWorkLogLinkModal);
     document.getElementById('workLogLinkModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'workLogLinkModal') closeWorkLogLinkModal();
-    });
-    document.getElementById('closeTimelineTaskModal')?.addEventListener('click', closeTimelineTaskModal);
-    document.getElementById('timelineTaskModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'timelineTaskModal') closeTimelineTaskModal();
-    });
-
-    document.getElementById('btnCreateNewWorkLog')?.addEventListener('click', () => {
-        if (linkingSubtaskId) {
-            openCreateWorkLogForSubtask(linkingSubtaskId);
-        }
     });
 
     document.getElementById('dashboardPrevMonth')?.addEventListener('click', async () => {
@@ -580,6 +479,14 @@ function initEventListeners() {
         dashboardMonth.setMonth(dashboardMonth.getMonth() + 1);
         renderDashboardCalendar();
         await loadTodos(dashboardMonth);
+    });
+    document.getElementById('prevYearBtn')?.addEventListener('click', () => {
+        quarterlyYear--;
+        renderGanttChartQuy();
+    });
+    document.getElementById('nextYearBtn')?.addEventListener('click', () => {
+        quarterlyYear++;
+        renderGanttChartQuy();
     });
 }
 
@@ -594,11 +501,11 @@ function handleSearchInput(event) {
         })
         : [...tasks];
     updateProjectSummaryProgress();
-
+    
     // Render based on active tab
     const statusTab = document.getElementById('boardTabStatus');
     const timelineTab = document.getElementById('boardTabTimeline');
-
+    
     if (statusTab && statusTab.classList.contains('active')) {
         renderTasks();
     }
@@ -610,18 +517,7 @@ function handleSearchInput(event) {
 // View Switching
 function switchView(view, shouldUpdateURL = true) {
     currentView = view;
-
-    // Update URL if needed
-    if (shouldUpdateURL) {
-        const params = {};
-        if (view === 'board' && currentProjectId) {
-            params.projectId = currentProjectId;
-        } else if (view === 'personal') {
-            params.personalSection = currentPersonalSection || 'account';
-        }
-        updateURL(view, params);
-    }
-
+    
     // Update nav
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
@@ -630,29 +526,41 @@ function switchView(view, shouldUpdateURL = true) {
     if (navLink) {
         navLink.classList.add('active');
     }
-
+    
     // Update content
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const activeView = document.getElementById(`${view}View`);
     if (activeView) {
         activeView.classList.add('active');
     }
-
+    
     // Update title
     const titles = {
         dashboard: 'Dashboard',
         projects: 'Projects',
         personal: 'Personal',
         board: 'Board',
-        users: 'User Management'
+        users: 'User Management',
+        notifications: 'Notifications'
     };
 
+    if (shouldUpdateURL) {
+        const routeParams = {};
+        if (view === 'board' && currentProjectId) {
+            routeParams.projectId = currentProjectId;
+        }
+        if (view === 'personal') {
+            routeParams.personalSection = currentPersonalSection || 'account';
+        }
+        updateURL(view, routeParams);
+    }
+    
     // Load data for specific views
     if (view === 'users' && currentUser?.role === 'admin') {
         loadUsersList();
     }
     document.getElementById('pageTitle').textContent = titles[view] || 'Dashboard';
-
+    
     // Load view-specific data
     if (view === 'dashboard') {
         loadDashboard();
@@ -671,12 +579,12 @@ function switchView(view, shouldUpdateURL = true) {
         stopThreadPolling();
         stopActivityPolling();
         document.getElementById('projectSummarySection').style.display = 'none';
-        showPersonalSection(currentPersonalSection || 'account', true);
+        showPersonalSection(currentPersonalSection || 'account', true, shouldUpdateURL);
     } else {
         stopThreadPolling(); // Dừng polling khi chuyển sang view khác
         stopActivityPolling(); // Dừng activity polling
         document.getElementById('projectSummarySection').style.display = 'none';
-        showPersonalSection(currentPersonalSection || 'account', false);
+        showPersonalSection(currentPersonalSection || 'account', false, false);
     }
 }
 
@@ -695,7 +603,7 @@ function initPersonalNavigation() {
     }
     const accountForm = document.getElementById('accountForm');
     accountForm?.addEventListener('submit', handleAccountSubmit);
-
+    
     const changePasswordForm = document.getElementById('changePasswordForm');
     changePasswordForm?.addEventListener('submit', handleChangePassword);
     const avatarInput = document.getElementById('accountAvatarUrl');
@@ -728,85 +636,14 @@ function initPersonalNavigation() {
         });
     }
 
-    // Meeting event listeners
-    document.querySelectorAll('.meeting-tab').forEach(tab => {
-        tab.addEventListener('click', async (e) => {
-            const tabName = e.target.getAttribute('data-meeting-tab');
-            await setMeetingTab(tabName);
-        });
-    });
-    document.getElementById('meetingForm')?.addEventListener('submit', handleMeetingSubmit);
-    document.getElementById('btnNewMeeting')?.addEventListener('click', resetMeetingForm);
-    document.getElementById('btnResetMeeting')?.addEventListener('click', resetMeetingForm);
-    document.getElementById('btnDeleteMeeting')?.addEventListener('click', handleDeleteMeeting);
-    document.getElementById('meetingEmployee')?.addEventListener('change', handleMeetingEmployeeChange);
-    document.querySelectorAll('.meeting-content-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const item = e.target.closest('.meeting-content-item');
-            const editBtn = item.querySelector('.btn-edit-content');
-            if (e.target.checked) {
-                editBtn.style.display = 'block';
-            } else {
-                editBtn.style.display = 'none';
-            }
-        });
-    });
-    document.querySelectorAll('.btn-edit-content').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const contentType = e.target.getAttribute('data-content-type');
-            openMeetingContentEditor(contentType);
-        });
-    });
-    document.getElementById('closeMeetingContentModal')?.addEventListener('click', closeMeetingContentModal);
-    document.getElementById('meetingContentModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'meetingContentModal') closeMeetingContentModal();
-    });
-    document.getElementById('cancelMeetingContent')?.addEventListener('click', closeMeetingContentModal);
-    document.getElementById('saveMeetingContent')?.addEventListener('click', saveMeetingContent);
-
-    document.getElementById('closeMeetingReportModal')?.addEventListener('click', () => document.getElementById('meetingReportModal').style.display = 'none');
-    document.getElementById('btnCloseMeetingReport')?.addEventListener('click', () => document.getElementById('meetingReportModal').style.display = 'none');
-    document.getElementById('meetingReportModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'meetingReportModal') document.getElementById('meetingReportModal').style.display = 'none';
-    });
-
-    showPersonalSection(currentPersonalSection, false);
-
-    // Intern Hub Navigation
-    const navInternHub = document.getElementById('navInternHub');
-    if (navInternHub) {
-        navInternHub.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent bubbling to personalList
-
-            if (!currentUser) return;
-
-            const userTeam = (currentUser.team || currentUser.department || '').toLowerCase();
-            const isAdmin = currentUser.role === 'admin';
-            const isIntern = userTeam.includes('intern');
-
-            if (isAdmin || isIntern) {
-                window.location.href = '/intern/overview';
-            } else {
-                const modal = document.getElementById('unauthorizedModal');
-                if (modal) modal.style.display = 'block';
-            }
-        });
-    }
-
-    document.getElementById('closeUnauthorizedModal')?.addEventListener('click', () => {
-        document.getElementById('unauthorizedModal').style.display = 'none';
-    });
-
-    document.getElementById('unauthorizedModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'unauthorizedModal') {
-            e.target.style.display = 'none';
-        }
-    });
+    showPersonalSection(currentPersonalSection, false, false);
 }
 
-function showPersonalSection(section = 'account', highlightNav = true) {
+function showPersonalSection(section = 'account', highlightNav = true, shouldUpdateURL = true) {
     currentPersonalSection = section;
+    if (shouldUpdateURL && currentView === 'personal') {
+        updateURL('personal', { personalSection: section });
+    }
     document.querySelectorAll('#personalList .personal-link').forEach(link => {
         const linkSection = link.getAttribute('data-personal');
         if (highlightNav) {
@@ -817,7 +654,6 @@ function showPersonalSection(section = 'account', highlightNav = true) {
     });
     const sectionMap = {
         todos: document.getElementById('personalSectionTodos'),
-        meeting: document.getElementById('personalSectionMeeting'),
         notes: document.getElementById('personalSectionNotes'),
         work: document.getElementById('personalSectionWork'),
         account: document.getElementById('personalSectionAccount')
@@ -834,8 +670,6 @@ function showPersonalSection(section = 'account', highlightNav = true) {
         ensureWorkLogSection();
     } else if (section === 'notes') {
         ensureNotesSection();
-    } else if (section === 'meeting') {
-        ensureMeetingSection();
     }
 }
 
@@ -924,47 +758,47 @@ async function handleAccountSubmit(event) {
 
 async function handleChangePassword(event) {
     event.preventDefault();
-
+    
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     const statusEl = document.getElementById('passwordStatus');
-
+    
     // Validate
     if (!currentPassword || !newPassword || !confirmPassword) {
         if (statusEl) statusEl.textContent = 'Vui lòng điền đầy đủ thông tin';
         return;
     }
-
+    
     if (newPassword.length < 6) {
         if (statusEl) statusEl.textContent = 'Mật khẩu mới phải có ít nhất 6 ký tự';
         return;
     }
-
+    
     if (newPassword !== confirmPassword) {
         if (statusEl) statusEl.textContent = 'Mật khẩu mới và xác nhận không khớp';
         return;
     }
-
+    
     try {
         if (statusEl) statusEl.textContent = 'Đang xử lý...';
-
+        
         const response = await apiCall('/users/me/change-password', 'POST', {
             current_password: currentPassword,
             new_password: newPassword
         });
-
+        
         if (response && response.message) {
             if (statusEl) {
                 statusEl.textContent = '✓ Đổi mật khẩu thành công!';
                 statusEl.style.color = 'var(--success-color)';
             }
-
+            
             // Reset form
             document.getElementById('currentPassword').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
-
+            
             // Clear status after 3 seconds
             setTimeout(() => {
                 if (statusEl) {
@@ -1002,10 +836,12 @@ async function ensureWorkLogSection() {
         if (existing) {
             populateWorkLogForm(existing);
         } else {
-            resetWorkLogForm(false);
+            resetWorkLogForm();
         }
+    } else if (workLogs.length) {
+        selectWorkLog(workLogs[0].id);
     } else {
-        resetWorkLogForm(false);
+        resetWorkLogForm();
     }
     setWorklogTab('list');
 }
@@ -1161,7 +997,7 @@ function renderDashboardCalendar(taskList = dashboardTasks, todoList = todos) {
     const startWeekday = firstDay.getDay(); // 0 = CN, 1 = T2, ..., 6 = T7
 
     grid.innerHTML = '';
-
+    
     // Header row với tên các ngày trong tuần
     const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
     dayNames.forEach(day => {
@@ -1178,7 +1014,7 @@ function renderDashboardCalendar(taskList = dashboardTasks, todoList = todos) {
     // Tạo các tuần (mỗi tuần là 7 ngày)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
+    
     let currentDate = new Date(weekStart);
     const totalDays = Math.ceil((daysInMonth + startWeekday) / 7) * 7; // Tổng số ngày cần hiển thị (làm tròn lên để đủ tuần)
 
@@ -1186,18 +1022,18 @@ function renderDashboardCalendar(taskList = dashboardTasks, todoList = todos) {
         const date = new Date(currentDate);
         const dayKey = getLocalDateKey(date);
         const isCurrentMonth = date.getMonth() === month;
-
+        
         const dayElement = document.createElement('div');
         dayElement.className = 'calendar-day';
-
+        
         if (!isCurrentMonth) {
             dayElement.classList.add('other-month');
         }
-
+        
         if (date.toDateString() === today.toDateString()) {
             dayElement.classList.add('today');
         }
-
+        
         // Hiển thị số ngày
         const label = document.createElement('div');
         label.className = 'calendar-date';
@@ -1243,7 +1079,7 @@ function renderDashboardCalendar(taskList = dashboardTasks, todoList = todos) {
                 } else {
                     classes.push('in-progress');
                 }
-
+                
                 const event = document.createElement('div');
                 event.className = classes.join(' ');
                 event.innerHTML = `
@@ -1255,7 +1091,7 @@ function renderDashboardCalendar(taskList = dashboardTasks, todoList = todos) {
         }
 
         grid.appendChild(dayElement);
-
+        
         // Chuyển sang ngày tiếp theo
         currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -1368,7 +1204,7 @@ function populateWorkLogSelectors(selectedProjectId = null, selectedTaskId = nul
     const currentProjectValue = selectedProjectId ?? (projectSelect.value ? Number(projectSelect.value) : null);
     projectSelect.innerHTML = '<option value="">-- Chưa gán --</option>' +
         projects.map(project => `<option value="${project.id}" ${project.id === Number(currentProjectValue) ? 'selected' : ''}>${escapeHtml(project.name)}</option>`).join('');
-
+    
     const desiredTaskId = selectedTaskId ?? (taskSelect.value ? Number(taskSelect.value) : null);
     const tasksToRender = currentProjectValue
         ? myWorkLogTasks.filter(task => task.project_id === Number(currentProjectValue))
@@ -1391,7 +1227,7 @@ function handleWorkLogProjectChange() {
     populateWorkLogSubtasks(result.taskId || null, null);
 }
 
-function resetWorkLogForm(shouldSwitchTab = true, preserveStatus = false) {
+function resetWorkLogForm() {
     currentWorkLogId = null;
     const idInput = document.getElementById('workLogId');
     if (idInput) idInput.value = '';
@@ -1407,14 +1243,10 @@ function resetWorkLogForm(shouldSwitchTab = true, preserveStatus = false) {
     }
     updateWorkLogAttachmentState(false);
     const status = document.getElementById('workLogStatus');
-    if (status && !preserveStatus) {
-        status.textContent = '';
-    }
+    if (status) status.textContent = '';
     const deleteBtn = document.getElementById('btnDeleteWorkLog');
     if (deleteBtn) deleteBtn.style.display = 'none';
-    if (shouldSwitchTab) {
-        setWorklogTab('form', { skipReset: true });
-    }
+    setWorklogTab('form');
 }
 
 function populateWorkLogForm(worklog) {
@@ -1432,7 +1264,7 @@ function populateWorkLogForm(worklog) {
     updateWorkLogAttachmentState(true);
     const deleteBtn = document.getElementById('btnDeleteWorkLog');
     if (deleteBtn) deleteBtn.style.display = 'inline-flex';
-    setWorklogTab('form', { skipReset: true });
+    setWorklogTab('form');
 }
 
 function updateWorkLogAttachmentState(enabled) {
@@ -1493,46 +1325,16 @@ async function handleWorkLogSubmit(event) {
         result = await apiCall('/work-logs/', 'POST', payload);
     }
     if (result) {
+        currentWorkLogId = result.id;
         await loadWorkLogs();
-
-        // Reset form về trạng thái sẵn sàng điền mới (preserve status để hiển thị thông báo)
-        resetWorkLogForm(true, true);
-
-        // Nếu đang tạo worklog mới từ subtask, tự động gắn vào subtask
-        if (!currentWorkLogId && linkingSubtaskId && result.id) {
-            const linkResult = await apiCall(`/subtasks/${linkingSubtaskId}`, 'PUT', { work_log_id: result.id });
-            if (linkResult) {
-                await refreshCurrentTaskData();
-                // Hiển thị thông báo thành công
-                if (status) {
-                    status.textContent = 'Đã tạo và gắn Work Log vào Subtask!';
-                    setTimeout(() => {
-                        status.textContent = '';
-                    }, 2000);
-                }
-                // Clear linkingSubtaskId sau khi gắn thành công
-                linkingSubtaskId = null;
-            } else {
-                if (status) {
-                    status.textContent = 'Đã tạo Work Log nhưng không thể gắn vào Subtask.';
-                    setTimeout(() => {
-                        status.textContent = '';
-                    }, 3000);
-                }
-            }
-        } else {
-            if (status) {
-                status.textContent = 'Đã lưu!';
-                setTimeout(() => {
-                    status.textContent = '';
-                }, 2000);
-            }
+        const updated = workLogs.find(log => log.id === currentWorkLogId);
+        if (updated) populateWorkLogForm(updated);
+        if (status) {
+            status.textContent = 'Đã lưu!';
+            setTimeout(() => status.textContent = '', 2000);
         }
     } else if (status) {
         status.textContent = 'Lưu thất bại.';
-        setTimeout(() => {
-            status.textContent = '';
-        }, 3000);
     }
 }
 
@@ -1540,41 +1342,13 @@ async function handleDeleteWorkLog() {
     if (!currentWorkLogId) return;
     if (!confirm('Bạn chắc chắn muốn xóa Work Log này?')) return;
     const status = document.getElementById('workLogStatus');
-    const workLogIdToDelete = currentWorkLogId; // Lưu ID trước khi reset
     if (status) status.textContent = 'Đang xóa...';
-
-    try {
-        const result = await apiCall(`/work-logs/${workLogIdToDelete}`, 'DELETE');
-        if (result) {
-            currentWorkLogId = null;
-            await loadWorkLogs();
-            resetWorkLogForm();
-            if (status) {
-                status.textContent = 'Đã xóa thành công!';
-                setTimeout(() => {
-                    status.textContent = '';
-                }, 2000);
-            }
-        } else {
-            // Nếu API call trả về null (có lỗi), thử reload lại danh sách
-            await loadWorkLogs();
-            if (status) {
-                status.textContent = 'Xóa thất bại. Vui lòng thử lại.';
-                setTimeout(() => {
-                    status.textContent = '';
-                }, 3000);
-            }
-        }
-    } catch (error) {
-        console.error('Error deleting worklog:', error);
-        // Reload danh sách để đảm bảo UI đồng bộ
+    const result = await apiCall(`/work-logs/${currentWorkLogId}`, 'DELETE');
+    if (result) {
+        currentWorkLogId = null;
         await loadWorkLogs();
-        if (status) {
-            status.textContent = 'Có lỗi xảy ra khi xóa. Vui lòng thử lại.';
-            setTimeout(() => {
-                status.textContent = '';
-            }, 3000);
-        }
+        resetWorkLogForm();
+        if (status) status.textContent = '';
     }
 }
 
@@ -1606,25 +1380,20 @@ function selectWorkLog(workLogId) {
     if (!log) return;
     populateWorkLogForm(log);
     renderWorkLogList();
-    setWorklogTab('form', { skipReset: true });
+    setWorklogTab('form');
 }
 
 function initWorklogTabs() {
     const tabs = document.querySelectorAll('.worklog-tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            const targetTab = tab.getAttribute('data-worklog-tab');
-            setWorklogTab(targetTab, { ensureBlank: targetTab === 'form' });
+            setWorklogTab(tab.getAttribute('data-worklog-tab'));
         });
     });
     worklogTabsInitialized = true;
 }
 
-function setWorklogTab(tabName, options = {}) {
-    const { ensureBlank = false, skipReset = false } = options;
-    if (tabName === 'form' && ensureBlank && !skipReset) {
-        resetWorkLogForm(false);
-    }
+function setWorklogTab(tabName) {
     document.querySelectorAll('.worklog-tab').forEach(tab => {
         tab.classList.toggle('active', tab.getAttribute('data-worklog-tab') === tabName);
     });
@@ -1863,39 +1632,6 @@ function closeWorkLogLinkModal() {
     document.getElementById('workLogLinkModal')?.classList.remove('active');
 }
 
-async function openCreateWorkLogForSubtask(subtaskId) {
-    // Lấy thông tin project và task từ currentTaskData
-    if (!currentTaskData) {
-        alert('Không thể lấy thông tin task. Vui lòng thử lại.');
-        return;
-    }
-
-    const projectId = currentTaskData.project_id || currentProjectId;
-    const taskId = currentTaskData.id;
-
-    if (!projectId || !taskId) {
-        alert('Không thể lấy thông tin project/task. Vui lòng thử lại.');
-        return;
-    }
-
-    // Lấy thông tin subtask từ currentTaskData
-    const subtask = currentTaskData.subtasks?.find(s => s.id === subtaskId);
-    const subtaskTitle = subtask ? subtask.title : '';
-
-    // Tạo URL với query params để mở tab mới
-    const params = new URLSearchParams({
-        section: 'work',
-        create: 'true',
-        project_id: projectId.toString(),
-        task_id: taskId.toString(),
-        subtask_id: subtaskId.toString()
-    });
-
-    // Mở tab mới với URL này
-    const newTabUrl = `/personal?${params.toString()}`;
-    window.open(newTabUrl, '_blank');
-}
-
 async function linkWorkLogToSubtask(workLogId) {
     if (!linkingSubtaskId) return;
     const result = await apiCall(`/subtasks/${linkingSubtaskId}`, 'PUT', { work_log_id: workLogId });
@@ -1903,8 +1639,6 @@ async function linkWorkLogToSubtask(workLogId) {
         await refreshCurrentTaskData();
         await loadWorkLogs();
         closeWorkLogLinkModal();
-        // Clear linkingSubtaskId sau khi gắn thành công
-        linkingSubtaskId = null;
     }
 }
 
@@ -1923,7 +1657,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         method,
         headers: {}
     };
-
+    
     const token = localStorage.getItem('pm_token');
     if (token) {
         options.headers['Authorization'] = `Bearer ${token}`;
@@ -1937,7 +1671,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
     if (data) {
         options.body = isFormData ? data : JSON.stringify(data);
     }
-
+    
     try {
         const response = await fetch(`${API_BASE}${endpoint}`, options);
         if (response.status === 401) {
@@ -1946,19 +1680,14 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         }
         if (!response.ok) {
             let errorDetail = '';
-            const contentType = response.headers.get('content-type');
             try {
-                if (contentType && contentType.includes('application/json')) {
-                    const errorJson = await response.clone().json();
-                    if (errorJson?.detail) {
-                        errorDetail = typeof errorJson.detail === 'string'
-                            ? errorJson.detail
-                            : JSON.stringify(errorJson.detail);
-                    } else if (Object.keys(errorJson || {}).length) {
-                        errorDetail = JSON.stringify(errorJson);
-                    }
-                } else {
-                    errorDetail = await response.clone().text();
+                const errorJson = await response.clone().json();
+                if (errorJson?.detail) {
+                    errorDetail = typeof errorJson.detail === 'string'
+                        ? errorJson.detail
+                        : JSON.stringify(errorJson.detail);
+                } else if (Object.keys(errorJson || {}).length) {
+                    errorDetail = JSON.stringify(errorJson);
                 }
             } catch (_) {
                 try {
@@ -1970,23 +1699,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
             const statusText = response.statusText || 'Error';
             throw new Error(`HTTP ${response.status} - ${statusText}${errorDetail ? `: ${errorDetail}` : ''}`);
         }
-
-        // Kiểm tra Content-Type trước khi parse JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            return await response.json();
-        } else {
-            // Nếu không phải JSON, có thể là HTML (404 page) hoặc text
-            // Điều này thường xảy ra khi endpoint chưa được implement
-            const text = await response.text();
-            console.warn('Expected JSON but got:', contentType, 'for endpoint:', endpoint);
-            // Trả về null thay vì throw error để frontend có thể xử lý gracefully
-            if (contentType && contentType.includes('text/html')) {
-                console.warn('API endpoint may not be implemented yet:', endpoint);
-                return null;
-            }
-            throw new Error('Response is not JSON. Content-Type: ' + contentType);
-        }
+        return await response.json();
     } catch (error) {
         console.error('API Error:', error);
         alert('Có lỗi xảy ra: ' + error.message);
@@ -2040,33 +1753,19 @@ function updateAssigneesList() {
 function renderProjects() {
     const container = document.getElementById('projectsGrid');
     if (!container) return;
-
-    container.innerHTML = projects.map(project => {
-        const dueDateStr = project.due_date ? formatDateDisplay(project.due_date) : 'Chưa đặt';
-        return `
+    
+    container.innerHTML = projects.map(project => `
         <div class="project-card" onclick="selectProject(${project.id})">
             <div class="project-card-header">
                 <div class="project-color" style="background: ${project.color}"></div>
                 <h3>${escapeHtml(project.name)}</h3>
-                <button class="project-edit-btn" onclick="event.stopPropagation(); editProject(${project.id})" title="Chỉnh sửa dự án">
-                    ✏️
-                </button>
             </div>
             <p>${escapeHtml(project.description || 'No description')}</p>
             <div class="project-meta">
                 <span>Status: ${project.status}</span>
-                ${project.due_date ? `<span>Due: ${dueDateStr}</span>` : ''}
             </div>
         </div>
-    `;
-    }).join('');
-}
-
-async function editProject(projectId) {
-    const project = projects.find(p => p.id === projectId);
-    if (project) {
-        await openProjectModal(project);
-    }
+    `).join('');
 }
 
 // Function removed - sidebar projects list has been removed
@@ -2086,7 +1785,7 @@ async function editProject(projectId) {
 function updateProjectSelect() {
     const select = document.getElementById('projectSelect');
     if (!select) return;
-
+    
     select.innerHTML = '<option value="">Select Project</option>' +
         projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
 }
@@ -2097,7 +1796,7 @@ async function selectProject(projectId, skipViewSwitch = false) {
     if (projectSelectEl) {
         projectSelectEl.value = projectId;
     }
-
+    
     // Tìm trong cache trước
     let projectDetail = projects.find(p => p.id === projectId) || null;
     try {
@@ -2114,30 +1813,21 @@ async function selectProject(projectId, skipViewSwitch = false) {
     } catch (error) {
         console.error('Failed to load project details:', error);
     }
-
+    
     currentProject = projectDetail;
     currentProjectIsOwner = currentProject ? currentProject.owner_id === currentUser?.id : false;
     updateTaskButtonState();
     updateProjectSummaryInfo();
-
-    // Update URL if we're in board view
-    if (currentView === 'board') {
-        updateURL('board', { projectId: projectId });
-    }
-
+    
     if (!skipViewSwitch) {
         switchView('board');
     } else {
-        // Still need to load tasks if we're already in board view
-        if (currentView === 'board') {
-            loadTasks(projectId, false);
-            updateProjectSummaryInfo();
-        }
+        updateURL('board', { projectId });
     }
-
+    
     await loadTasks(projectId, false);
     await loadActivities(projectId);
-
+    
     document.getElementById('projectSummarySection').style.display = 'grid';
 }
 
@@ -2165,29 +1855,29 @@ async function loadTasks(projectId = null, assignedOnly = false) {
         endpoint += `project_id=${projectId}&`;
     }
     endpoint += `assigned_only=${assignedOnly}`;
-
+    
     const data = await apiCall(endpoint);
     if (data) {
         tasks = data;
         filteredTasks = [...tasks];
         updateProjectSummaryProgress();
-
+        
         // Refresh activities if project is selected
         if (currentProjectId) {
             await loadActivities(currentProjectId);
         }
-
+        
         // Render based on active tab
         const statusTab = document.getElementById('boardTabStatus');
         const timelineTab = document.getElementById('boardTabTimeline');
-
+        
         if (statusTab && statusTab.classList.contains('active')) {
             renderTasks();
         }
         if (timelineTab && timelineTab.classList.contains('active')) {
-            renderGanttChartQuy();
+            renderGanttChart();
         }
-
+        
         // Load threads nếu tab Thread đang active
         const threadTab = document.getElementById('boardTabThread');
         if (threadTab && threadTab.classList.contains('active')) {
@@ -2196,9 +1886,9 @@ async function loadTasks(projectId = null, assignedOnly = false) {
     }
 }
 
-async function refreshCurrentProjectTasks() {
+function refreshCurrentProjectTasks() {
     if (currentProjectId) {
-        await loadTasks(currentProjectId, false);
+        loadTasks(currentProjectId, false);
     }
 }
 
@@ -2220,7 +1910,7 @@ function renderTasks() {
     if (!statusTab || !statusTab.classList.contains('active')) {
         return;
     }
-
+    
     const statuses = ['todo', 'in_progress', 'done', 'blocked'];
     const statusMap = {
         todo: 'tasksTodo',
@@ -2234,19 +1924,19 @@ function renderTasks() {
         done: 'countDone',
         blocked: 'countBlocked'
     };
-
+    
     statuses.forEach(status => {
         const container = document.getElementById(statusMap[status]);
         if (!container) return;
-
+        
         const statusTasks = filteredTasks.filter(t => t.status === status);
         const countEl = document.getElementById(countMap[status]);
         if (countEl) {
             countEl.textContent = statusTasks.length;
         }
-
+        
         container.innerHTML = statusTasks.map(task => createTaskCard(task)).join('');
-
+        
         container.querySelectorAll('.task-card').forEach(card => {
             const canEdit = card.dataset.canEdit === 'true';
             card.draggable = canEdit;
@@ -2259,7 +1949,7 @@ function renderTasks() {
             card.addEventListener('click', handleTaskCardClick);
         });
     });
-
+    
     // Add drop zones
     document.querySelectorAll('.kanban-column').forEach(column => {
         column.addEventListener('dragover', handleDragOver);
@@ -2275,17 +1965,17 @@ function switchBoardTab(tabName) {
             tab.classList.add('active');
         }
     });
-
+    
     // Update tab content
     document.querySelectorAll('.board-tab-content').forEach(content => {
         content.classList.remove('active');
     });
-
+    
     const activeContent = document.getElementById(`boardTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
     if (activeContent) {
         activeContent.classList.add('active');
     }
-
+    
     // Render content based on active tab
     if (tabName === 'timeline') {
         stopThreadPolling();
@@ -2302,14 +1992,10 @@ function renderGanttChart() {
     const chart = document.getElementById('ganttChart');
     const timeline = document.getElementById('ganttTimeline');
     if (!chart || !timeline) return;
-
-    // Chỉ render nếu tab Timeline đang active và sub-tab Tháng đang active
+    
+    // Chỉ render nếu tab Timeline đang active
     const timelineTab = document.getElementById('boardTabTimeline');
-    const thangSubTab = document.querySelector('[data-timeline-tab="thang"]');
     if (!timelineTab || !timelineTab.classList.contains('active')) {
-        return;
-    }
-    if (!thangSubTab || !thangSubTab.classList.contains('active')) {
         return;
     }
 
@@ -2335,7 +2021,7 @@ function renderGanttChart() {
 
     const startDates = sortedTasks.map(task => parseDate(task.created_at || task.due_date) || new Date()).filter(Boolean);
     const dueDates = sortedTasks.map(task => parseDate(task.due_date)).filter(Boolean);
-
+    
     if (dueDates.length === 0) {
         chart.innerHTML = '<p class="text-muted">Chưa có task nào đặt ngày hoàn thành.</p>';
         timeline.innerHTML = '';
@@ -2379,35 +2065,6 @@ function renderGanttChart() {
             </div>
         `;
     }).join('');
-
-    attachTimelineTooltipEvents(chart);
-}
-
-function switchTimelineSubTab(subTabName) {
-    // Update sub-tab buttons
-    document.querySelectorAll('.timeline-sub-tab').forEach(tab => {
-        tab.classList.remove('active');
-        if (tab.getAttribute('data-timeline-tab') === subTabName) {
-            tab.classList.add('active');
-        }
-    });
-
-    // Show/hide containers
-    const thangContainer = document.getElementById('ganttContainerThang');
-    const quyContainer = document.getElementById('ganttContainerQuy');
-    const yearSelector = document.getElementById('quarterlyYearSelector');
-
-    if (subTabName === 'thang') {
-        if (thangContainer) thangContainer.style.display = 'block';
-        if (quyContainer) quyContainer.style.display = 'none';
-        if (yearSelector) yearSelector.style.display = 'none';
-        renderGanttChart();
-    } else if (subTabName === 'quy') {
-        if (thangContainer) thangContainer.style.display = 'none';
-        if (quyContainer) quyContainer.style.display = 'block';
-        if (yearSelector) yearSelector.style.display = 'flex';
-        renderGanttChartQuy();
-    }
 }
 
 function renderGanttChartQuy() {
@@ -2416,7 +2073,6 @@ function renderGanttChartQuy() {
     const yearDisplay = document.getElementById('currentYearDisplay');
     if (!chart || !timeline) return;
 
-    // Cập nhật hiển thị năm
     if (yearDisplay) {
         yearDisplay.textContent = `Năm ${quarterlyYear}`;
     }
@@ -2427,7 +2083,6 @@ function renderGanttChartQuy() {
         return;
     }
 
-    // Helper để parse date
     function parseDate(dateValue) {
         if (!dateValue) return null;
         const normalized = String(dateValue).replace(' ', 'T');
@@ -2435,22 +2090,13 @@ function renderGanttChartQuy() {
         return Number.isNaN(date.getTime()) ? null : date;
     }
 
-    // Helper để lấy quý từ date
-    function getQuarter(date) {
-        if (!date) return null;
-        const month = date.getMonth(); // 0-11
-        return Math.floor(month / 3) + 1; // 1-4
-    }
-
-    // Lọc tasks theo năm được chọn
     const tasksInYear = filteredTasks.filter(task => {
         const dueDate = parseDate(task.due_date);
-        if (!dueDate) return false;
-        return dueDate.getFullYear() === quarterlyYear;
+        return dueDate && dueDate.getFullYear() === quarterlyYear;
     });
 
     if (tasksInYear.length === 0) {
-        chart.innerHTML = '<p class="text-muted">Không có task nào trong năm ' + quarterlyYear + '.</p>';
+        chart.innerHTML = `<p class="text-muted">Không có task nào trong năm ${quarterlyYear}.</p>`;
         timeline.innerHTML = '';
         return;
     }
@@ -2462,18 +2108,14 @@ function renderGanttChartQuy() {
         { name: 'Q4', months: ['10', '11', '12'], startMonth: 9, endMonth: 11 }
     ];
 
-    timeline.innerHTML = quarters.map((quarter, index) => {
-        const quarterStart = new Date(quarterlyYear, quarter.startMonth, 1);
-        const quarterEnd = new Date(quarterlyYear, quarter.endMonth + 1, 0);
-        return `
-            <div class="gantt-quarter-block quarter-q${index + 1}">
-                <div class="gantt-quarter-header">${quarter.name} ${quarterlyYear}</div>
-                <div class="gantt-quarter-months">
-                    ${quarter.months.map(month => `<span>${month}</span>`).join('')}
-                </div>
+    timeline.innerHTML = quarters.map((quarter, index) => `
+        <div class="gantt-quarter-block quarter-q${index + 1}">
+            <div class="gantt-quarter-header">${quarter.name} ${quarterlyYear}</div>
+            <div class="gantt-quarter-months">
+                ${quarter.months.map(month => `<span>${month}</span>`).join('')}
             </div>
-        `;
-    }).join('');
+        </div>
+    `).join('');
 
     const yearStart = new Date(quarterlyYear, 0, 1);
     const yearEnd = new Date(quarterlyYear, 11, 31, 23, 59, 59, 999);
@@ -2484,32 +2126,17 @@ function renderGanttChartQuy() {
         const dueDateRaw = parseDate(task.due_date);
         if (!dueDateRaw) return '';
         const startDateRaw = parseDate(task.created_at) || dueDateRaw;
-
-        if (startDateRaw > yearEnd || dueDateRaw < yearStart) {
-            return '';
-        }
+        if (startDateRaw > yearEnd || dueDateRaw < yearStart) return '';
 
         const start = new Date(Math.max(yearStart, startDateRaw));
         const end = new Date(Math.min(yearEnd, dueDateRaw));
-
         const startOffsetDays = (start - yearStart) / MS_PER_DAY;
         const durationDays = Math.max(1, (end - start) / MS_PER_DAY);
-
-        let leftPercent = (startOffsetDays / totalYearDays) * 100;
-        let widthPercent = (durationDays / totalYearDays) * 100;
-        widthPercent = Math.max(2, Math.min(widthPercent, 100 - leftPercent));
-
+        const leftPercent = (startOffsetDays / totalYearDays) * 100;
+        const widthPercent = Math.max(2, Math.min((durationDays / totalYearDays) * 100, 100 - leftPercent));
         const color = getStatusColor(task.status);
-        const statusTextMap = {
-            todo: 'To Do',
-            in_progress: 'In Progress',
-            done: 'Done',
-            blocked: 'Blocked'
-        };
+        const statusTextMap = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' };
         const statusText = statusTextMap[task.status] || task.status;
-        const startDateStr = formatDateDisplay(start);
-        const dueDateStr = formatDateDisplay(end);
-        const priority = task.priority || 'Không có';
         const totalSubtasks = typeof task.total_subtasks === 'number'
             ? task.total_subtasks
             : (task.subtasks ? task.subtasks.length : 0);
@@ -2517,7 +2144,7 @@ function renderGanttChartQuy() {
             ? task.completed_subtasks
             : (task.subtasks ? task.subtasks.filter(sub => sub.is_done).length : 0);
         const tooltip = escapeHtml(
-            `Task: ${task.title}\nTrạng thái: ${statusText}\nBắt đầu: ${startDateStr}\nHạn: ${dueDateStr}\nPriority: ${priority}\nSubtasks: ${completedSubtasks}/${totalSubtasks}`
+            `Task: ${task.title}\nTrạng thái: ${statusText}\nBắt đầu: ${formatDateDisplay(start)}\nHạn: ${formatDateDisplay(end)}\nPriority: ${task.priority || 'Không có'}\nSubtasks: ${completedSubtasks}/${totalSubtasks}`
         );
 
         return `
@@ -2540,7 +2167,7 @@ function renderGanttChartQuy() {
 function attachTimelineTooltipEvents(container) {
     if (!container) return;
     container.querySelectorAll('.gantt-bar-quarter').forEach(bar => {
-        bar.addEventListener('mouseenter', (event) => showTimelineTooltip(event, bar.getAttribute('data-tooltip')));
+        bar.addEventListener('mouseenter', event => showTimelineTooltip(event, bar.getAttribute('data-tooltip')));
         bar.addEventListener('mousemove', moveTimelineTooltip);
         bar.addEventListener('mouseleave', hideTimelineTooltip);
     });
@@ -2580,7 +2207,6 @@ function positionTimelineTooltip(event) {
     const viewportWidth = document.documentElement.clientWidth;
     const viewportHeight = document.documentElement.clientHeight;
 
-    // Temporarily set position to measure size accurately
     timelineTooltip.style.left = `${event.pageX + margin}px`;
     timelineTooltip.style.top = `${event.pageY - margin}px`;
     const tooltipRect = timelineTooltip.getBoundingClientRect();
@@ -2594,7 +2220,6 @@ function positionTimelineTooltip(event) {
     if (left < scrollX + margin) {
         left = scrollX + margin;
     }
-
     if (top < scrollY + margin) {
         top = event.pageY + margin;
     }
@@ -2604,157 +2229,6 @@ function positionTimelineTooltip(event) {
 
     timelineTooltip.style.left = `${left}px`;
     timelineTooltip.style.top = `${top}px`;
-}
-
-function initEmojiPicker() {
-    const emojiBtn = document.getElementById('emojiPickerBtn');
-    const threadInput = document.getElementById('threadInput');
-    if (!emojiBtn || !threadInput || typeof EmojiButton === 'undefined') return;
-
-    const picker = new EmojiButton({
-        position: 'top-end',
-        autoHideOnBlur: true,
-        theme: 'light'
-    });
-
-    picker.on('emoji', selection => {
-        const emoji = selection.emoji || selection;
-        const start = threadInput.selectionStart || 0;
-        const end = threadInput.selectionEnd || 0;
-        const value = threadInput.value || '';
-        threadInput.value = value.slice(0, start) + emoji + value.slice(end);
-        const newPos = start + emoji.length;
-        threadInput.focus();
-        threadInput.setSelectionRange(newPos, newPos);
-    });
-
-    emojiBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        picker.togglePicker(emojiBtn);
-    });
-}
-
-async function openTimelineTaskModal(taskId) {
-    let task = (filteredTasks || []).find(t => t.id === taskId) || tasks.find(t => t.id === taskId);
-    if (!task) {
-        task = await apiCall(`/tasks/${taskId}`);
-        if (!task) return;
-    }
-    const modal = document.getElementById('timelineTaskModal');
-    if (!modal) return;
-
-    setTextContent('timelineTaskTitle', task.title || 'Không có tên');
-    setTextContent('timelineTaskDescription', task.description || 'Không có mô tả.');
-
-    setMetaValue('timelineTaskStatus', formatStatus(task.status), `status-chip ${getStatusChipClass(task.status)}`);
-    const priorityClass = task.priority ? `priority-${task.priority}` : '';
-    setMetaValue('timelineTaskPriority', task.priority || 'Chưa đặt', priorityClass);
-    const progressPercent = typeof task.progress_percent === 'number' ? Math.round(task.progress_percent) : null;
-    const progressValue = progressPercent !== null ? `${progressPercent}%` : '--';
-    setMetaValue('timelineTaskProgress', progressValue, `progress-chip ${getProgressChipClass(progressPercent)}`);
-    const deadline = task.due_date ? formatDateDisplay(task.due_date) : '--';
-    setMetaValue('timelineTaskDeadline', deadline, 'deadline-chip');
-
-    renderTimelineAssignees(task.assignees || []);
-    renderTimelineSubtasks(task.subtasks || []);
-
-    modal.classList.add('active');
-}
-
-function closeTimelineTaskModal() {
-    document.getElementById('timelineTaskModal')?.classList.remove('active');
-}
-
-function setMetaValue(elementId, value, extraClass = '') {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    el.textContent = value;
-    el.className = `meta-chip ${extraClass}`.trim();
-}
-
-function setTextContent(elementId, value) {
-    const el = document.getElementById(elementId);
-    if (el) el.textContent = value;
-}
-
-function renderTimelineAssignees(assignees) {
-    const container = document.getElementById('timelineTaskAssignees');
-    if (!container) return;
-    if (!assignees.length) {
-        container.className = 'assignee-list empty-state';
-        container.textContent = 'Chưa phân công.';
-        return;
-    }
-    container.className = 'assignee-list';
-    container.innerHTML = assignees.map(user => {
-        const name = user.full_name || user.username || 'User';
-        const role = user.role || '';
-        const initials = name.split(' ').map(part => part[0]?.toUpperCase() || '').slice(0, 2).join('');
-        const avatar = user.avatar_url
-            ? `<img src="${user.avatar_url}" alt="${escapeHtml(name)}" class="assignee-avatar">`
-            : `<div class="assignee-initials">${initials || 'U'}</div>`;
-        return `
-            <div class="assignee-card">
-                ${avatar}
-                <div class="assignee-info">
-                    <span>${escapeHtml(name)}</span>
-                    <span>${escapeHtml(role)}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function renderTimelineSubtasks(subtasks) {
-    const container = document.getElementById('timelineTaskSubtasks');
-    if (!container) return;
-    if (!subtasks.length) {
-        container.className = 'timeline-subtask-list empty-state';
-        container.textContent = 'Chưa có subtask.';
-        return;
-    }
-    container.className = 'timeline-subtask-list';
-    container.innerHTML = subtasks.map(subtask => `
-        <div class="timeline-subtask-item ${subtask.is_done ? 'completed' : ''}">
-            <div>
-                <h4>${escapeHtml(subtask.title || 'Untitled')}</h4>
-                ${subtask.description ? `<p>${escapeHtml(subtask.description)}</p>` : ''}
-            </div>
-            <span class="timeline-subtask-status">${subtask.is_done ? '✅' : '🔴'}</span>
-        </div>
-    `).join('');
-}
-
-function formatStatus(status) {
-    const map = {
-        todo: 'To Do',
-        in_progress: 'In Progress',
-        done: 'Done',
-        blocked: 'Blocked'
-    };
-    return map[status] || status || '--';
-}
-
-function getStatusChipClass(status) {
-    switch (status) {
-        case 'todo':
-            return 'status-todo';
-        case 'in_progress':
-            return 'status-in-progress';
-        case 'done':
-            return 'status-done';
-        case 'blocked':
-            return 'status-blocked';
-        default:
-            return '';
-    }
-}
-
-function getProgressChipClass(percent) {
-    if (percent === null || percent === undefined) return '';
-    if (percent < 34) return 'progress-low';
-    if (percent < 67) return 'progress-medium';
-    return 'progress-high';
 }
 
 function getStatusColor(status) {
@@ -2783,7 +2257,7 @@ function createTaskCard(task) {
     const progressColor = getProgressColor(progress);
     const progressTextColor = getProgressTextColor(progress);
     const editable = canEditTask(task);
-
+    
     // Tạo avatar HTML cho nhiều assignees
     let assigneesHtml = '';
     if (assignees.length > 0) {
@@ -2796,7 +2270,7 @@ function createTaskCard(task) {
                 return `<div class="task-assignee-avatar task-assignee-initials" title="${escapeHtml(assigneeName)}">${initials}</div>`;
             }
         }).join('');
-
+        
         // Thêm text hiển thị tên nếu chỉ có 1 assignee, hoặc số lượng nếu nhiều hơn
         if (assignees.length === 1) {
             assigneesHtml += `<span class="task-assignee-name">${escapeHtml(assignees[0].full_name || assignees[0].username)}</span>`;
@@ -2804,7 +2278,7 @@ function createTaskCard(task) {
             assigneesHtml += `<span class="task-assignee-name">${assignees.length} assignees</span>`;
         }
     }
-
+    
     return `
         <div class="task-card ${editable ? '' : 'task-card-readonly'}" draggable="${editable}" data-task-id="${task.id}" data-can-edit="${editable}">
             <div class="task-card-header">
@@ -2836,7 +2310,7 @@ async function createTask(taskData) {
     taskData.project_id = currentProjectId;
     const data = await apiCall('/tasks/', 'POST', taskData);
     if (data) {
-        await refreshCurrentProjectTasks();
+        refreshCurrentProjectTasks();
         if (currentProjectId) {
             await loadActivities(currentProjectId);
         }
@@ -2847,7 +2321,7 @@ async function createTask(taskData) {
 async function updateTask(taskId, taskData) {
     const data = await apiCall(`/tasks/${taskId}`, 'PUT', taskData);
     if (data) {
-        await refreshCurrentProjectTasks();
+        refreshCurrentProjectTasks();
         if (currentProjectId) {
             await loadActivities(currentProjectId);
         }
@@ -2861,7 +2335,7 @@ async function deleteTask(taskId) {
     }
     const data = await apiCall(`/tasks/${taskId}`, 'DELETE');
     if (data) {
-        await refreshCurrentProjectTasks();
+        refreshCurrentProjectTasks();
     }
 }
 
@@ -2908,18 +2382,18 @@ async function handleDrop(e) {
     const column = e.currentTarget;
     const newStatus = column.getAttribute('data-status');
     const taskId = parseInt(draggedTask.getAttribute('data-task-id'));
-
+    
     // Find position (simple: add to end)
     const tasksInColumn = tasks.filter(t => t.status === newStatus);
     const newPosition = tasksInColumn.length;
-
+    
     const result = await apiCall(`/tasks/${taskId}/move`, 'POST', {
         new_status: newStatus,
         new_position: newPosition
     });
-
+    
     if (result) {
-        await refreshCurrentProjectTasks();
+        refreshCurrentProjectTasks();
     }
 }
 
@@ -2929,7 +2403,7 @@ async function loadDashboard() {
         apiCall('/projects/'),
         apiCall('/tasks/?assigned_only=false')
     ]);
-
+    
     if (!projectsData || !tasksData) return;
 
     const now = new Date();
@@ -2954,7 +2428,7 @@ async function loadDashboard() {
     const atRiskProjects = projectsData.filter(project => isProjectAtRisk(project, taskMap, now));
 
     document.getElementById('statTotalProjects').textContent = totalProjects;
-
+    
     // Completion Rate with color coding
     const completionRateEl = document.getElementById('statCompletionRate');
     completionRateEl.textContent = `${completionRate}%`;
@@ -2963,7 +2437,7 @@ async function loadDashboard() {
     } else {
         completionRateEl.style.color = '#10b981'; // Green
     }
-
+    
     // On-time Rate with color coding
     const onTimeRateEl = document.getElementById('statOnTimeRate');
     onTimeRateEl.textContent = `${onTimeRate}%`;
@@ -2972,7 +2446,7 @@ async function loadDashboard() {
     } else {
         onTimeRateEl.style.color = '#10b981'; // Green
     }
-
+    
     document.getElementById('statOverdueCount').textContent = overdueCount;
 
     updateWarningCards(atRiskProjects, overdueProjects);
@@ -2980,24 +2454,17 @@ async function loadDashboard() {
     const recentProjects = projectsData.slice(0, 6);
     const container = document.getElementById('recentProjectsList');
     if (container) {
-        container.innerHTML = recentProjects.map(project => {
-            const dueDateStr = project.due_date ? formatDateDisplay(project.due_date) : 'Chưa đặt';
-            return `
+        container.innerHTML = recentProjects.map(project => `
             <div class="project-card" onclick="selectProject(${project.id})">
                 <div class="project-card-header">
                     <div class="project-color" style="background: ${project.color}"></div>
                     <h3>${escapeHtml(project.name)}</h3>
-                    <button class="project-edit-btn" onclick="event.stopPropagation(); editProject(${project.id})" title="Chỉnh sửa dự án">
-                        ✏️
-                    </button>
                 </div>
                 <p>${escapeHtml(project.description || 'No description')}</p>
-                ${project.due_date ? `<div class="project-meta"><span>Due: ${dueDateStr}</span></div>` : ''}
             </div>
-        `;
-        }).join('');
+        `).join('');
     }
-
+    
     renderDashboardCalendar(dashboardTasks, todos);
     await loadTodos(dashboardMonth);
     await renderTodayTasks();
@@ -3007,7 +2474,7 @@ async function loadDashboard() {
 // Upcoming Deadlines
 async function loadUpcomingDeadlines() {
     if (!currentUser) return;
-
+    
     try {
         // Load tasks assigned to current user
         const tasksData = await apiCall('/tasks/?assigned_only=true');
@@ -3015,16 +2482,16 @@ async function loadUpcomingDeadlines() {
             renderUpcomingDeadlines([]);
             return;
         }
-
+        
         const now = new Date();
         now.setHours(0, 0, 0, 0);
-
+        
         // Filter tasks with due_date, not completed, and due_date >= today
         const upcomingTasks = tasksData
             .filter(task => {
                 if (!task.due_date) return false;
                 if (task.status === 'done') return false;
-
+                
                 const dueDate = new Date(task.due_date);
                 dueDate.setHours(0, 0, 0, 0);
                 return dueDate >= now;
@@ -3035,7 +2502,7 @@ async function loadUpcomingDeadlines() {
                 return dateA - dateB;
             })
             .slice(0, 10); // Limit to 10 most urgent
-
+        
         renderUpcomingDeadlines(upcomingTasks);
     } catch (error) {
         console.error('Error loading upcoming deadlines:', error);
@@ -3046,40 +2513,40 @@ async function loadUpcomingDeadlines() {
 function renderUpcomingDeadlines(tasks) {
     const container = document.getElementById('upcomingDeadlinesList');
     if (!container) return;
-
+    
     if (!tasks || tasks.length === 0) {
         container.innerHTML = `
             <div class="empty-state" style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
                 <div style="margin-bottom: 12px;">Xin chúc mừng! Bạn đã hoàn thành toàn bộ deadline</div>
-                <img src="/assets/icon/smiling.png" alt="Smiling" style="width: 60px; height: 60px; object-fit: contain;">
+                <span class="material-symbols-outlined" style="font-size: 56px; color: var(--primary-color);">sentiment_satisfied</span>
             </div>
         `;
         return;
     }
-
+    
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-
+    
     container.innerHTML = tasks.map(task => {
         const dueDate = new Date(task.due_date);
         dueDate.setHours(0, 0, 0, 0);
         const daysDiff = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
-
+        
         let urgencyClass = '';
         if (daysDiff <= 3) {
             urgencyClass = 'urgent';
         } else if (daysDiff <= 7) {
             urgencyClass = 'warning';
         }
-
+        
         const formattedDate = dueDate.toLocaleDateString('vi-VN', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
         });
-
+        
         const daysText = daysDiff === 0 ? 'Hôm nay' : daysDiff === 1 ? '1 ngày' : `${daysDiff} ngày`;
-
+        
         return `
             <div class="upcoming-deadline-item ${urgencyClass}" onclick="openTaskFromDeadline(${task.id})">
                 <div class="upcoming-deadline-task-name">${escapeHtml(task.title)}</div>
@@ -3121,28 +2588,28 @@ function openTaskFromDeadline(taskId) {
 async function renderTodayTasks() {
     const container = document.getElementById('todayTasksList');
     if (!container) return;
-
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
+    
     // Load todos for today
     const start = new Date(today);
     start.setHours(0, 0, 0, 0);
     const end = new Date(today);
     end.setHours(23, 59, 59, 999);
-
+    
     const todayTodos = await apiCall(`/todos/?start_date=${start.toISOString()}&end_date=${end.toISOString()}`);
-
+    
     if (!todayTodos || todayTodos.length === 0) {
         container.innerHTML = '<div class="empty-state">Chưa có công việc nào cho ngày hôm nay.</div>';
         return;
     }
-
+    
     container.innerHTML = todayTodos.map(todo => {
         const todoDate = new Date(todo.planned_date);
         todoDate.setHours(0, 0, 0, 0);
         const isPast = todoDate < today && !todo.is_done;
-
+        
         let statusClass = 'in-progress';
         let statusText = 'In Progress';
         if (todo.is_done) {
@@ -3152,7 +2619,7 @@ async function renderTodayTasks() {
             statusClass = 'late';
             statusText = 'Late';
         }
-
+        
         return `
             <div class="today-task-row">
                 <div class="task-col-status">
@@ -3186,10 +2653,10 @@ async function toggleTodayTodo(todoId) {
 async function openProjectModal(project = null) {
     const modal = document.getElementById('projectModal');
     const form = document.getElementById('projectForm');
-
+    
     // Load project types vào dropdown
     await loadProjectTypes();
-
+    
     if (project) {
         document.getElementById('projectModalTitle').textContent = 'Edit Project';
         document.getElementById('projectId').value = project.id;
@@ -3211,7 +2678,7 @@ async function openProjectModal(project = null) {
         document.getElementById('projectType').value = '';
         document.getElementById('projectDueDate').value = '';
     }
-
+    
     modal.classList.add('active');
 }
 
@@ -3220,13 +2687,13 @@ async function loadProjectTypes() {
         const projectTypes = await apiCall('/projects/types/list');
         const select = document.getElementById('projectType');
         if (!select) return;
-
+        
         // Lưu giá trị hiện tại
         const currentValue = select.value;
-
+        
         // Clear và thêm options
         select.innerHTML = '<option value="">-- Chọn loại dự án --</option>';
-
+        
         if (projectTypes && projectTypes.length > 0) {
             projectTypes.forEach(type => {
                 const option = document.createElement('option');
@@ -3235,7 +2702,7 @@ async function loadProjectTypes() {
                 select.appendChild(option);
             });
         }
-
+        
         // Khôi phục giá trị nếu có
         if (currentValue) {
             select.value = currentValue;
@@ -3252,11 +2719,11 @@ function closeProjectModal() {
 function normalizeDateInput(value) {
     if (!value) return null;
     const trimmed = value.trim();
-
+    
     let day;
     let month;
     let year;
-
+    
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
         [day, month, year] = trimmed.split('/');
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
@@ -3302,25 +2769,19 @@ function handleProjectSubmit(e) {
     const projectId = document.getElementById('projectId').value;
     const projectTypeId = document.getElementById('projectType').value;
     const dueDateValue = document.getElementById('projectDueDate').value;
-
-    // Validate date nếu có giá trị
-    let normalizedDueDate = null;
-    if (dueDateValue && dueDateValue.trim()) {
-        normalizedDueDate = normalizeDateInput(dueDateValue);
-        if (!normalizedDueDate) {
-            alert('Ngày hoàn thành dự án không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy hoặc chọn ngày từ lịch.');
-            return;
-        }
+    const normalizedDueDate = normalizeDateInput(dueDateValue);
+    if (dueDateValue && !normalizedDueDate) {
+        alert('Ngày hoàn thành dự án không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy hoặc chọn ngày từ lịch.');
+        return;
     }
-
     const projectData = {
         name: document.getElementById('projectName').value,
         description: document.getElementById('projectDescription').value,
         color: document.getElementById('projectColor').value,
         project_type_id: projectTypeId ? parseInt(projectTypeId) : null,
-        due_date: normalizedDueDate // null nếu không có giá trị, hoặc ISO string nếu có
+        due_date: normalizedDueDate
     };
-
+    
     if (projectId) {
         updateProject(parseInt(projectId), projectData);
     } else {
@@ -3337,10 +2798,10 @@ function openTaskModal(task = null, readOnly = false) {
         alert('Chỉ Project Manager mới được tạo task.');
         return;
     }
-
+    
     const modal = document.getElementById('taskModal');
     const form = document.getElementById('taskForm');
-
+    
     updateAssigneesList();
     currentTaskData = task || null;
     currentEditingTaskId = task ? task.id : null;
@@ -3354,13 +2815,13 @@ function openTaskModal(task = null, readOnly = false) {
         document.getElementById('taskStatus').value = task.status;
         document.getElementById('taskPriority').value = task.priority;
         document.getElementById('taskTags').value = task.tags || '';
-
+        
         // Load assignees đã chọn
         const assigneeIds = task.assignees ? task.assignees.map(a => a.id) : [];
         document.querySelectorAll('.assignee-checkbox-input').forEach(checkbox => {
             checkbox.checked = assigneeIds.includes(parseInt(checkbox.value));
         });
-
+        
         if (task.due_date) {
             const date = new Date(task.due_date);
             document.getElementById('taskDueDate').value = date.toISOString().slice(0, 16);
@@ -3371,16 +2832,16 @@ function openTaskModal(task = null, readOnly = false) {
         document.getElementById('taskId').value = '';
         document.getElementById('taskStatus').value = 'todo';
         document.getElementById('taskPriority').value = 'medium';
-
+        
         // Uncheck tất cả assignees
         document.querySelectorAll('.assignee-checkbox-input').forEach(checkbox => {
             checkbox.checked = false;
         });
     }
-
+    
     renderTaskExtras(task);
     applyTaskModalReadOnlyState(readOnly);
-
+    
     modal.classList.add('active');
 }
 
@@ -3410,7 +2871,7 @@ function handleTaskSubmit(e) {
     const assigneeCheckboxes = document.querySelectorAll('.assignee-checkbox-input:checked');
     const assigneeIds = Array.from(assigneeCheckboxes).map(cb => parseInt(cb.value));
     taskData.assignee_ids = assigneeIds.length > 0 ? assigneeIds : null;
-
+    
     if (taskId) {
         updateTask(parseInt(taskId), taskData);
     } else {
@@ -3433,7 +2894,7 @@ function getAssignee(userId) {
 function canEditTask(task) {
     if (!task || !currentUser) return false;
     if (currentProjectIsOwner) return true;
-
+    
     // Kiểm tra nếu user có trong danh sách assignees
     const assigneeIds = task.assignees ? task.assignees.map(a => a.id) : [];
     return assigneeIds.includes(currentUser.id);
@@ -3609,19 +3070,12 @@ function renderSubtasks(task) {
 
     list.innerHTML = ordered.map(subtask => `
         <div class="subtask-item ${subtask.is_done ? 'done' : ''}">
-            <div class="subtask-checkbox-cell">
+            <label>
                 <input type="checkbox" ${subtask.is_done ? 'checked' : ''} ${allowEdits ? '' : 'disabled'} onchange="handleSubtaskToggle(${subtask.id}, this.checked)">
-            </div>
-            <div class="subtask-title-cell">
                 <span class="subtask-title">${escapeHtml(subtask.title)}</span>
-            </div>
-            <div class="subtask-description-cell">
-                ${subtask.description ? escapeHtml(subtask.description) : '--'}
-            </div>
-            <div class="subtask-worklog-cell">
-                ${subtask.work_log_id ? `<span>Work Log #${subtask.work_log_id}</span> <a href="#" onclick="openWorkLogFromSubtask(${subtask.work_log_id}, false); return false;" class="subtask-readonly-link">Đọc chi tiết</a>` : '<span class="muted">Chưa có Work Log</span>'}
-            </div>
-            <div class="subtask-actions-cell">
+            </label>
+            ${subtask.work_log_id ? `<div class="subtask-linked-log"><span>📚 Work Log #${subtask.work_log_id}</span> <a href="#" onclick="openWorkLogFromSubtask(${subtask.work_log_id}, false); return false;" class="subtask-readonly-link">Đọc chi tiết</a></div>` : '<div class="subtask-linked-log muted">Chưa có Work Log</div>'}
+            <div class="subtask-actions">
                 ${allowEdits ? `
                     <button type="button" class="btn-link" onclick="openWorkLogLinkModal(${subtask.id})">${subtask.work_log_id ? 'Đổi Work Log' : 'Gắn Work Log'}</button>
                     ${subtask.work_log_id ? `<button type="button" class="btn-link danger" onclick="unlinkWorkLogFromSubtask(${subtask.id})">Bỏ liên kết</button>` : ''}
@@ -3746,8 +3200,8 @@ async function confirmTaskCompletion() {
     const result = await apiCall(`/tasks/${currentEditingTaskId}/confirm-complete`, 'POST');
     if (result) {
         alert('Đã xác nhận hoàn thành task.');
-        await refreshCurrentProjectTasks();
         closeTaskModal();
+        refreshCurrentProjectTasks();
     }
 }
 
@@ -3758,7 +3212,7 @@ function applyTaskModalReadOnlyState(readOnly) {
     const note = document.getElementById('taskReadOnlyNote');
     const addBtn = document.getElementById('btnAddSubtask');
     const subtaskForm = document.getElementById('subtaskFormWrapper');
-    const inputs = ['taskTitle', 'taskDescription', 'taskStatus', 'taskPriority', 'taskDueDate', 'taskTags'];
+    const inputs = ['taskTitle','taskDescription','taskStatus','taskPriority','taskDueDate','taskTags'];
     // Disable assignees checkboxes
     document.querySelectorAll('.assignee-checkbox-input').forEach(cb => {
         cb.disabled = readOnly;
@@ -3829,35 +3283,130 @@ async function loadUsersList() {
     }
 }
 
-function renderUsersTable() {
-    const tbody = document.getElementById('usersTableBody');
-    if (!tbody) return;
+function normalizeUserFieldGroups(user = {}) {
+    const groupEntries = Array.isArray(user.group) ? user.group : [];
+    const normalizedGroups = groupEntries
+        .map((entry) => ({
+            field: (entry?.field || '').trim(),
+            group: (entry?.group || '').trim()
+        }))
+        .filter((entry) => entry.field || entry.group);
 
-    if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="padding: 24px; text-align: center; color: var(--text-secondary);">Không có user nào</td></tr>';
+    if (normalizedGroups.length > 0) {
+        return normalizedGroups;
+    }
+
+    const fields = Array.isArray(user.field) ? user.field : [];
+    return fields
+        .map((fieldName) => ({
+            field: String(fieldName || '').trim(),
+            group: ''
+        }))
+        .filter((entry) => entry.field);
+}
+
+function renderUserFieldGroupSummary(user = {}) {
+    const entries = normalizeUserFieldGroups(user);
+    if (entries.length === 0) {
+        return '--';
+    }
+
+    return entries
+        .map((entry) => entry.group ? `${entry.field} - ${entry.group}` : entry.field)
+        .join(', ');
+}
+
+function createUserFieldGroupRowMarkup(fieldValue = '', groupValue = '') {
+    return `
+        <div class="user-field-group-row">
+            <div class="form-group">
+                <label>Lĩnh vực</label>
+                <input type="text" class="user-field-input" value="${escapeHtml(fieldValue)}" placeholder="Ví dụ: Sales">
+            </div>
+            <div class="form-group">
+                <label>Nhóm</label>
+                <input type="text" class="user-group-input" value="${escapeHtml(groupValue)}" placeholder="Ví dụ: Enterprise">
+            </div>
+            <button type="button" class="btn-secondary danger user-field-group-remove" onclick="removeUserFieldGroupRow(this)">Remove</button>
+        </div>
+    `;
+}
+
+function renderUserFieldGroupRows(entries = []) {
+    const rowsContainer = document.getElementById('userFieldGroupRows');
+    if (!rowsContainer) return;
+
+    const safeEntries = entries.length > 0 ? entries : [{ field: '', group: '' }];
+    rowsContainer.innerHTML = safeEntries
+        .map((entry) => createUserFieldGroupRowMarkup(entry.field || '', entry.group || ''))
+        .join('');
+}
+
+function addUserFieldGroupRow(fieldValue = '', groupValue = '') {
+    const rowsContainer = document.getElementById('userFieldGroupRows');
+    if (!rowsContainer) return;
+
+    rowsContainer.insertAdjacentHTML('beforeend', createUserFieldGroupRowMarkup(fieldValue, groupValue));
+}
+
+function removeUserFieldGroupRow(button) {
+    const rowsContainer = document.getElementById('userFieldGroupRows');
+    const row = button?.closest('.user-field-group-row');
+    if (!rowsContainer || !row) return;
+
+    if (rowsContainer.children.length === 1) {
+        const fieldInput = row.querySelector('.user-field-input');
+        const groupInput = row.querySelector('.user-group-input');
+        if (fieldInput) fieldInput.value = '';
+        if (groupInput) groupInput.value = '';
         return;
     }
 
+    row.remove();
+}
+
+function collectUserFieldGroupData() {
+    const rows = Array.from(document.querySelectorAll('#userFieldGroupRows .user-field-group-row'));
+
+    return rows
+        .map((row) => ({
+            field: row.querySelector('.user-field-input')?.value?.trim() || '',
+            group: row.querySelector('.user-group-input')?.value?.trim() || ''
+        }))
+        .filter((entry) => entry.field);
+}
+
+function renderUsersTable() {
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="padding: 24px; text-align: center; color: var(--text-secondary);">Không có user nào</td></tr>';
+        return;
+    }
+    
     tbody.innerHTML = users.map(user => `
         <tr style="border-bottom: 1px solid var(--border-color);">
             <td style="padding: 12px;">
-                ${user.avatar_url
-            ? `<img src="${user.avatar_url}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);">`
-            : '<div style="width: 40px; height: 40px; border-radius: 50%; background: var(--sidebar-bg); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-secondary);">' +
-            ((user.full_name || user.username || 'U').split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || '👤') +
-            '</div>'
-        }
+                ${user.avatar_url 
+                    ? `<img src="${user.avatar_url}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);">`
+                    : '<div style="width: 40px; height: 40px; border-radius: 50%; background: var(--sidebar-bg); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-secondary);">' + 
+                      ((user.full_name || user.username || 'U').split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || '👤') + 
+                      '</div>'
+                }
             </td>
             <td style="padding: 12px; font-weight: 500;">${escapeHtml(user.username)}</td>
             <td style="padding: 12px;">${escapeHtml(user.email)}</td>
             <td style="padding: 12px;">${escapeHtml(user.full_name || '--')}</td>
+            <td style="padding: 12px;">${escapeHtml(user.position || '--')}</td>
             <td style="padding: 12px;">${escapeHtml(user.department || '--')}</td>
             <td style="padding: 12px;">${escapeHtml(user.team || '--')}</td>
+            <td style="padding: 12px;">${escapeHtml(renderUserFieldGroupSummary(user))}</td>
             <td style="padding: 12px;">
                 <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; 
-                    ${user.role === 'admin' ? 'background: #fee2e2; color: #991b1b;' :
-            user.role === 'viewer' ? 'background: #e0e7ff; color: #3730a3;' :
-                'background: #dbeafe; color: #1e40af;'}">
+                    ${user.role === 'admin' ? 'background: #fee2e2; color: #991b1b;' : 
+                      user.role === 'viewer' ? 'background: #e0e7ff; color: #3730a3;' : 
+                      'background: #dbeafe; color: #1e40af;'}">
                     ${user.role || 'member'}
                 </span>
             </td>
@@ -3868,43 +3417,56 @@ function renderUsersTable() {
     `).join('');
 }
 
-function openUserModal(userId = null) {
+function openCreateUserModal() {
     const modal = document.getElementById('userModal');
-    const form = document.getElementById('userForm');
     const passwordGroup = document.getElementById('userPasswordGroup');
-    const modalTitle = document.getElementById('userModalTitle');
+    const passwordInput = document.getElementById('userPassword');
 
-    if (userId) {
-        const user = users.find(u => u.id === userId);
-        if (!user) return;
-        modalTitle.textContent = 'Edit User';
-        document.getElementById('userId').value = user.id;
-        document.getElementById('userUsername').value = user.username || '';
-        document.getElementById('userEmail').value = user.email || '';
-        document.getElementById('userFullName').value = user.full_name || '';
-        document.getElementById('userDepartment').value = user.department || '';
-        document.getElementById('userTeam').value = user.team || '';
-        document.getElementById('userRole').value = user.role || 'member';
+    document.getElementById('userModalTitle').textContent = 'Create User';
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = '';
+    document.getElementById('userRole').value = 'member';
+    document.getElementById('userAvatarPreview').style.display = 'none';
+    document.getElementById('userAvatarInput').value = '';
+    passwordGroup.style.display = 'block';
+    passwordInput.required = true;
+    renderUserFieldGroupRows();
 
-        if (passwordGroup) passwordGroup.style.display = 'none';
-        document.getElementById('userPassword').required = false;
+    modal.classList.add('active');
+}
 
-        const avatarPreview = document.getElementById('userAvatarPreview');
-        if (user.avatar_url) {
-            avatarPreview.src = user.avatar_url;
-            avatarPreview.style.display = 'block';
-        } else {
-            avatarPreview.style.display = 'none';
-        }
+function openUserModal(userId) {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    const modal = document.getElementById('userModal');
+    const passwordGroup = document.getElementById('userPasswordGroup');
+    const passwordInput = document.getElementById('userPassword');
+
+    document.getElementById('userModalTitle').textContent = 'Edit User';
+    document.getElementById('userId').value = user.id;
+    document.getElementById('userUsername').value = user.username || '';
+    document.getElementById('userEmail').value = user.email || '';
+    document.getElementById('userFullName').value = user.full_name || '';
+    document.getElementById('userDepartment').value = user.department || '';
+    document.getElementById('userTeam').value = user.team || '';
+    document.getElementById('userPosition').value = user.position || '';
+    document.getElementById('userRole').value = user.role || 'member';
+    passwordGroup.style.display = 'none';
+    passwordInput.required = false;
+    passwordInput.value = '';
+    renderUserFieldGroupRows(normalizeUserFieldGroups(user));
+
+    const avatarPreview = document.getElementById('userAvatarPreview');
+    const avatarInput = document.getElementById('userAvatarInput');
+    if (user.avatar_url) {
+        avatarPreview.src = user.avatar_url;
+        avatarPreview.style.display = 'block';
     } else {
-        modalTitle.textContent = 'Create User';
-        form.reset();
-        document.getElementById('userId').value = '';
-        if (passwordGroup) passwordGroup.style.display = 'block';
-        document.getElementById('userPassword').required = true;
-        document.getElementById('userAvatarPreview').style.display = 'none';
+        avatarPreview.style.display = 'none';
     }
-
+    avatarInput.value = '';
+    
     modal.classList.add('active');
 }
 
@@ -3913,18 +3475,23 @@ function closeUserModal() {
     modal.classList.remove('active');
     document.getElementById('userForm').reset();
     document.getElementById('userAvatarPreview').style.display = 'none';
+    document.getElementById('userAvatarInput').value = '';
+    document.getElementById('userPasswordGroup').style.display = 'block';
+    document.getElementById('userPassword').required = true;
+    document.getElementById('userModalTitle').textContent = 'Edit User';
+    renderUserFieldGroupRows();
 }
 
 function handleAvatarPreview(event) {
     const file = event.target.files[0];
     if (!file) return;
-
+    
     if (!file.type.startsWith('image/')) {
         alert('File phải là ảnh (PNG, JPG, JPEG)');
         event.target.value = '';
         return;
     }
-
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         const avatarPreview = document.getElementById('userAvatarPreview');
@@ -3934,64 +3501,81 @@ function handleAvatarPreview(event) {
     reader.readAsDataURL(file);
 }
 
-async function loadUsersList() {
-    const data = await apiCall('/users/');
-    if (data) {
-        users = data;
-        renderUsersTable();
-    }
-}
-
 async function handleUserSubmit(e) {
     e.preventDefault();
-    const userId = document.getElementById('userId').value;
+    const userId = parseInt(document.getElementById('userId').value);
+    const fieldGroupEntries = collectUserFieldGroupData();
+    
     const userData = {
         username: document.getElementById('userUsername').value,
         email: document.getElementById('userEmail').value,
-        full_name: document.getElementById('userFullName').value,
-        department: document.getElementById('userDepartment').value,
-        team: document.getElementById('userTeam').value,
+        full_name: document.getElementById('userFullName').value || null,
+        department: document.getElementById('userDepartment').value || null,
+        team: document.getElementById('userTeam').value || null,
+        position: document.getElementById('userPosition').value || null,
+        field: fieldGroupEntries.map((entry) => entry.field),
+        group: fieldGroupEntries,
         role: document.getElementById('userRole').value
     };
 
-    if (!userId) {
-        userData.password = document.getElementById('userPassword').value;
-        if (!userData.password) {
-            alert('Vui lòng nhập mật khẩu cho user mới.');
-            return;
+    const avatarInput = document.getElementById('userAvatarInput');
+
+    if (userId) {
+        let uploadedUser = null;
+        if (avatarInput.files && avatarInput.files.length > 0) {
+            uploadedUser = await uploadUserAvatar(userId, avatarInput.files[0]);
+            if (!uploadedUser) {
+                return;
+            }
         }
-        await createUser(userData);
-    } else {
-        await updateUser(parseInt(userId), userData);
+
+        const updatedUser = await updateUserInfo(userId, userData);
+        if (updatedUser || uploadedUser) {
+            await loadUsersList();
+            closeUserModal();
+        }
+        return;
+    }
+
+    const password = document.getElementById('userPassword').value;
+    if (!password) {
+        alert('Password là bắt buộc khi tạo user mới');
+        return;
+    }
+
+    const createdUser = await createUserInfo({
+        ...userData,
+        password
+    });
+
+    if (!createdUser) {
+        return;
+    }
+
+    if (avatarInput.files && avatarInput.files.length > 0) {
+        await uploadUserAvatar(createdUser.id, avatarInput.files[0]);
+    }
+
+    if (createdUser) {
+        await loadUsersList();
+        closeUserModal();
     }
 }
 
-async function createUser(userData) {
+async function createUserInfo(userData) {
     const data = await apiCall('/users/', 'POST', userData);
     if (data) {
-        // Upload avatar sau khi tạo user nếu có file
-        const avatarInput = document.getElementById('userAvatarInput');
-        if (avatarInput.files && avatarInput.files.length > 0) {
-            await uploadUserAvatar(data.id, avatarInput.files[0]);
-        }
-        await loadUsersList();
-        closeUserModal();
-        alert('Tạo user thành công.');
+        return data;
     }
+    return null;
 }
 
-async function updateUser(userId, userData) {
+async function updateUserInfo(userId, userData) {
     const data = await apiCall(`/users/${userId}`, 'PUT', userData);
     if (data) {
-        // Upload avatar nếu có file mới
-        const avatarInput = document.getElementById('userAvatarInput');
-        if (avatarInput.files && avatarInput.files.length > 0) {
-            await uploadUserAvatar(userId, avatarInput.files[0]);
-        }
-        await loadUsersList();
-        closeUserModal();
-        alert('Cập nhật user thành công.');
+        return data;
     }
+    return null;
 }
 
 async function uploadUserAvatar(userId, file) {
@@ -4000,10 +3584,10 @@ async function uploadUserAvatar(userId, file) {
         alert('Vui lòng đăng nhập lại');
         return null;
     }
-
+    
     const formData = new FormData();
     formData.append('file', file);
-
+    
     try {
         const response = await fetch(`${API_BASE}/users/${userId}/avatar`, {
             method: 'POST',
@@ -4012,17 +3596,17 @@ async function uploadUserAvatar(userId, file) {
             },
             body: formData
         });
-
+        
         if (response.status === 401) {
             forceLogout();
             return null;
         }
-
+        
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || 'Upload avatar thất bại');
         }
-
+        
         const result = await response.json();
         return result;
     } catch (error) {
@@ -4048,20 +3632,20 @@ async function loadThreads(shouldScrollToBottom = false) {
     if (!currentProjectId) {
         const container = document.getElementById('threadMessages');
         if (container) {
-            container.innerHTML =
+            container.innerHTML = 
                 '<div style="padding: 24px; text-align: center; color: var(--text-secondary);">Vui lòng chọn project trước.</div>';
         }
         stopThreadPolling();
         return;
     }
-
+    
     const data = await apiCall(`/threads/?project_id=${currentProjectId}`);
     if (data) {
         // Kiểm tra xem có message mới không (so sánh số lượng hoặc last message ID)
-        const hasNewMessages = projectThreads.length !== data.length ||
-            (data.length > 0 && projectThreads.length > 0 &&
-                data[data.length - 1].id !== projectThreads[projectThreads.length - 1].id);
-
+        const hasNewMessages = projectThreads.length !== data.length || 
+            (data.length > 0 && projectThreads.length > 0 && 
+             data[data.length - 1].id !== projectThreads[projectThreads.length - 1].id);
+        
         projectThreads = data;
         renderThreads(shouldScrollToBottom || hasNewMessages);
     }
@@ -4070,16 +3654,16 @@ async function loadThreads(shouldScrollToBottom = false) {
 function startThreadPolling() {
     // Dừng polling cũ nếu có
     stopThreadPolling();
-
+    
     // Chỉ start polling nếu tab Thread đang active
     const threadTab = document.getElementById('boardTabThread');
     if (!threadTab || !threadTab.classList.contains('active')) {
         return;
     }
-
+    
     // Load ngay lập tức
     loadThreads(false);
-
+    
     // Sau đó poll mỗi 5 giây
     threadPollingInterval = setInterval(() => {
         // Kiểm tra lại xem tab có còn active không
@@ -4102,25 +3686,26 @@ function stopThreadPolling() {
 function renderThreads(shouldScrollToBottom = true) {
     const container = document.getElementById('threadMessages');
     if (!container) return;
-
+    
     // Lưu scroll position trước khi render
     const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-
+    
     if (projectThreads.length === 0) {
-        container.innerHTML =
+        container.innerHTML = 
             '<div style="padding: 24px; text-align: center; color: var(--text-secondary);">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</div>';
         return;
     }
-
+    
     container.innerHTML = projectThreads.map(thread => createThreadMessage(thread)).join('');
-
+    attachThreadImageEvents();
+    
     // Chỉ scroll xuống nếu user đang ở cuối hoặc khi gửi message mới
     if (shouldScrollToBottom || wasAtBottom) {
         setTimeout(() => {
             container.scrollTop = container.scrollHeight;
         }, 100);
     }
-
+    
     // Attach event listeners
     container.querySelectorAll('.thread-message-action').forEach(btn => {
         const action = btn.getAttribute('data-action');
@@ -4131,7 +3716,6 @@ function renderThreads(shouldScrollToBottom = true) {
             btn.addEventListener('click', () => handleDeleteThread(threadId));
         }
     });
-    attachThreadImageEvents();
 }
 
 function createThreadMessage(thread) {
@@ -4142,7 +3726,7 @@ function createThreadMessage(thread) {
     const isProjectOwner = currentProject?.owner_id === currentUser?.id;
     const canEdit = isAuthor;
     const canDelete = isAuthor || isProjectOwner;
-
+    
     // Avatar HTML
     let avatarHtml = '';
     if (avatarUrl) {
@@ -4151,11 +3735,11 @@ function createThreadMessage(thread) {
         const initials = (authorName || 'U').split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || '👤';
         avatarHtml = `<div class="thread-message-avatar-initials">${initials}</div>`;
     }
-
+    
     // Time display
     const timeStr = formatThreadTime(thread.created_at);
     const editedStr = thread.is_edited ? '<span class="thread-message-edited">(đã chỉnh sửa)</span>' : '';
-
+    
     // Actions HTML
     let actionsHtml = '';
     if (canEdit || canDelete) {
@@ -4168,15 +3752,15 @@ function createThreadMessage(thread) {
         }
         actionsHtml += '</div>';
     }
-
+    
     // Replies HTML
     let repliesHtml = '';
     if (thread.replies && thread.replies.length > 0) {
-        repliesHtml = '<div class="thread-replies">' +
-            thread.replies.map(reply => createThreadMessage(reply)).join('') +
+        repliesHtml = '<div class="thread-replies">' + 
+            thread.replies.map(reply => createThreadMessage(reply)).join('') + 
             '</div>';
     }
-
+    
     return `
         <div class="thread-message" data-thread-id="${thread.id}">
             ${avatarHtml}
@@ -4208,16 +3792,13 @@ function parseAndHighlightMentions(content, mentionUserIds) {
 
     while ((match = imagePattern.exec(content)) !== null) {
         if (match.index > lastIndex) {
-            const textSegment = content.substring(lastIndex, match.index);
-            segments.push(highlightMentionsInText(textSegment, mentionedUsers));
+            segments.push(highlightMentionsInText(content.substring(lastIndex, match.index), mentionedUsers));
         }
 
         const altText = match[1] || 'image';
         const imageUrl = (match[2] || '').trim();
         if (isSafeImageUrl(imageUrl)) {
-            segments.push(
-                `<img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" class="thread-inline-image">`
-            );
+            segments.push(`<img src="${escapeAttribute(imageUrl)}" alt="${escapeHtml(altText)}" class="thread-inline-image">`);
         } else {
             segments.push(highlightMentionsInText(match[0], mentionedUsers));
         }
@@ -4287,13 +3868,135 @@ function formatThreadTime(dateStr) {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
+    
     if (diffMins < 1) return 'Vừa xong';
     if (diffMins < 60) return `${diffMins} phút trước`;
     if (diffHours < 24) return `${diffHours} giờ trước`;
     if (diffDays < 7) return `${diffDays} ngày trước`;
-
+    
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+async function handleSendThread() {
+    if (!currentProjectId) {
+        alert('Vui lòng chọn project trước!');
+        return;
+    }
+    
+    const input = document.getElementById('threadInput');
+    const content = (input.value || '').trim();
+    if (!content) return;
+    
+    const data = await apiCall('/threads/', 'POST', {
+        project_id: currentProjectId,
+        content: content
+    });
+    
+    if (data) {
+        input.value = '';
+        // Load lại và scroll xuống bottom khi gửi message mới
+        await loadThreads(true);
+    }
+}
+
+async function handleEditThread(threadId) {
+    const thread = findThreadById(threadId);
+    if (!thread) return;
+    
+    const newContent = prompt('Sửa tin nhắn:', thread.content);
+    if (newContent === null || newContent.trim() === '') return;
+    
+    const data = await apiCall(`/threads/${threadId}`, 'PUT', {
+        content: newContent.trim()
+    });
+    
+    if (data) {
+        await loadThreads();
+    }
+}
+
+async function handleDeleteThread(threadId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa tin nhắn này không?')) {
+        return;
+    }
+    
+    const data = await apiCall(`/threads/${threadId}`, 'DELETE');
+    if (data) {
+        await loadThreads();
+    }
+}
+
+function findThreadById(threadId) {
+    for (const thread of projectThreads) {
+        if (thread.id === threadId) return thread;
+        if (thread.replies) {
+            for (const reply of thread.replies) {
+                if (reply.id === threadId) return reply;
+            }
+        }
+    }
+    return null;
+}
+
+// Mention Functions
+function isMentionDropdownVisible() {
+    const dropdown = document.getElementById('mentionDropdown');
+    return dropdown && dropdown.style.display !== 'none';
+}
+
+function handleThreadInput(e) {
+    const input = e.target;
+    const value = input.value;
+    const cursorPos = input.selectionStart;
+    
+    // Tìm @ gần nhất trước cursor
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+        // Kiểm tra xem có space sau @ không (nếu có thì không phải mention)
+        const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+        if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+            // Có @ mention đang được gõ
+            const query = textAfterAt.trim();
+            mentionState.isActive = true;
+            mentionState.query = query;
+            mentionState.startPos = lastAtIndex;
+            mentionState.endPos = cursorPos;
+            mentionState.selectedIndex = 0;
+            
+            showMentionDropdown(query);
+            return;
+        }
+    }
+    
+    // Không có mention active
+    hideMentionDropdown();
+}
+
+function handleThreadInputKeydown(e) {
+    if (!isMentionDropdownVisible()) return;
+    
+    const dropdown = document.getElementById('mentionDropdown');
+    const items = dropdown.querySelectorAll('.mention-item');
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        mentionState.selectedIndex = Math.min(mentionState.selectedIndex + 1, items.length - 1);
+        updateMentionDropdownSelection();
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        mentionState.selectedIndex = Math.max(mentionState.selectedIndex - 1, 0);
+        updateMentionDropdownSelection();
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        if (items[mentionState.selectedIndex]) {
+            selectMention(items[mentionState.selectedIndex]);
+        }
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        hideMentionDropdown();
+    }
 }
 
 async function handleThreadPaste(event) {
@@ -4393,165 +4096,39 @@ function initThreadImageViewer() {
             closeThreadImageViewer();
         }
     });
-
     closeBtn?.addEventListener('click', closeThreadImageViewer);
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' && viewer.style.display !== 'none') {
             closeThreadImageViewer();
         }
     });
 }
 
-function openThreadImageViewer(src, caption) {
+function openThreadImageViewer(src, alt = '') {
     const viewer = document.getElementById('threadImageViewer');
     const img = document.getElementById('threadImageViewerImg');
-    const captionEl = document.getElementById('threadImageViewerCaption');
-    if (!viewer || !img || !src) return;
-    img.src = src;
-    captionEl.textContent = caption || '';
+    const caption = document.getElementById('threadImageViewerCaption');
+    if (!viewer || !img || !caption) return;
+    img.src = src || '';
+    img.alt = alt || 'Preview';
+    caption.textContent = alt || '';
     viewer.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
 }
 
 function closeThreadImageViewer() {
     const viewer = document.getElementById('threadImageViewer');
     const img = document.getElementById('threadImageViewerImg');
-    const captionEl = document.getElementById('threadImageViewerCaption');
-    if (!viewer || !img) return;
+    const caption = document.getElementById('threadImageViewerCaption');
+    if (!viewer || !img || !caption) return;
     viewer.style.display = 'none';
     img.src = '';
-    if (captionEl) {
-        captionEl.textContent = '';
-    }
-    document.body.style.overflow = '';
-}
-
-async function handleSendThread() {
-    if (!currentProjectId) {
-        alert('Vui lòng chọn project trước!');
-        return;
-    }
-
-    const input = document.getElementById('threadInput');
-    const content = (input.value || '').trim();
-    if (!content) return;
-
-    const data = await apiCall('/threads/', 'POST', {
-        project_id: currentProjectId,
-        content: content
-    });
-
-    if (data) {
-        input.value = '';
-        // Load lại và scroll xuống bottom khi gửi message mới
-        await loadThreads(true);
-    }
-}
-
-async function handleEditThread(threadId) {
-    const thread = findThreadById(threadId);
-    if (!thread) return;
-
-    const newContent = prompt('Sửa tin nhắn:', thread.content);
-    if (newContent === null || newContent.trim() === '') return;
-
-    const data = await apiCall(`/threads/${threadId}`, 'PUT', {
-        content: newContent.trim()
-    });
-
-    if (data) {
-        await loadThreads();
-    }
-}
-
-async function handleDeleteThread(threadId) {
-    if (!confirm('Bạn có chắc chắn muốn xóa tin nhắn này không?')) {
-        return;
-    }
-
-    const data = await apiCall(`/threads/${threadId}`, 'DELETE');
-    if (data) {
-        await loadThreads();
-    }
-}
-
-function findThreadById(threadId) {
-    for (const thread of projectThreads) {
-        if (thread.id === threadId) return thread;
-        if (thread.replies) {
-            for (const reply of thread.replies) {
-                if (reply.id === threadId) return reply;
-            }
-        }
-    }
-    return null;
-}
-
-// Mention Functions
-function isMentionDropdownVisible() {
-    const dropdown = document.getElementById('mentionDropdown');
-    return dropdown && dropdown.style.display !== 'none';
-}
-
-function handleThreadInput(e) {
-    const input = e.target;
-    const value = input.value;
-    const cursorPos = input.selectionStart;
-
-    // Tìm @ gần nhất trước cursor
-    const textBeforeCursor = value.substring(0, cursorPos);
-    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-
-    if (lastAtIndex !== -1) {
-        // Kiểm tra xem có space sau @ không (nếu có thì không phải mention)
-        const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
-        if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
-            // Có @ mention đang được gõ
-            const query = textAfterAt.trim();
-            mentionState.isActive = true;
-            mentionState.query = query;
-            mentionState.startPos = lastAtIndex;
-            mentionState.endPos = cursorPos;
-            mentionState.selectedIndex = 0;
-
-            showMentionDropdown(query);
-            return;
-        }
-    }
-
-    // Không có mention active
-    hideMentionDropdown();
-}
-
-function handleThreadInputKeydown(e) {
-    if (!isMentionDropdownVisible()) return;
-
-    const dropdown = document.getElementById('mentionDropdown');
-    const items = dropdown.querySelectorAll('.mention-item');
-
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        mentionState.selectedIndex = Math.min(mentionState.selectedIndex + 1, items.length - 1);
-        updateMentionDropdownSelection();
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        mentionState.selectedIndex = Math.max(mentionState.selectedIndex - 1, 0);
-        updateMentionDropdownSelection();
-    } else if (e.key === 'Enter' || e.key === 'Tab') {
-        e.preventDefault();
-        if (items[mentionState.selectedIndex]) {
-            selectMention(items[mentionState.selectedIndex]);
-        }
-    } else if (e.key === 'Escape') {
-        e.preventDefault();
-        hideMentionDropdown();
-    }
+    caption.textContent = '';
 }
 
 function showMentionDropdown(query) {
     const dropdown = document.getElementById('mentionDropdown');
     if (!dropdown) return;
-
+    
     // Filter users theo query
     const filteredUsers = users.filter(user => {
         if (!query) return true;
@@ -4560,12 +4137,12 @@ function showMentionDropdown(query) {
         const fullName = (user.full_name || '').toLowerCase();
         return username.includes(q) || fullName.includes(q);
     });
-
+    
     if (filteredUsers.length === 0) {
         hideMentionDropdown();
         return;
     }
-
+    
     dropdown.innerHTML = filteredUsers.map((user, index) => {
         const userName = user.full_name || user.username || 'Unknown';
         const avatarUrl = user.avatar_url;
@@ -4576,7 +4153,7 @@ function showMentionDropdown(query) {
             const initials = userName.split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || '👤';
             avatarHtml = `<div class="mention-item-avatar-initials">${initials}</div>`;
         }
-
+        
         return `
             <div class="mention-item ${index === 0 ? 'selected' : ''}" data-user-id="${user.id}" data-username="${escapeHtml(user.username)}" data-full-name="${escapeHtml(userName)}">
                 ${avatarHtml}
@@ -4587,14 +4164,14 @@ function showMentionDropdown(query) {
             </div>
         `;
     }).join('');
-
+    
     dropdown.style.display = 'block';
-
+    
     // Attach click handlers
     dropdown.querySelectorAll('.mention-item').forEach(item => {
         item.addEventListener('click', () => selectMention(item));
     });
-
+    
     mentionState.selectedIndex = 0;
     updateMentionDropdownSelection();
 }
@@ -4602,7 +4179,7 @@ function showMentionDropdown(query) {
 function updateMentionDropdownSelection() {
     const dropdown = document.getElementById('mentionDropdown');
     if (!dropdown) return;
-
+    
     const items = dropdown.querySelectorAll('.mention-item');
     items.forEach((item, index) => {
         if (index === mentionState.selectedIndex) {
@@ -4617,23 +4194,23 @@ function updateMentionDropdownSelection() {
 function selectMention(item) {
     const input = document.getElementById('threadInput');
     if (!input) return;
-
+    
     const username = item.getAttribute('data-username');
     const fullName = item.getAttribute('data-full-name');
     const value = input.value;
-
+    
     // Thay thế @query bằng @username
     const beforeMention = value.substring(0, mentionState.startPos);
     const afterMention = value.substring(mentionState.endPos);
     const newValue = beforeMention + '@' + username + ' ' + afterMention;
-
+    
     input.value = newValue;
-
+    
     // Set cursor position sau mention
     const newCursorPos = mentionState.startPos + username.length + 2; // +2 cho @ và space
     input.setSelectionRange(newCursorPos, newCursorPos);
     input.focus();
-
+    
     hideMentionDropdown();
 }
 
@@ -4653,7 +4230,7 @@ let commentAttachmentFile = null;
 
 async function loadComments(taskId) {
     if (!taskId) return;
-
+    
     const data = await apiCall(`/comments/?task_id=${taskId}`);
     if (data) {
         taskComments = data;
@@ -4664,14 +4241,14 @@ async function loadComments(taskId) {
 function renderComments() {
     const container = document.getElementById('commentsList');
     if (!container) return;
-
+    
     if (taskComments.length === 0) {
         container.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 14px;">Chưa có comment nào.</div>';
         return;
     }
-
+    
     container.innerHTML = taskComments.map(comment => createCommentItem(comment)).join('');
-
+    
     // Attach event listeners
     container.querySelectorAll('.comment-item-action').forEach(btn => {
         const action = btn.getAttribute('data-action');
@@ -4682,7 +4259,7 @@ function renderComments() {
             btn.addEventListener('click', () => handleDeleteComment(commentId));
         }
     });
-
+    
     // Scroll to bottom
     container.scrollTop = container.scrollHeight;
 }
@@ -4695,7 +4272,7 @@ function createCommentItem(comment) {
     const isProjectOwner = currentProject?.owner_id === currentUser?.id;
     const canEdit = isAuthor;
     const canDelete = isAuthor || isProjectOwner;
-
+    
     // Avatar HTML
     let avatarHtml = '';
     if (avatarUrl) {
@@ -4704,11 +4281,11 @@ function createCommentItem(comment) {
         const initials = (authorName || 'U').split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || '👤';
         avatarHtml = `<div class="comment-item-avatar-initials">${initials}</div>`;
     }
-
+    
     // Time display
     const timeStr = formatCommentTime(comment.created_at);
     const editedStr = comment.is_edited ? '<span style="font-size: 11px; color: var(--text-secondary); font-style: italic; margin-left: 8px;">(đã chỉnh sửa)</span>' : '';
-
+    
     // Attachment HTML
     let attachmentHtml = '';
     if (comment.attachment_url && !comment.is_deleted) {
@@ -4718,7 +4295,7 @@ function createCommentItem(comment) {
             </div>
         `;
     }
-
+    
     // Actions HTML
     let actionsHtml = '';
     if ((canEdit || canDelete) && !comment.is_deleted) {
@@ -4731,7 +4308,7 @@ function createCommentItem(comment) {
         }
         actionsHtml += '</div>';
     }
-
+    
     return `
         <div class="comment-item">
             ${avatarHtml}
@@ -4757,12 +4334,12 @@ function formatCommentTime(dateStr) {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
+    
     if (diffMins < 1) return 'Vừa xong';
     if (diffMins < 60) return `${diffMins} phút trước`;
     if (diffHours < 24) return `${diffHours} giờ trước`;
     if (diffDays < 7) return `${diffDays} ngày trước`;
-
+    
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -4772,32 +4349,32 @@ async function handleAddComment() {
         alert('Vui lòng lưu task trước khi thêm comment!');
         return;
     }
-
+    
     const content = document.getElementById('newCommentContent').value.trim();
     if (!content && !commentAttachmentFile) {
         alert('Vui lòng nhập nội dung hoặc đính kèm file!');
         return;
     }
-
+    
     // Tạo comment
     const commentData = {
         task_id: parseInt(taskId),
         content: content || '(Không có nội dung)'
     };
-
+    
     const comment = await apiCall('/comments/', 'POST', commentData);
     if (comment) {
         // Upload attachment nếu có
         if (commentAttachmentFile) {
             await uploadCommentAttachment(comment.id, commentAttachmentFile);
         }
-
+        
         // Clear form
         document.getElementById('newCommentContent').value = '';
         commentAttachmentFile = null;
         document.getElementById('commentAttachmentPreview').style.display = 'none';
         document.getElementById('commentAttachmentInput').value = '';
-
+        
         // Reload comments
         await loadComments(parseInt(taskId));
         if (currentProjectId) {
@@ -4809,7 +4386,7 @@ async function handleAddComment() {
 async function uploadCommentAttachment(commentId, file) {
     const formData = new FormData();
     formData.append('file', file);
-
+    
     try {
         const response = await fetch(`/api/comments/${commentId}/upload`, {
             method: 'POST',
@@ -4818,11 +4395,11 @@ async function uploadCommentAttachment(commentId, file) {
             },
             body: formData
         });
-
+        
         if (!response.ok) {
             throw new Error('Upload thất bại');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Upload Error:', error);
@@ -4834,16 +4411,16 @@ async function uploadCommentAttachment(commentId, file) {
 function handleCommentAttachmentPreview(e) {
     const file = e.target.files[0];
     if (!file) return;
-
+    
     if (!file.type.startsWith('image/')) {
         alert('Chỉ chấp nhận file ảnh!');
         return;
     }
-
+    
     commentAttachmentFile = file;
     const preview = document.getElementById('commentAttachmentPreview');
     const reader = new FileReader();
-
+    
     reader.onload = (e) => {
         preview.innerHTML = `
             <img src="${e.target.result}" alt="Preview">
@@ -4851,7 +4428,7 @@ function handleCommentAttachmentPreview(e) {
         `;
         preview.style.display = 'block';
     };
-
+    
     reader.readAsDataURL(file);
 }
 
@@ -4864,14 +4441,14 @@ function removeCommentAttachment() {
 async function handleEditComment(commentId) {
     const comment = taskComments.find(c => c.id === commentId);
     if (!comment) return;
-
+    
     const newContent = prompt('Sửa comment:', comment.content);
     if (newContent === null || newContent.trim() === '') return;
-
+    
     const data = await apiCall(`/comments/${commentId}`, 'PUT', {
         content: newContent.trim()
     });
-
+    
     if (data) {
         const taskId = document.getElementById('taskId').value;
         await loadComments(parseInt(taskId));
@@ -4882,7 +4459,7 @@ async function handleDeleteComment(commentId) {
     if (!confirm('Bạn có chắc chắn muốn xóa comment này không?')) {
         return;
     }
-
+    
     const data = await apiCall(`/comments/${commentId}`, 'DELETE');
     if (data) {
         const taskId = document.getElementById('taskId').value;
@@ -4903,12 +4480,12 @@ async function loadActivities(projectId) {
         document.getElementById('projectSummarySection').style.display = 'none';
         return;
     }
-
+    
     const data = await apiCall(`/activities/?project_id=${projectId}&limit=50`);
     if (data) {
         projectActivities = data;
         renderActivities();
-
+        
         // Start polling for new activities
         startActivityPolling(projectId);
     }
@@ -4917,23 +4494,22 @@ async function loadActivities(projectId) {
 function renderActivities() {
     const container = document.getElementById('activityList');
     if (!container) return;
-
+    
     if (projectActivities.length === 0) {
         container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-secondary);">Chưa có hoạt động nào.</div>';
         return;
     }
-
-    // Hiển thị tất cả activities, nhưng container có max-height để tự động scroll
-    // Với max-height 280px, khoảng 5 activities sẽ hiển thị trước
+    
+    // Group activities by date
     const grouped = groupActivitiesByDate(projectActivities);
-
+    
     container.innerHTML = Object.entries(grouped).map(([dateLabel, activities]) => `
         <div class="activity-group">
             <div class="activity-group-header">${dateLabel}</div>
             ${activities.map(activity => createActivityItem(activity)).join('')}
         </div>
     `).join('');
-
+    
     // Attach click listeners
     container.querySelectorAll('.activity-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -4956,13 +4532,13 @@ function groupActivitiesByDate(activities) {
     yesterday.setDate(yesterday.getDate() - 1);
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
-
+    
     const grouped = {};
-
+    
     activities.forEach(activity => {
         const date = new Date(activity.created_at);
         let label = '';
-
+        
         if (date >= today) {
             label = 'Hôm nay';
         } else if (date >= yesterday) {
@@ -4972,13 +4548,13 @@ function groupActivitiesByDate(activities) {
         } else {
             label = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
-
+        
         if (!grouped[label]) {
             grouped[label] = [];
         }
         grouped[label].push(activity);
     });
-
+    
     return grouped;
 }
 
@@ -4987,34 +4563,30 @@ function createActivityItem(activity) {
     const authorName = user.full_name || user.username || 'Unknown';
     const avatarUrl = user.avatar_url;
 
-    // Avatar HTML
     let avatarHtml = '';
     if (avatarUrl) {
         avatarHtml = `<img src="${avatarUrl}" alt="${escapeHtml(authorName)}" class="activity-item-avatar">`;
     } else {
-        const initials = (authorName || 'U').split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || '👤';
+        const initials = (authorName || 'U').split(' ').map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('') || 'U';
         avatarHtml = `<div class="activity-item-avatar-initials">${initials}</div>`;
     }
 
-    // Icon HTML
     const iconMap = {
-        'task_created': '➕',
-        'task_updated': '✏️',
-        'task_status_changed': '🔄',
-        'task_completed': '✅',
-        'task_assigned': '👤',
-        'comment_added': '💬',
-        'subtask_completed': '✓'
+        task_created: 'add_task',
+        task_updated: 'edit_square',
+        task_status_changed: 'sync_alt',
+        task_completed: 'task_alt',
+        task_assigned: 'person_add',
+        comment_added: 'chat',
+        subtask_completed: 'check_circle'
     };
-    const icon = iconMap[activity.activity_type] || '📌';
-
-    // Time display
+    const icon = iconMap[activity.activity_type] || 'flag';
     const timeStr = formatActivityTime(activity.created_at);
 
     return `
         <div class="activity-item" data-entity-type="${activity.entity_type}" data-entity-id="${activity.entity_id}">
             ${avatarHtml}
-            <div class="activity-item-icon ${activity.activity_type}">${icon}</div>
+            <div class="activity-item-icon ${activity.activity_type}"><span class="material-symbols-outlined">${icon}</span></div>
             <div class="activity-item-content">
                 <div class="activity-item-text">${escapeHtml(activity.description)}</div>
                 <div class="activity-item-time">${timeStr}</div>
@@ -5030,18 +4602,18 @@ function formatActivityTime(dateStr) {
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
-
+    
     if (diffMins < 1) return 'Vừa xong';
     if (diffMins < 60) return `${diffMins} phút trước`;
     if (diffHours < 24) return `${diffHours} giờ trước`;
-
+    
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 function startActivityPolling(projectId) {
     // Dừng polling cũ nếu có
     stopActivityPolling();
-
+    
     // Poll mỗi 5 giây để cập nhật activities
     activityPollingInterval = setInterval(() => {
         if (currentProjectId === projectId) {
@@ -5062,7 +4634,7 @@ function stopActivityPolling() {
 // Notifications
 async function loadNotificationCount() {
     if (!currentUser) return;
-
+    
     try {
         const data = await apiCall('/notifications/unread-count');
         if (data && data.count > 0) {
@@ -5084,7 +4656,7 @@ async function loadNotificationCount() {
 
 async function loadNotifications() {
     if (!currentUser) return;
-
+    
     try {
         const notifications = await apiCall('/notifications/?limit=50');
         renderNotifications(notifications || []);
@@ -5098,7 +4670,7 @@ function renderNotifications(notifications) {
     if (!container) return;
 
     if (!notifications || notifications.length === 0) {
-        container.innerHTML = '<div class="empty-state">Không có thông báo nào</div>';
+        container.innerHTML = '<div class="empty-state">Kh?ng c? th?ng b?o n?o</div>';
         return;
     }
 
@@ -5106,40 +4678,38 @@ function renderNotifications(notifications) {
         const timeAgo = getTimeAgo(new Date(notif.created_at));
         const readClass = notif.is_read ? 'read' : 'unread';
 
-        // Xác định icon và action dựa trên type
-        let icon = '🔔';
+        let icon = 'notifications';
         let actionUrl = '#';
 
         if (notif.type === 'task_assigned') {
-            icon = '👤';
+            icon = 'person_add';
             if (notif.task_id) {
                 actionUrl = `javascript:openTaskFromNotification(${notif.task_id})`;
             } else if (notif.project_id) {
                 actionUrl = `javascript:selectProject(${notif.project_id})`;
             }
         } else if (notif.type === 'task_updated') {
-            icon = '✏️';
+            icon = 'edit_square';
             if (notif.task_id) {
                 actionUrl = `javascript:openTaskFromNotification(${notif.task_id})`;
             } else if (notif.project_id) {
                 actionUrl = `javascript:selectProject(${notif.project_id})`;
             }
         } else if (notif.type === 'mentioned') {
-            icon = '💬';
+            icon = 'alternate_email';
             if (notif.thread_id && notif.project_id) {
                 actionUrl = `javascript:openThreadFromNotification(${notif.project_id}, ${notif.thread_id})`;
             } else if (notif.project_id) {
                 actionUrl = `javascript:selectProject(${notif.project_id})`;
             }
         } else if (notif.type === 'deadline_reminder') {
-            icon = '⏰';
+            icon = 'alarm';
             if (notif.task_id) {
                 actionUrl = `javascript:openTaskFromNotification(${notif.task_id})`;
             } else if (notif.project_id) {
                 actionUrl = `javascript:selectProject(${notif.project_id})`;
             }
         } else {
-            // Fallback cho các type khác
             if (notif.task_id) {
                 actionUrl = `javascript:openTaskFromNotification(${notif.task_id})`;
             } else if (notif.project_id) {
@@ -5151,7 +4721,7 @@ function renderNotifications(notifications) {
             <div class="notification-item ${readClass}" onclick="${actionUrl}; if(!${notif.is_read}) markNotificationAsRead(${notif.id})">
                 <div class="notification-content">
                     <div class="notification-title">
-                        <span style="margin-right: 8px;">${icon}</span>
+                        <span class="notification-title-icon"><span class="material-symbols-outlined">${icon}</span></span>
                         ${escapeHtml(notif.title)}
                     </div>
                     <div class="notification-message">${escapeHtml(notif.message)}</div>
@@ -5170,7 +4740,7 @@ function getTimeAgo(date) {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-
+    
     if (seconds < 60) return 'Vừa xong';
     if (minutes < 60) return `${minutes} phút trước`;
     if (hours < 24) return `${hours} giờ trước`;
@@ -5198,14 +4768,14 @@ function openThreadFromNotification(projectId, threadId) {
     if (projectId) {
         currentProjectId = projectId;
         switchView('board');
-
+        
         // Chuyển sang tab Thread
         setTimeout(() => {
             const threadTab = document.getElementById('boardTabThread');
             if (threadTab) {
                 threadTab.click(); // Trigger click để switch tab
             }
-
+            
             // Đợi threads load xong rồi scroll đến thread
             setTimeout(() => {
                 // Tìm thread element và scroll đến nó
@@ -5217,7 +4787,7 @@ function openThreadFromNotification(projectId, threadId) {
                         const threadTop = threadElement.offsetTop;
                         const containerTop = container.offsetTop;
                         container.scrollTop = threadTop - containerTop - 50;
-
+                        
                         // Highlight thread
                         threadElement.style.backgroundColor = 'rgba(35, 131, 226, 0.1)';
                         threadElement.style.transition = 'background-color 0.3s';
@@ -5249,624 +4819,5 @@ async function markNotificationAsRead(notificationId) {
     } catch (error) {
         console.error('Error marking as read:', error);
     }
-}
-
-// Meeting Management
-let meetingContentEditor = null;
-let currentMeetingContentType = null;
-let meetingContentData = {
-    kpi: '',
-    strengths: '',
-    improvements: '',
-    development: '',
-    feedback: ''
-};
-
-const MEETING_SUGGESTIONS = {
-    kpi: {
-        title: 'Xem xét KPI (Reviewing KPIs)',
-        subtitle: 'Mục tiêu: Đánh giá dựa trên dữ liệu thực tế, nhìn nhận khách quan.',
-        questions: [
-            'Nhìn lại các chỉ số này, kết quả nào khiến bạn cảm thấy hài lòng nhất?',
-            'Đâu là nguyên nhân chính (khách quan & chủ quan) khiến chỉ số [X] chưa đạt mục tiêu?',
-            'Nếu được làm lại Q3/Q4, bạn sẽ thay đổi chiến thuật nào để cải thiện con số này?',
-            'Tỷ lệ hoàn thành này phản ánh đúng bao nhiêu % nỗ lực thực tế của bạn?'
-        ]
-    },
-    strengths: {
-        title: 'Nhận xét điểm tốt (Strengths & Highlights)',
-        subtitle: 'Mục tiêu: Ghi nhận, khích lệ và tìm ra "vùng thiên tài" của nhân viên.',
-        questions: [
-            'Dự án hoặc nhiệm vụ nào trong năm qua khiến bạn cảm thấy tự hào và hứng thú nhất?',
-            'Kỹ năng nào bạn cảm thấy mình đã phát triển vượt bậc trong năm nay?',
-            'Theo bạn, đóng góp lớn nhất của bạn cho team trong năm qua là gì?',
-            'Tôi nhận thấy bạn làm rất tốt việc [Kỹ năng A], bạn có bí quyết gì không?'
-        ]
-    },
-    improvements: {
-        title: 'Nhận xét điểm cần cải thiện (Areas for Improvement)',
-        subtitle: 'Mục tiêu: Góp ý mang tính xây dựng, tập trung vào giải pháp thay vì chỉ trích.',
-        questions: [
-            'Có tình huống nào trong năm qua bạn ước rằng mình đã xử lý khác đi không?',
-            'Rào cản lớn nhất ngăn cản bạn đạt hiệu suất tối đa là gì?',
-            'Kỹ năng hoặc kiến thức nào bạn cảm thấy mình còn thiếu hụt để xử lý công việc trôi chảy hơn?',
-            'Để tránh lặp lại vấn đề [Vấn đề A] trong năm tới, chúng ta cần thay đổi quy trình hay cách làm việc như thế nào?'
-        ]
-    },
-    development: {
-        title: 'Trao đổi định hướng phát triển (Career Development)',
-        subtitle: 'Mục tiêu: Gắn kết mục tiêu cá nhân với mục tiêu tổ chức (Career Path).',
-        questions: [
-            'Trong 1-2 năm tới, bạn hình dung mình sẽ đảm nhận vai trò gì tại công ty?',
-            'Có mảng công việc hay dự án mới nào bạn muốn thử sức trong năm sau không?',
-            'Bạn quan tâm đến việc phát triển theo hướng Chuyên gia (Specialist) hay Quản lý (Manager) hơn?',
-            'Kỹ năng nào bạn muốn ưu tiên học nhất trong năm tới?'
-        ]
-    },
-    feedback: {
-        title: 'Ý kiến, mong muốn của nhân viên (Employee Feedback/Wishes)',
-        subtitle: 'Mục tiêu: Thấu hiểu nhu cầu và cải thiện môi trường làm việc.',
-        questions: [
-            'Công ty hay bản thân tôi cần hỗ trợ nguồn lực cụ thể gì để bạn hoàn thành tốt mục tiêu năm tới?',
-            'Phong cách quản lý của tôi có điểm nào phù hợp hoặc chưa phù hợp với bạn?',
-            'Có quy trình hay công cụ nào hiện tại đang làm giảm hiệu suất của bạn không?',
-            'Điều gì sẽ giúp bạn cảm thấy hạnh phúc và gắn bó hơn với công ty?'
-        ]
-    }
-};
-
-async function ensureMeetingSection() {
-    // Show/hide create button based on role
-    const createTabBtn = document.getElementById('btnCreateMeetingTab');
-    if (createTabBtn) {
-        createTabBtn.style.display = (currentUser?.role === 'admin') ? 'block' : 'none';
-    }
-
-    if (!currentUser || currentUser.role !== 'admin') {
-        // Non-admin users see list view only
-        await setMeetingTab('list');
-        return;
-    }
-    // Admin users can create meetings
-    await setMeetingTab('list');
-}
-
-// Helper to format date to GMT+7 for datetime-local value
-function toGMT7Value(dateString) {
-    const date = dateString ? new Date(dateString) : new Date();
-    // Offset to GMT+7
-    const gmt7Date = new Date(date.getTime() + (7 * 60 * 60 * 1000));
-    return gmt7Date.toISOString().slice(0, 16);
-}
-
-// Helper to format date to GMT+7 display string
-function formatGMT7(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    // Use Intl.DateTimeFormat to force GMT+7
-    return new Intl.DateTimeFormat('vi-VN', {
-        timeZone: 'Asia/Ho_Chi_Minh',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    }).format(date);
-}
-
-async function setMeetingTab(tabName) {
-    document.querySelectorAll('.meeting-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.getAttribute('data-meeting-tab') === tabName);
-    });
-    document.querySelectorAll('.meeting-tab-panel').forEach(panel => {
-        panel.classList.toggle('active', panel.id === `meetingTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
-    });
-    if (tabName === 'create' && currentUser?.role === 'admin') {
-        await initMeetingForm();
-    } else if (tabName === 'list') {
-        if (currentUser?.role === 'admin') {
-            await loadMeetingListForAdmin();
-        } else {
-            await loadMeetingListForUser();
-        }
-    }
-}
-
-async function initMeetingForm() {
-    // Set current time (GMT+7)
-    document.getElementById('meetingTime').value = toGMT7Value();
-
-    // Set department from current user
-    if (currentUser?.department) {
-        document.getElementById('meetingDepartment').value = currentUser.department;
-    }
-
-    // Load employees from same department
-    await loadMeetingEmployees();
-
-    // Reset content checkboxes and cards
-    document.querySelectorAll('.meeting-content-checkbox').forEach(cb => {
-        cb.checked = false;
-        const item = cb.closest('.meeting-content-item');
-        if (item) {
-            item.classList.remove('selected');
-            const editBtn = item.querySelector('.btn-edit-content');
-            if (editBtn) editBtn.style.display = 'none';
-        }
-    });
-
-    // Reset content data
-    meetingContentData = {
-        kpi: '',
-        strengths: '',
-        improvements: '',
-        development: '',
-        feedback: ''
-    };
-
-    // Reset status
-    const statusEl = document.getElementById('meetingFooterStatus');
-    if (statusEl) {
-        statusEl.textContent = '';
-        statusEl.className = 'meeting-footer-status';
-    }
-}
-
-function toggleMeetingContent(contentType) {
-    const item = document.querySelector(`.meeting-content-item[data-content-type="${contentType}"]`);
-    if (!item) return;
-
-    const checkbox = item.querySelector('.meeting-content-checkbox');
-    if (!checkbox) return;
-
-    checkbox.checked = !checkbox.checked;
-    item.classList.toggle('selected', checkbox.checked);
-
-    const editBtn = item.querySelector('.btn-edit-content');
-    if (editBtn) {
-        editBtn.style.display = checkbox.checked ? 'flex' : 'none';
-
-        // If checked and no content, maybe highlight it? Or just let user click edit.
-    }
-}
-
-async function loadMeetingEmployees() {
-    const select = document.getElementById('meetingEmployee');
-    if (!select || !currentUser || currentUser.role !== 'admin') return;
-
-    // Ensure users are loaded
-    if (!users || users.length === 0) {
-        await loadUsers();
-    }
-
-    select.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
-
-    // Filter users by same department and exclude admin
-    const deptUsers = users.filter(u =>
-        u.department === currentUser.department &&
-        u.role !== 'admin' &&
-        u.id !== currentUser.id
-    );
-
-    deptUsers.forEach(user => {
-        const option = document.createElement('option');
-        option.value = user.id;
-        const username = user.username || '';
-        const fullName = user.full_name || '';
-        option.textContent = fullName ? `${username} - ${fullName}` : username;
-        select.appendChild(option);
-    });
-}
-
-function handleMeetingEmployeeChange(e) {
-    const employeeId = parseInt(e.target.value);
-    const employee = users.find(u => u.id === employeeId);
-    const teamInput = document.getElementById('meetingTeam');
-    if (teamInput && employee) {
-        teamInput.value = employee.team || '';
-    } else if (teamInput) {
-        teamInput.value = '';
-    }
-}
-
-async function resetMeetingForm() {
-    document.getElementById('meetingId').value = '';
-    document.getElementById('meetingForm').reset();
-    await initMeetingForm();
-    document.getElementById('meetingStatus').textContent = '';
-}
-
-function openMeetingContentEditor(contentType) {
-    currentMeetingContentType = contentType;
-    const config = MEETING_SUGGESTIONS[contentType];
-    if (!config) return;
-
-    document.getElementById('meetingContentModalTitle').textContent = config.title;
-    document.getElementById('meetingContentSubtitle').textContent = config.subtitle;
-
-    // Render suggestions
-    const suggestionsContainer = document.getElementById('meetingSuggestions');
-    suggestionsContainer.innerHTML = config.questions.map(q =>
-        `<div class="meeting-suggestion-item">${q}</div>`
-    ).join('');
-
-    // Initialize editor if not exists
-    if (!meetingContentEditor) {
-        meetingContentEditor = new Quill('#meetingContentEditor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, false] }],
-                    ['bold', 'italic', 'underline'],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    ['link'],
-                    ['clean']
-                ]
-            }
-        });
-    }
-
-    // Load existing content
-    const content = meetingContentData[contentType] || '';
-    meetingContentEditor.root.innerHTML = content;
-
-    // Show modal
-    document.getElementById('meetingContentModal').style.display = 'flex';
-}
-
-function closeMeetingContentModal() {
-    document.getElementById('meetingContentModal').style.display = 'none';
-}
-
-function saveMeetingContent() {
-    if (!currentMeetingContentType || !meetingContentEditor) return;
-
-    const content = meetingContentEditor.root.innerHTML;
-    meetingContentData[currentMeetingContentType] = content;
-
-    closeMeetingContentModal();
-
-    // Show status in footer
-    const statusEl = document.getElementById('meetingFooterStatus');
-    if (statusEl) {
-        statusEl.textContent = 'Đã lưu nội dung chi tiết cho mục ' + (MEETING_SUGGESTIONS[currentMeetingContentType]?.title || '');
-        statusEl.className = 'meeting-footer-status success';
-        setTimeout(() => {
-            statusEl.style.display = 'none';
-            // Wait a bit then completely reset for next message
-            setTimeout(() => {
-                statusEl.textContent = '';
-                statusEl.className = 'meeting-footer-status';
-                statusEl.style.display = 'block';
-            }, 500);
-        }, 3000);
-    }
-}
-
-async function handleMeetingSubmit(e) {
-    e.preventDefault();
-
-    if (!currentUser || currentUser.role !== 'admin') {
-        alert('Chỉ admin mới có thể tạo cuộc họp');
-        return;
-    }
-
-    const meetingId = document.getElementById('meetingId').value;
-    const timeInput = document.getElementById('meetingTime').value;
-    const location = document.getElementById('meetingLocation').value;
-    const employeeId = parseInt(document.getElementById('meetingEmployee').value);
-    const department = document.getElementById('meetingDepartment').value;
-    const team = document.getElementById('meetingTeam').value;
-
-    // Convert datetime-local to ISO format for backend
-    let time = timeInput;
-    if (timeInput && !timeInput.includes('T')) {
-        // If format is wrong, try to fix it
-        time = timeInput.replace(' ', 'T');
-    }
-    if (time && !time.endsWith('Z') && !time.includes('+')) {
-        // Add timezone if not present (assume GMT+7)
-        time = time + '+07:00';
-    }
-
-    // Get selected content types
-    const selectedContents = [];
-    document.querySelectorAll('.meeting-content-checkbox:checked').forEach(cb => {
-        selectedContents.push(cb.value);
-    });
-
-    if (selectedContents.length === 0) {
-        alert('Vui lòng chọn ít nhất một nội dung họp');
-        return;
-    }
-
-    const meetingData = {
-        time: time,
-        location: location,
-        department: department,
-        employee_id: employeeId,
-        team: team,
-        contents: selectedContents,
-        content_data: {}
-    };
-
-    // Add content data for selected contents
-    selectedContents.forEach(contentType => {
-        meetingData.content_data[contentType] = meetingContentData[contentType] || '';
-    });
-
-    const statusEl = document.getElementById('meetingFooterStatus');
-    try {
-        if (meetingId) {
-            // Update existing
-            const result = await apiCall(`/meetings/${meetingId}`, 'PUT', meetingData);
-            if (!result) {
-                throw new Error('API endpoint chưa sẵn sàng');
-            }
-            statusEl.textContent = 'Cập nhật cuộc họp thành công';
-        } else {
-            // Create new
-            const result = await apiCall('/meetings/', 'POST', meetingData);
-            if (!result) {
-                throw new Error('API endpoint chưa sẵn sàng');
-            }
-            statusEl.textContent = 'Tạo cuộc họp thành công';
-        }
-        statusEl.className = 'meeting-footer-status success';
-
-        // Reset form and switch to list
-        setTimeout(() => {
-            resetMeetingForm();
-            setMeetingTab('list');
-        }, 1500);
-    } catch (error) {
-        statusEl.textContent = 'Lỗi: ' + (error.message || 'Không thể lưu cuộc họp');
-        statusEl.className = 'meeting-footer-status error';
-    }
-}
-
-async function handleDeleteMeeting() {
-    const meetingId = document.getElementById('meetingId').value;
-    if (!meetingId) return;
-
-    if (!confirm('Bạn có chắc chắn muốn xóa cuộc họp này?')) return;
-
-    try {
-        const result = await apiCall(`/meetings/${meetingId}`, 'DELETE');
-        if (!result) {
-            alert('API endpoint chưa sẵn sàng. Tính năng Meeting đang được phát triển.');
-            return;
-        }
-        resetMeetingForm();
-        await setMeetingTab('list');
-    } catch (error) {
-        console.error('Error deleting meeting:', error);
-        alert('Lỗi: ' + (error.message || 'Không thể xóa cuộc họp. API endpoint có thể chưa sẵn sàng.'));
-    }
-}
-
-async function loadMeetingListForAdmin() {
-    const listContainer = document.getElementById('meetingList');
-    if (!listContainer) return;
-
-    try {
-        const meetings = await apiCall('/meetings/?creator=true', 'GET');
-        if (!meetings) {
-            // API endpoint chưa được implement
-            listContainer.innerHTML = '<div class="empty-state">Tính năng Meeting đang được phát triển. API endpoint chưa sẵn sàng.</div>';
-            return;
-        }
-        if (Array.isArray(meetings) && meetings.length === 0) {
-            listContainer.innerHTML = '<div class="empty-state">Chưa có cuộc họp nào.</div>';
-            return;
-        }
-        if (!Array.isArray(meetings)) {
-            listContainer.innerHTML = '<div class="empty-state">Dữ liệu không hợp lệ.</div>';
-            return;
-        }
-
-        listContainer.innerHTML = meetings.map(meeting => `
-            <div class="meeting-item" onclick="showMeetingReport(${meeting.id})">
-                <div class="meeting-item-title">Cuộc họp với ${meeting.employee_name || 'N/A'}</div>
-                <div class="meeting-item-meta">Thời gian: ${formatGMT7(meeting.time)}</div>
-                <div class="meeting-item-meta">Địa điểm: ${meeting.location}</div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading meetings:', error);
-        listContainer.innerHTML = '<div class="empty-state">Tính năng Meeting đang được phát triển. API endpoint chưa sẵn sàng.</div>';
-    }
-}
-
-async function loadMeetingListForUser() {
-    const listContainer = document.getElementById('meetingList');
-    if (!listContainer) return;
-
-    try {
-        const meetings = await apiCall('/meetings/?employee=true', 'GET');
-        if (!meetings) {
-            // API endpoint chưa được implement
-            listContainer.innerHTML = '<div class="empty-state">Tính năng Meeting đang được phát triển. API endpoint chưa sẵn sàng.</div>';
-            return;
-        }
-        if (Array.isArray(meetings) && meetings.length === 0) {
-            listContainer.innerHTML = '<div class="empty-state">Chưa có cuộc họp nào.</div>';
-            return;
-        }
-        if (!Array.isArray(meetings)) {
-            listContainer.innerHTML = '<div class="empty-state">Dữ liệu không hợp lệ.</div>';
-            return;
-        }
-
-        listContainer.innerHTML = meetings.map(meeting => `
-            <div class="meeting-item" onclick="showMeetingReport(${meeting.id})">
-                <div class="meeting-item-title">Cuộc họp với ${meeting.creator_name || 'Quản lý'}</div>
-                <div class="meeting-item-meta">Thời gian: ${formatGMT7(meeting.time)}</div>
-                <div class="meeting-item-meta">Địa điểm: ${meeting.location}</div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading meetings:', error);
-        listContainer.innerHTML = '<div class="empty-state">Tính năng Meeting đang được phát triển. API endpoint chưa sẵn sàng.</div>';
-    }
-}
-
-async function showMeetingReport(meetingId) {
-    try {
-        const meeting = await apiCall(`/meetings/${meetingId}`, 'GET');
-        if (!meeting) return;
-
-        const container = document.getElementById('meetingReportContent');
-        const editBtn = document.getElementById('btnEditMeetingFromReport');
-
-        // Symbols for sections
-        const icons = { kpi: '📊', strengths: '🌟', improvements: '💡', development: '🚀', feedback: '💬' };
-        const labels = {
-            kpi: '1. Xem xét KPI',
-            strengths: '2. Điểm tốt & Đóng góp',
-            improvements: '3. Điểm cần cải thiện',
-            development: '4. Định hướng phát triển',
-            feedback: '5. Ý kiến & Phản hồi nhân viên'
-        };
-
-        // Header and Official Info
-        let html = `
-            <div class="report-official-header">
-                <div class="report-org-info">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</div>
-                <div class="report-doc-id">Mã số: MEET-${meeting.id} / ${meeting.id}</div>
-            </div>
-
-            <div class="report-title-section">
-                <h1>BIÊN BẢN HỌP CÁ NHÂN</h1>
-                <p>Cập nhật lần cuối: ${formatGMT7(new Date())}</p>
-            </div>
-
-            <table class="report-meta-table">
-                <tr>
-                    <td class="report-meta-label">📅 Thời gian</td>
-                    <td class="report-meta-value">${formatGMT7(meeting.time)}</td>
-                </tr>
-                <tr>
-                    <td class="report-meta-label">📍 Địa điểm</td>
-                    <td class="report-meta-value">${meeting.location}</td>
-                </tr>
-                <tr>
-                    <td class="report-meta-label">👔 Người thực hiện</td>
-                    <td class="report-meta-value">${meeting.creator_name || 'N/A'} (Quản lý)</td>
-                </tr>
-                <tr>
-                    <td class="report-meta-label">👤 Nhân viên</td>
-                    <td class="report-meta-value">${meeting.employee_name || 'N/A'} (${meeting.employee_username || meeting.employee_id})</td>
-                </tr>
-                <tr>
-                    <td class="report-meta-label">🏢 Đơn vị</td>
-                    <td class="report-meta-value">${meeting.department} - ${meeting.team || 'N/A'}</td>
-                </tr>
-            </table>
-        `;
-
-        // Render content sections
-        meeting.contents.forEach(type => {
-            const content = meeting.content_data?.[type] || '';
-            html += `
-                <div class="report-section">
-                    <div class="report-section-header">
-                        <span>${icons[type]}</span>
-                        <h3>${labels[type]}</h3>
-                    </div>
-                    <div class="report-section-body">
-                        ${content || '<span class="report-empty-section">Chưa cập nhật nội dung cho mục này.</span>'}
-                    </div>
-                </div>
-            `;
-        });
-
-        // Add Signature Section
-        html += `
-            <div class="report-signature-section">
-                <div class="report-signature-box">
-                    <div class="report-signature-label">Nhân viên xác nhận</div>
-                    <div class="report-signature-name">${meeting.employee_name || '................................'}</div>
-                </div>
-                <div class="report-signature-box">
-                    <div class="report-signature-label">Cán bộ quản lý</div>
-                    <div class="report-signature-name">${meeting.creator_name || '................................'}</div>
-                </div>
-            </div>
-        `;
-
-        container.innerHTML = html;
-
-        // Show edit button only for admin (creator)
-        if (currentUser?.role === 'admin' && meeting.creator_id === currentUser.id) {
-            editBtn.style.display = 'block';
-            editBtn.onclick = () => {
-                document.getElementById('meetingReportModal').style.display = 'none';
-                editMeeting(meeting.id);
-            };
-        } else {
-            editBtn.style.display = 'none';
-        }
-
-        document.getElementById('meetingReportModal').style.display = 'flex';
-
-    } catch (error) {
-        console.error('Error showing meeting report:', error);
-        alert('Không thể tải biên bản họp');
-    }
-}
-
-async function editMeeting(meetingId) {
-    if (currentUser?.role !== 'admin') return;
-
-    try {
-        const meeting = await apiCall(`/meetings/${meetingId}`, 'GET');
-        if (!meeting) return;
-
-        await setMeetingTab('create');
-
-        // Populate form fields
-        document.getElementById('meetingId').value = meeting.id;
-
-        // Fix time format for datetime-local to GMT+7
-        if (meeting.time) {
-            document.getElementById('meetingTime').value = toGMT7Value(meeting.time);
-        }
-
-        document.getElementById('meetingLocation').value = meeting.location || 'Phòng họp';
-        document.getElementById('meetingDepartment').value = meeting.department || '';
-
-        // Load employees then select
-        await loadMeetingEmployees();
-        document.getElementById('meetingEmployee').value = meeting.employee_id;
-        document.getElementById('meetingTeam').value = meeting.team || '';
-
-        // Populate content checkboxes and data
-        meetingContentData = meeting.content_data || {};
-
-        const contents = meeting.contents || [];
-        document.querySelectorAll('.meeting-content-checkbox').forEach(cb => {
-            const isChecked = contents.includes(cb.value);
-            cb.checked = isChecked;
-            const item = cb.closest('.meeting-content-item');
-            if (item) {
-                item.classList.toggle('selected', isChecked);
-                const editBtn = item.querySelector('.btn-edit-content');
-                if (editBtn) editBtn.style.display = isChecked ? 'flex' : 'none';
-            }
-        });
-
-        // Show delete button
-        document.getElementById('btnDeleteMeeting').style.display = 'block';
-
-    } catch (error) {
-        console.error('Error loading meeting for edit:', error);
-        alert('Không thể tải thông tin cuộc họp');
-    }
-}
-
-function viewMeeting(meetingId) {
-    alert('Tính năng xem báo cáo cuộc họp đang được phát triển.');
 }
 

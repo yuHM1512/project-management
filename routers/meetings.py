@@ -35,7 +35,7 @@ def list_meetings(
     """List meetings - Admin sees meetings they created, regular users see meetings they're involved in"""
     try:
         query = db.query(Meeting)
-        
+
         if current_user.role == UserRole.ADMIN.value:
             if creator:
                 # Admin xem các meeting họ tạo
@@ -49,27 +49,27 @@ def list_meetings(
         else:
             # Regular user chỉ xem meetings họ được review
             query = query.filter(Meeting.employee_id == current_user.id)
-        
+
         meetings = query.order_by(Meeting.time.desc()).all()
     except Exception as e:
         import traceback
         error_detail = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"Error listing meetings: {str(e)}\n{error_detail}")
-    
+
     # Thêm thông tin creator_name và employee_name
     result = []
     for meeting in meetings:
         # Query names directly to avoid relationship loading issues
         creator = db.query(User).filter(User.id == meeting.creator_id).first()
         employee = db.query(User).filter(User.id == meeting.employee_id).first()
-        
+
         creator_name = None
         employee_name = None
         if creator:
             creator_name = creator.full_name or creator.username
         if employee:
             employee_name = employee.full_name or employee.username
-        
+
         meeting_dict = {
             "id": meeting.id,
             "creator_id": meeting.creator_id,
@@ -87,7 +87,7 @@ def list_meetings(
             "employee_username": employee.username if employee else None,
         }
         result.append(MeetingResponse(**meeting_dict))
-    
+
     return result
 
 
@@ -101,21 +101,21 @@ def create_meeting(
     try:
         if current_user.role != UserRole.ADMIN.value:
             raise HTTPException(status_code=403, detail="Only admin can create meetings")
-        
+
         # Verify employee exists and belongs to same department
         employee = db.query(User).filter(User.id == payload.employee_id).first()
         if not employee:
             raise HTTPException(status_code=404, detail="Employee not found")
-        
+
         if employee.department != current_user.department:
             raise HTTPException(status_code=403, detail="Employee must belong to the same department")
-        
+
         # Convert payload to dict - handle both dict() and model_dump() for Pydantic v1/v2 compatibility
         try:
             data = payload.model_dump() if hasattr(payload, 'model_dump') else payload.dict()
         except:
             data = payload.dict()
-        
+
         data["creator_id"] = current_user.id
         # Set department from current user if not provided
         if not data.get("department"):
@@ -123,7 +123,7 @@ def create_meeting(
         # Set team from employee if not provided
         if not data.get("team") and employee.team:
             data["team"] = employee.team
-        
+
         meeting = Meeting(**data)
         db.add(meeting)
         db.commit()
@@ -135,18 +135,18 @@ def create_meeting(
         import traceback
         error_detail = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"Error creating meeting: {str(e)}\n{error_detail}")
-    
+
     # Return with names - query directly to avoid relationship loading issues
     creator = db.query(User).filter(User.id == meeting.creator_id).first()
     employee = db.query(User).filter(User.id == meeting.employee_id).first()
-    
+
     creator_name = None
     employee_name = None
     if creator:
         creator_name = creator.full_name or creator.username
     if employee:
         employee_name = employee.full_name or employee.username
-    
+
     meeting_dict = {
         "id": meeting.id,
         "creator_id": meeting.creator_id,
@@ -175,18 +175,18 @@ def get_meeting(
     """Get a specific meeting"""
     meeting = _get_meeting_or_404(db, meeting_id)
     _ensure_meeting_permission(meeting, current_user)
-    
+
     # Query names directly
     creator = db.query(User).filter(User.id == meeting.creator_id).first()
     employee = db.query(User).filter(User.id == meeting.employee_id).first()
-    
+
     creator_name = None
     employee_name = None
     if creator:
         creator_name = creator.full_name or creator.username
     if employee:
         employee_name = employee.full_name or employee.username
-    
+
     meeting_dict = {
         "id": meeting.id,
         "creator_id": meeting.creator_id,
@@ -216,16 +216,16 @@ def update_meeting(
     """Update a meeting - Only creator (admin) can update"""
     try:
         meeting = _get_meeting_or_404(db, meeting_id)
-        
+
         if meeting.creator_id != current_user.id:
             raise HTTPException(status_code=403, detail="Only meeting creator can update")
-        
+
         # Handle both dict() and model_dump() for Pydantic v1/v2 compatibility
         try:
             update_data = payload.model_dump(exclude_unset=True) if hasattr(payload, 'model_dump') else payload.dict(exclude_unset=True)
         except:
             update_data = payload.dict(exclude_unset=True)
-    
+
         # If employee_id is updated, verify new employee
         if "employee_id" in update_data:
             employee = db.query(User).filter(User.id == update_data["employee_id"]).first()
@@ -235,10 +235,10 @@ def update_meeting(
                 raise HTTPException(status_code=403, detail="Employee must belong to the same department")
             if not update_data.get("team") and employee.team:
                 update_data["team"] = employee.team
-        
+
         for field, value in update_data.items():
             setattr(meeting, field, value)
-        
+
         db.commit()
         db.refresh(meeting)
     except HTTPException:
@@ -248,18 +248,18 @@ def update_meeting(
         import traceback
         error_detail = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"Error updating meeting: {str(e)}\n{error_detail}")
-    
+
     # Query names directly
     creator = db.query(User).filter(User.id == meeting.creator_id).first()
     employee = db.query(User).filter(User.id == meeting.employee_id).first()
-    
+
     creator_name = None
     employee_name = None
     if creator:
         creator_name = creator.full_name or creator.username
     if employee:
         employee_name = employee.full_name or employee.username
-    
+
     meeting_dict = {
         "id": meeting.id,
         "creator_id": meeting.creator_id,
@@ -287,11 +287,10 @@ def delete_meeting(
 ):
     """Delete a meeting - Only creator (admin) can delete"""
     meeting = _get_meeting_or_404(db, meeting_id)
-    
+
     if meeting.creator_id != current_user.id:
         raise HTTPException(status_code=403, detail="Only meeting creator can delete")
-    
+
     db.delete(meeting)
     db.commit()
     return {"message": "Meeting deleted successfully"}
-
