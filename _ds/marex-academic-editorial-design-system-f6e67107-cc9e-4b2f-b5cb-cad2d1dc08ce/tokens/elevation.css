@@ -1,0 +1,23 @@
+/* ============================================================
+   ELEVATION — Tonal Layering, not boxy shadows
+   Most "elevation" is a surface-shift. Shadows are reserved for
+   truly floating elements (modals, popovers).
+   ============================================================ */
+
+:root {
+  /* Cloud shadows — soft, ambient, 5% on_surface tint */
+  --shadow-cloud-sm: 0px 4px 12px rgba(25, 28, 29, 0.04);
+  --shadow-cloud-md: 0px 12px 28px rgba(25, 28, 29, 0.06);
+  --shadow-cloud-lg: 0px 20px 40px rgba(25, 28, 29, 0.05);
+  --shadow-cloud-xl: 0px 32px 64px rgba(25, 28, 29, 0.08);
+
+  /* Focus ring — primary @ 30% opacity, used as ghost border */
+  --focus-ring:       0 0 0 3px rgba(0, 86, 210, 0.28);
+  --focus-ring-inset: inset 0 0 0 1px rgba(0, 86, 210, 0.30);
+
+  /* Layering — semantic tokens for nested cards */
+  --layer-card-on-canvas:    var(--surface-container-lowest);
+  --layer-card-on-panel:     var(--surface-container-lowest);
+  --layer-panel-on-canvas:   var(--surface-container-low);
+  --layer-sub-on-card:       var(--surface-container);
+}

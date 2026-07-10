@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Management</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css?v={{ get_file_version('static/css/style.css') }}">
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
@@ -55,13 +55,6 @@
                             <span class="material-symbols-outlined nav-icon icon">view_kanban</span>
                             <span>Board</span>
                         </a></li>
-                            <li><a href="#" data-view="notifications" class="nav-link">
-                            <div style="position: relative; display: inline-flex; align-items: center;">
-                                <span class="material-symbols-outlined nav-icon icon">notifications</span>
-                                <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
-                            </div>
-                            <span>Notifications</span>
-                        </a></li>
                             <li><a href="#" data-view="settings" class="nav-link admin-only" style="display: none;">
                             <span class="material-symbols-outlined nav-icon icon">settings</span>
                             <span>Settings</span>
@@ -78,7 +71,7 @@
                 </button>
                 <div class="sidebar-section-body" data-section-body="personal">
                     <ul id="personalList" class="personal-links">
-                        <li><a href="#" class="personal-link" data-personal="todos">
+                        <li hidden><a href="#" class="personal-link" data-personal="todos">
                             <span class="material-symbols-outlined nav-icon icon">checklist</span>
                             <span>To-do List</span>
                         </a></li>
@@ -86,7 +79,7 @@
                             <span class="material-symbols-outlined nav-icon icon">co_present</span>
                             <span>Meeting</span>
                         </a></li>
-                        <li><a href="#" class="personal-link" data-personal="notes">
+                        <li hidden><a href="#" class="personal-link" data-personal="notes">
                             <span class="material-symbols-outlined nav-icon icon">sticky_note_2</span>
                             <span>My Notes</span>
                         </a></li>
@@ -94,7 +87,7 @@
                             <span class="material-symbols-outlined nav-icon icon">contract_edit</span>
                             <span>Work Log</span>
                         </a></li>
-                        <li><a href="#" class="personal-link" id="navInternHub">
+                        <li hidden><a href="#" class="personal-link" id="navInternHub">
                             <span class="material-symbols-outlined nav-icon icon">school</span>
                             <span>Intern Hub</span>
                         </a></li>
@@ -106,17 +99,6 @@
                 </div>
             </div>
 
-            <div class="sidebar-utility-card">
-                <div class="sidebar-utility-head">
-                    <span class="material-symbols-outlined">tips_and_updates</span>
-                    <span>Vận hành nhanh</span>
-                </div>
-                <p>Dùng Board để theo dõi tiến độ, Projects để quản lý danh mục, và Personal để xử lý công việc hằng ngày.</p>
-                <div class="sidebar-utility-actions">
-                    <button class="sidebar-utility-pill" type="button">Theo dõi</button>
-                    <button class="sidebar-utility-pill" type="button">Rà soát</button>
-                </div>
-            </div>
         </aside>
 
         <!-- Main Content -->
@@ -141,6 +123,10 @@
                         <input type="search" placeholder="Search projects, tasks, notes..." class="search-input"
                             id="searchInput">
                     </div>
+                    <button class="header-notif-btn" id="headerNotifBtn" title="Thông báo" onclick="switchView('notifications')">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+                    </button>
                     <div class="user-info">
                         <div class="user-menu">
                             <span class="user-avatar" id="userAvatar">U</span>
@@ -155,127 +141,180 @@
             <div class="content-area">
                 <!-- Dashboard View -->
                 <div id="dashboardView" class="view active">
-                    <section class="dashboard-hero">
-                        <div class="dashboard-hero-copy">
-                            <span class="hero-kicker">Project Control Center</span>
-                            <h1>Tập trung tiến độ cho mọi dự án đang vận hành.</h1>
-                            <p>Theo dõi các dự án quan trọng, deadline cần chú ý và nhịp triển khai của đội ngũ trên cùng một màn hình.</p>
-                        </div>
-                        <div class="dashboard-hero-meta">
-                            <div class="hero-meta-card">
-                                <span>Chế độ hiện tại</span>
-                                <strong>Điều phối dự án</strong>
-                            </div>
-                            <div class="hero-meta-card">
-                                <span>Trọng tâm hệ thống</span>
-                                <strong>Tiến độ, trách nhiệm, deadline</strong>
-                            </div>
-                        </div>
-                    </section>
-                    <div class="stats-grid">
-                        <div class="stat-card" data-card-accent="indigo">
-                            <div class="stat-card-icon-wrapper">
-                                <span class="material-symbols-outlined stat-card-icon">workspaces</span>
-                            </div>
-                            <div class="stat-card-content">
-                                <div class="stat-card-label">Total Projects</div>
-                                <p class="stat-number" id="statTotalProjects">0</p>
-                            </div>
-                        </div>
-                        <div class="stat-card" data-card-accent="green">
-                            <div class="stat-card-icon-wrapper">
-                                <span class="material-symbols-outlined stat-card-icon">task_alt</span>
-                            </div>
-                            <div class="stat-card-content">
-                                <div class="stat-card-label">Completion Rate</div>
-                                <p class="stat-number" id="statCompletionRate">0%</p>
-                            </div>
-                        </div>
-                        <div class="stat-card" data-card-accent="blue">
-                            <div class="stat-card-icon-wrapper">
-                                <span class="material-symbols-outlined stat-card-icon">schedule</span>
-                            </div>
-                            <div class="stat-card-content">
-                                <div class="stat-card-label">On-time Rate</div>
-                                <p class="stat-number" id="statOnTimeRate">0%</p>
-                            </div>
-                        </div>
-                        <div class="stat-card" data-card-accent="red">
-                            <div class="stat-card-icon-wrapper">
-                                <span class="material-symbols-outlined stat-card-icon">warning</span>
-                            </div>
-                            <div class="stat-card-content">
-                                <div class="stat-card-label">Overdue Count</div>
-                                <p class="stat-number" id="statOverdueCount">0</p>
-                            </div>
-                        </div>
+
+                    <!-- Tab bar -->
+                    <div class="dash-tabs">
+                        <button class="dash-tab active" data-dash-tab="tong-quan">Tổng quan</button>
+                        <button class="dash-tab" data-dash-tab="cua-toi">Của tôi</button>
                     </div>
 
-                    <div class="warning-zone" style="display: none;">
-                        <div class="warning-card at-risk">
-                            <div class="warning-header">
-                                <span class="warning-title">At Risk</span>
-                                <span class="warning-count" id="warningAtRiskCount">0</span>
-                            </div>
-                            <div class="warning-list" id="warningAtRiskList">Không có dự án nào</div>
-                        </div>
-                        <div class="warning-card overdue">
-                            <div class="warning-header">
-                                <span class="warning-title">Overdue</span>
-                                <span class="warning-count" id="warningOverdueCount">0</span>
-                            </div>
-                            <div class="warning-list" id="warningOverdueList">Không có dự án nào</div>
-                        </div>
-                    </div>
+                    <!-- ── TAB: TỔNG QUAN ── -->
+                    <div class="dash-panel active" id="dashPanelTongQuan">
 
-                    <div class="dashboard-focus-grid">
-                        <div class="today-tasks-card">
-                            <div class="today-tasks-header">
-                                <h3><span class="material-symbols-outlined today-tasks-icon">today</span>Today Tasks
+                        <!-- Stat cards -->
+                        <div class="dash-stats-grid">
+                            <div class="dash-stat-card" data-accent="blue">
+                                <div class="dash-stat-icon"><span class="material-symbols-outlined">workspaces</span></div>
+                                <div class="dash-stat-body">
+                                    <span class="dash-stat-label">Dự án đang chạy</span>
+                                    <span class="dash-stat-number" id="dsSoDA">—</span>
+                                </div>
+                            </div>
+                            <div class="dash-stat-card" data-accent="red">
+                                <div class="dash-stat-icon"><span class="material-symbols-outlined">event_busy</span></div>
+                                <div class="dash-stat-body">
+                                    <span class="dash-stat-label">Quá hạn</span>
+                                    <span class="dash-stat-number" id="dsQuaHan">—</span>
+                                </div>
+                            </div>
+                            <div class="dash-stat-card" data-accent="amber">
+                                <div class="dash-stat-icon"><span class="material-symbols-outlined">warning</span></div>
+                                <div class="dash-stat-body">
+                                    <span class="dash-stat-label">Cần chú ý</span>
+                                    <span class="dash-stat-number" id="dsChuY">—</span>
+                                </div>
+                            </div>
+                            <div class="dash-stat-card" data-accent="green">
+                                <div class="dash-stat-icon"><span class="material-symbols-outlined">task_alt</span></div>
+                                <div class="dash-stat-body">
+                                    <span class="dash-stat-label">Hoàn thành</span>
+                                    <span class="dash-stat-number" id="dsHoanThanh">—</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project progress table -->
+                        <div class="dash-section-card">
+                            <div class="dash-section-header">
+                                <h3 class="dash-section-title">
+                                    <span class="material-symbols-outlined">bar_chart_4_bars</span>Tiến độ dự án
                                 </h3>
+                                <a href="#" class="dash-see-all" onclick="switchView('projects'); return false;">
+                                    Xem tất cả <span class="material-symbols-outlined">chevron_right</span>
+                                </a>
                             </div>
-                            <div class="today-tasks-table">
-                                <div class="today-tasks-table-header">
-                                    <div class="task-col-status">Status</div>
-                                    <div class="task-col-title">Task</div>
-                                    <div class="task-col-description">Description</div>
-                                    <div class="task-col-actions">Actions</div>
+                            <div class="dash-project-table-wrap">
+                                <table class="dash-project-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tên dự án</th>
+                                            <th>Loại</th>
+                                            <th>Tiến độ</th>
+                                            <th>Deadline</th>
+                                            <th>Trạng thái</th>
+                                            <th>Phụ trách</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashProjectTableBody">
+                                        <tr><td colspan="6" class="dash-table-loading">Đang tải...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Bottom: urgent + activity -->
+                        <div class="dash-bottom-grid">
+                            <div class="dash-section-card dash-urgent-panel">
+                                <div class="dash-section-header">
+                                    <h3 class="dash-section-title dash-urgent-title">
+                                        <span class="material-symbols-outlined">priority_high</span>Cần xử lý ngay
+                                    </h3>
                                 </div>
-                                <div id="todayTasksList" class="today-tasks-table-body">
-                                    <div class="empty-state">Đang tải...</div>
+                                <div id="dashUrgentList" class="dash-urgent-list">
+                                    <div class="dash-empty">Không có vấn đề nào cần xử lý</div>
                                 </div>
+                            </div>
+                            <div class="dash-section-card">
+                                <div class="dash-section-header">
+                                    <h3 class="dash-section-title">
+                                        <span class="material-symbols-outlined">groups</span>Tải công việc nhóm
+                                    </h3>
+                                </div>
+                                <div id="dashTeamWorkload" class="dash-team-workload">
+                                    <div class="dash-empty">Đang tải...</div>
                                 </div>
                             </div>
                         </div>
-                        <!-- Upcoming Deadlines Widget -->
-                        <div class="upcoming-deadlines-card">
-                            <div class="upcoming-deadlines-header">
-                                <h3>
-                                    <span class="material-symbols-outlined upcoming-deadlines-icon">event_upcoming</span>
-                                    Upcoming Deadlines
+
+                    </div><!-- /dashPanelTongQuan -->
+
+                    <!-- ── TAB: CỦA TÔI ── -->
+                    <div class="dash-panel" id="dashPanelCuaToi">
+
+                        <!-- Greeting -->
+                        <div class="dash-greeting">
+                            <div class="dash-greeting-text">
+                                <h2 id="dashGreetingName">Chào,</h2>
+                                <p>
+                                    <span id="dashGreetingDate"></span>
+                                    <span id="dashGreetingTaskBadge" class="dash-greeting-badge" style="display:none"></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Task hôm nay + Sắp đến hạn -->
+                        <div class="dash-personal-grid">
+                            <div class="dash-section-card">
+                                <div class="dash-section-header">
+                                    <h3 class="dash-section-title">
+                                        <span class="material-symbols-outlined">today</span>Task hôm nay
+                                    </h3>
+                                    <a href="#" class="dash-see-all" onclick="switchView('board'); return false;">Xem tất cả <span class="material-symbols-outlined">chevron_right</span></a>
+                                </div>
+                                <div id="dashTodayTasks" class="dash-task-list">
+                                    <div class="dash-empty">Đang tải...</div>
+                                </div>
+                            </div>
+                            <div class="dash-section-card">
+                                <div class="dash-section-header">
+                                    <h3 class="dash-section-title">
+                                        <span class="material-symbols-outlined">alarm</span>Sắp đến hạn
+                                    </h3>
+                                </div>
+                                <div id="dashUpcomingDeadlines" class="dash-deadline-list">
+                                    <div class="dash-empty">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Họp định kỳ được phân công -->
+                        <div class="dash-section-card" id="dashMeetingSection">
+                            <div class="dash-section-header">
+                                <h3 class="dash-section-title">
+                                    <span class="material-symbols-outlined">event_repeat</span>Phiên họp cần cập nhật
                                 </h3>
+                                <a href="#" class="dash-see-all" onclick="switchView('personal'); setTimeout(()=>showPersonalSection('meeting'),100); return false;">
+                                    Xem tất cả <span class="material-symbols-outlined">chevron_right</span>
+                                </a>
                             </div>
-                            <div id="upcomingDeadlinesList" class="upcoming-deadlines-list">
-                                <div class="empty-state">Đang tải...</div>
+                            <div id="dashMeetingList" class="dash-meeting-list">
+                                <div class="dash-empty">Đang tải...</div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="recent-projects" id="recentProjectsSection">
-                        <h3>Recent Projects</h3>
-                        <div id="recentProjectsList" class="projects-grid"></div>
-                    </div>
+                    </div><!-- /dashPanelCuaToi -->
 
-                    <!--
-                    <div class="dashboard-calendar-card">
-                        <div class="calendar-header">
-                            <button id="dashboardPrevMonth">←</button>
-                            <h3 id="dashboardCurrentMonth"></h3>
-                            <button id="dashboardNextMonth">→</button>
+                    <!-- Kept for backward compat with existing JS references -->
+                    <div style="display:none">
+                        <div id="recentProjectsSection"><div id="recentProjectsList"></div></div>
+                        <div id="todayTasksList"></div>
+                        <div id="upcomingDeadlinesList"></div>
+                        <div class="warning-zone">
+                            <div class="warning-card at-risk">
+                                <span id="warningAtRiskCount"></span>
+                                <div id="warningAtRiskList"></div>
+                            </div>
+                            <div class="warning-card overdue">
+                                <span id="warningOverdueCount"></span>
+                                <div id="warningOverdueList"></div>
+                            </div>
                         </div>
-                        <div class="calendar-grid" id="dashboardCalendarGrid"></div>
+                        <span id="statTotalProjects"></span>
+                        <span id="statCompletionRate"></span>
+                        <span id="statOnTimeRate"></span>
+                        <span id="statOverdueCount"></span>
                     </div>
-                    -->
+
                 </div>
 
                 <!-- Projects View -->
@@ -324,7 +363,7 @@
                         </div>
                     </div>
                     <div class="personal-sections">
-                        <div id="personalSectionTodos" class="personal-section">
+                        <div id="personalSectionTodos" class="personal-section" hidden>
                             <div class="todo-card">
                                 <h3>To-do List</h3>
                                 <div class="form-row">
@@ -349,6 +388,18 @@
                         </div>
 
                         <div id="personalSectionMeeting" class="personal-section">
+                            <!-- ── Meeting top switcher ── -->
+                            <div class="pm-switcher">
+                                <button class="pm-switch-btn active" id="pmSwitchOne" onclick="showMeetingMode('one')">
+                                    <span class="material-symbols-outlined">event</span>Họp 1 lần
+                                </button>
+                                <button class="pm-switch-btn" id="pmSwitchPeriodic" onclick="showMeetingMode('periodic')">
+                                    <span class="material-symbols-outlined">event_repeat</span>Họp định kỳ
+                                </button>
+                            </div>
+
+                            <!-- ── One-off meetings (existing) ── -->
+                            <div id="pmModeOne" style="display:block">
                             <div class="meeting-card">
                                 <div class="meeting-tabs">
                                     <button class="meeting-tab active" data-meeting-tab="list">Danh sách</button>
@@ -535,9 +586,176 @@
                                     </div>
                                 </div>
                             </div>
+                            </div><!-- /pmModeOne -->
+
+                            <!-- ── Periodic meeting board ── -->
+                            <div id="pmModePeriodic" style="display:none">
+                                <!-- List view -->
+                                <div id="pmBoardList" class="pm-board-list">
+                                    <div class="pm-board-toolbar">
+                                        <h2 class="pm-board-title">Họp định kỳ</h2>
+                                        <button class="pm-btn-create" onclick="openCreatePeriodicMeeting()">
+                                            <span class="material-symbols-outlined">add</span>Tạo lịch họp
+                                        </button>
+                                    </div>
+                                    <div id="pmMeetingGrid" class="pm-meeting-grid">
+                                        <div class="users-empty-state">Đang tải...</div>
+                                    </div>
+                                </div>
+
+                                <!-- Session board view (hidden until meeting selected) -->
+                                <div id="pmSessionBoard" class="pm-session-board" style="display:none">
+                                    <div class="pm-session-header">
+                                        <button class="pm-back-btn" onclick="closePmSessionBoard()">
+                                            <span class="material-symbols-outlined">arrow_back</span>
+                                        </button>
+                                        <div class="pm-session-header-info">
+                                            <div class="pm-session-freq-badge" id="pmSessionFreqBadge"></div>
+                                            <h2 class="pm-session-title" id="pmSessionTitle"></h2>
+                                            <div class="pm-session-meta" id="pmSessionMeta"></div>
+                                        </div>
+                                        <button class="pm-btn-dashboard" id="pmDashboardBtn" onclick="openMeetingDashboard()" style="display:none">
+                                            <span class="material-symbols-outlined">slideshow</span>Bắt đầu họp
+                                        </button>
+                                    </div>
+                                    <div id="pmSessionList" class="pm-session-list">
+                                        <div class="users-empty-state">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div><!-- /pmModePeriodic -->
+
+                        </div><!-- /personalSectionMeeting -->
+
+                        <!-- ── Create Periodic Meeting Modal ── -->
+                        <div id="createPeriodicMeetingModal" class="modal">
+                            <div class="modal-content pm-create-modal">
+                                <div class="pm-create-header">
+                                    <h2 class="pm-create-title">Tạo lịch họp định kỳ</h2>
+                                    <button class="rtask-modal-close" onclick="closeCreatePeriodicMeeting()">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                                <div class="pm-create-body">
+                                    <div class="pm-form-row">
+                                        <label class="pm-label">Tên cuộc họp</label>
+                                        <input type="text" id="pmTitle" class="pm-input" placeholder="VD: Họp KSHT hàng tuần">
+                                    </div>
+                                    <div class="pm-form-row">
+                                        <label class="pm-label">Tần suất</label>
+                                        <div class="pm-freq-pills" id="pmFreqPills">
+                                            <button class="pm-freq-pill active" data-freq="weekly" onclick="selectPmFreq('weekly',this)">
+                                                <span class="material-symbols-outlined">calendar_view_week</span>Hàng tuần
+                                            </button>
+                                            <button class="pm-freq-pill" data-freq="monthly" onclick="selectPmFreq('monthly',this)">
+                                                <span class="material-symbols-outlined">calendar_month</span>Hàng tháng
+                                            </button>
+                                            <button class="pm-freq-pill" data-freq="quarterly" onclick="selectPmFreq('quarterly',this)">
+                                                <span class="material-symbols-outlined">calendar_today</span>Hàng quý
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Day picker (changes based on frequency) -->
+                                    <div class="pm-form-row" id="pmDayRow">
+                                        <label class="pm-label" id="pmDayLabel">Ngày họp trong tuần</label>
+                                        <div class="pm-dow-pills" id="pmDowPills">
+                                            <button class="pm-dow-pill active" data-dow="0" onclick="selectPmDow(0,this)">T2</button>
+                                            <button class="pm-dow-pill" data-dow="1" onclick="selectPmDow(1,this)">T3</button>
+                                            <button class="pm-dow-pill" data-dow="2" onclick="selectPmDow(2,this)">T4</button>
+                                            <button class="pm-dow-pill" data-dow="3" onclick="selectPmDow(3,this)">T5</button>
+                                            <button class="pm-dow-pill" data-dow="4" onclick="selectPmDow(4,this)">T6</button>
+                                            <button class="pm-dow-pill" data-dow="5" onclick="selectPmDow(5,this)">T7</button>
+                                            <button class="pm-dow-pill" data-dow="6" onclick="selectPmDow(6,this)">CN</button>
+                                        </div>
+                                        <div id="pmDomRow" style="display:none">
+                                            <label class="pm-label" style="margin-top:8px">Ngày trong tháng</label>
+                                            <input type="number" id="pmDom" class="pm-input" min="1" max="28" value="1" style="width:80px">
+                                        </div>
+                                    </div>
+                                    <div class="pm-form-row pm-date-range">
+                                        <div class="pm-date-col">
+                                            <label class="pm-label">Từ ngày</label>
+                                            <input type="date" id="pmStartDate" class="pm-input">
+                                        </div>
+                                        <div class="pm-date-col">
+                                            <label class="pm-label">Đến ngày <span style="opacity:.5;font-size:11px">(tuỳ chọn)</span></label>
+                                            <input type="date" id="pmEndDate" class="pm-input">
+                                        </div>
+                                    </div>
+                                    <div class="pm-form-row">
+                                        <label class="pm-label">Người tham gia</label>
+                                        <div class="pm-participant-search">
+                                            <input type="text" id="pmParticipantSearch" class="pm-input"
+                                                placeholder="Tìm tên..." oninput="filterPmParticipants(this.value)">
+                                        </div>
+                                        <div class="pm-participant-list" id="pmParticipantList"></div>
+                                        <div class="pm-participant-selected" id="pmParticipantSelected"></div>
+                                    </div>
+                                    <div class="pm-form-row">
+                                        <label class="pm-label">Mô tả <span style="opacity:.5;font-size:11px">(tuỳ chọn)</span></label>
+                                        <textarea id="pmDescription" class="pm-input pm-textarea" rows="2" placeholder="Mục đích, nội dung chính..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="pm-create-footer">
+                                    <button class="pm-btn-cancel" onclick="closeCreatePeriodicMeeting()">Huỷ</button>
+                                    <button class="pm-btn-submit" onclick="submitCreatePeriodicMeeting()">
+                                        <span class="material-symbols-outlined">check</span>Tạo lịch họp
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="personalSectionNotes" class="personal-section">
+                        <!-- ── Session Detail Modal ── -->
+                        <div id="pmSessionDetailModal" class="modal">
+                            <div class="modal-content pm-session-detail-modal">
+                                <div class="pm-sd-header">
+                                    <div>
+                                        <div class="pm-sd-date" id="pmSdDate"></div>
+                                        <h2 class="pm-sd-title" id="pmSdTitle"></h2>
+                                        <div class="pm-sd-user-line" id="pmSdUserLine"></div>
+                                    </div>
+                                    <button class="rtask-modal-close" onclick="closePmSessionDetail()">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                                <div class="pm-sd-body" id="pmSdBody"></div>
+                                <div class="pm-sd-footer-bar">
+                                    <span class="pm-sd-last-update" id="pmSdLastUpdate"></span>
+                                    <div class="pm-sd-footer-actions">
+                                        <button class="pm-btn-cancel" onclick="closePmSessionDetail()">Hủy bỏ</button>
+                                        <button class="pm-sd-save-btn" onclick="closePmSessionDetail()">Lưu cập nhật</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Meeting Dashboard (fullscreen) ── -->
+                        <div id="pmDashboardOverlay" class="pm-dashboard-overlay" style="display:none">
+                            <div class="pm-dashboard-header">
+                                <div class="pm-dashboard-title-wrap">
+                                    <span class="pm-dashboard-icon">
+                                        <span class="material-symbols-outlined">groups</span>
+                                    </span>
+                                    <div>
+                                        <div class="pm-dashboard-label" id="pmDashFreqLabel"></div>
+                                        <h1 class="pm-dashboard-title" id="pmDashTitle"></h1>
+                                    </div>
+                                </div>
+                                <div class="pm-dash-live-badge">● Đang họp</div>
+                                <div class="pm-dash-progress-wrap">
+                                    <div class="pm-dash-progress-text" id="pmDashProgress">0 / 0 người đã cập nhật</div>
+                                    <div class="pm-dash-progress-track">
+                                        <div class="pm-dash-progress-bar" id="pmDashProgressBar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div class="pm-dashboard-date" id="pmDashDate"></div>
+                                <button class="pm-dashboard-close" onclick="closeMeetingDashboard()">
+                                    <span class="material-symbols-outlined">close_fullscreen</span>Thoát
+                                </button>
+                            </div>
+                            <div class="pm-dashboard-body" id="pmDashBody"></div>
+                        </div>
+
+                        <div id="personalSectionNotes" class="personal-section" hidden>
                             <div class="notes-tabs">
                                 <button class="note-tab active" data-note-tab="list">Danh sách</button>
                                 <button class="note-tab" data-note-tab="form">Tạo / Chỉnh sửa</button>
@@ -654,54 +872,59 @@
                             </div>
                         </div>
                         <div id="personalSectionAccount" class="personal-section active">
-                            <div class="card account-card">
-                                <h3>Account Information</h3>
-                                <p class="card-description">Cập nhật thông tin cá nhân của bạn.</p>
-                                <form id="accountForm" class="account-form">
-                                    <div class="account-avatar-row">
-                                        <div class="avatar-preview" id="accountAvatarPreview">
-                                            <img id="accountAvatarPreviewImg" src="" alt="Avatar preview"
-                                                onerror="this.src='https://placehold.co/120x120?text=Avatar';">
+                            <div class="account-tabs" id="accountTabs">
+                                <button type="button" class="account-tab active" data-account-tab="profile">Tài khoản</button>
+                                <button type="button" class="account-tab" data-account-tab="recurring">Công việc lặp lại</button>
+                            </div>
+                            <div id="accountTabProfile" class="account-tab-panel active">
+                                <div class="card account-card">
+                                    <h3>Account Information</h3>
+                                    <p class="card-description">Cập nhật thông tin cá nhân của bạn.</p>
+                                    <form id="accountForm" class="account-form">
+                                        <div class="account-avatar-row">
+                                            <div class="avatar-preview" id="accountAvatarPreview">
+                                                <img id="accountAvatarPreviewImg" src="" alt="Avatar preview"
+                                                    onerror="this.src='https://placehold.co/120x120?text=Avatar';">
+                                            </div>
+                                            <div class="form-group avatar-input-group">
+                                                <label>Avatar URL</label>
+                                                <input type="text" id="accountAvatarUrl" placeholder="https://..."
+                                                    autocomplete="off" inputmode="url">
+                                                <small><a href="https://notion-avatar.app" target="_blank"
+                                                        rel="noopener">Tạo custom avatar</a></small>
+                                            </div>
                                         </div>
-                                        <div class="form-group avatar-input-group">
-                                            <label>Avatar URL</label>
-                                            <input type="text" id="accountAvatarUrl" placeholder="https://..."
-                                                autocomplete="off" inputmode="url">
-                                            <small><a href="https://notion-avatar.app" target="_blank"
-                                                    rel="noopener">Tạo custom avatar</a></small>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Email</label>
+                                                <input type="email" id="accountEmail" required
+                                                    placeholder="you@example.com">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Họ và tên</label>
+                                                <input type="text" id="accountFullName" placeholder="Nguyễn Văn A">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Email</label>
-                                            <input type="email" id="accountEmail" required
-                                                placeholder="you@example.com">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Đơn vị</label>
+                                                <input type="text" id="accountDepartment" placeholder="Phòng/Ban">
+                                            </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label>Họ và tên</label>
-                                            <input type="text" id="accountFullName" placeholder="Nguyễn Văn A">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Bộ phận</label>
+                                                <input type="text" id="accountTeam" placeholder="Nhóm phụ trách">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Đơn vị</label>
-                                            <input type="text" id="accountDepartment" placeholder="Phòng/Ban">
+                                        <div class="form-actions">
+                                            <span id="accountStatus" class="form-status"></span>
+                                            <button type="submit" class="btn-primary">Lưu thay đổi</button>
                                         </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Bộ phận</label>
-                                            <input type="text" id="accountTeam" placeholder="Nhóm phụ trách">
-                                        </div>
-                                    </div>
-                                    <div class="form-actions">
-                                        <span id="accountStatus" class="form-status"></span>
-                                        <button type="submit" class="btn-primary">Lưu thay đổi</button>
-                                    </div>
-                                </form>
+                                    </form>
+                                </div>
 
-                                <!-- Change Password Section -->
-                                <div class="card account-card" style="margin-top: 24px;">
+                                <div class="card account-card account-password-card">
                                     <h3>Đổi mật khẩu</h3>
                                     <p class="card-description">Thay đổi mật khẩu đăng nhập của bạn.</p>
                                     <form id="changePasswordForm" class="account-form">
@@ -727,6 +950,21 @@
                                     </form>
                                 </div>
                             </div>
+                            <div id="accountTabRecurring" class="account-tab-panel">
+                                <div class="card account-card account-recurring-card">
+                                    <div class="account-recurring-header">
+                                        <div>
+                                            <h3>Công việc lặp lại</h3>
+                                            <p class="card-description">Danh sách công việc định kỳ của bạn.</p>
+                                        </div>
+                                        <button type="button" id="btnOpenRecurringAdminReport" class="btn-secondary" style="display:none;">
+                                            <span class="material-symbols-outlined">analytics</span>
+                                            Report Admin
+                                        </button>
+                                    </div>
+                                    <div id="accountRecurringTasksBody" class="rtask-body account-rtask-body"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -745,6 +983,10 @@
                             <button type="button" class="settings-tab active" data-settings-tab="users">
                                 <span class="material-symbols-outlined">group</span>
                                 <span>Users</span>
+                            </button>
+                            <button type="button" class="settings-tab" data-settings-tab="tracking">
+                                <span class="material-symbols-outlined">event_available</span>
+                                <span>Theo dõi</span>
                             </button>
                             <button type="button" class="settings-tab" data-settings-tab="mtcl">
                                 <span class="material-symbols-outlined">track_changes</span>
@@ -788,7 +1030,7 @@
                                     <div class="users-directory-head">
                                         <div>
                                             <span class="users-directory-kicker">Editorial Directory</span>
-                                            <h3>People, role and capability matrix</h3>
+                                            <h3>Member matrix</h3>
                                         </div>
                                         <p id="usersDirectoryMeta">Loading user directory...</p>
                                     </div>
@@ -809,6 +1051,65 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Tracking Panel -->
+                        <div id="settingsPanelTracking" class="settings-panel">
+                            <div class="tracking-shell">
+                                <div class="view-header tracking-view-header">
+                                    <div class="view-title-stack">
+                                        <span class="view-kicker">Công việc định kỳ</span>
+                                        <h2>Theo dõi nhân sự</h2>
+                                        <p>Ma trận công việc định kỳ theo tần suất của toàn bộ nhân sự.</p>
+                                    </div>
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <select id="trackingDeptFilter" class="tracking-filter-select">
+                                            <option value="">Tất cả phòng ban</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- KPI row -->
+                                <div class="tracking-kpi-row" id="trackingKpiRow">
+                                    <div class="tracking-kpi-card">
+                                        <span class="tracking-kpi-label">Tổng nhân sự</span>
+                                        <strong class="tracking-kpi-value" id="tkpiTotal">—</strong>
+                                    </div>
+                                    <div class="tracking-kpi-card">
+                                        <span class="tracking-kpi-label">Có công việc</span>
+                                        <strong class="tracking-kpi-value green" id="tkpiAssigned">—</strong>
+                                    </div>
+                                    <div class="tracking-kpi-card">
+                                        <span class="tracking-kpi-label">Chưa phân công</span>
+                                        <strong class="tracking-kpi-value amber" id="tkpiUnassigned">—</strong>
+                                    </div>
+                                    <div class="tracking-kpi-card">
+                                        <span class="tracking-kpi-label">Tổng tasks</span>
+                                        <strong class="tracking-kpi-value" id="tkpiTasks">—</strong>
+                                    </div>
+                                </div>
+                                <!-- Matrix table -->
+                                <div class="tracking-matrix-shell">
+                                    <div class="tracking-matrix-wrap">
+                                        <table class="tracking-matrix-table" id="trackingMatrixTable">
+                                            <thead>
+                                                <tr>
+                                                    <th class="tm-col-employee">Nhân sự</th>
+                                                    <th><span class="tm-freq-head weekly">Tuần</span></th>
+                                                    <th><span class="tm-freq-head monthly">Tháng</span></th>
+                                                    <th><span class="tm-freq-head quarterly">Quý</span></th>
+                                                    <th><span class="tm-freq-head semi_annual">6T</span></th>
+                                                    <th><span class="tm-freq-head annual">Năm</span></th>
+                                                    <th><span class="tm-freq-head ad_hoc">Phát sinh</span></th>
+                                                    <th class="tm-col-total">Tổng</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="trackingMatrixBody">
+                                                <tr><td colspan="8" class="users-empty-state">Đang tải...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="settingsPanelMtcl" class="settings-panel">
                             <div class="mtcl-view-shell">
                                 <div class="view-header mtcl-view-header">
@@ -1030,33 +1331,18 @@
                                         </div>
                                         <div class="task-list" id="tasksDone"></div>
                                     </div>
-                                    <div class="kanban-column" data-status="blocked">
-                                        <div class="column-header">
-                                            <div class="column-heading-stack">
-                                                <span class="column-kicker">Needs Attention</span>
-                                                <h3>Blocked</h3>
-                                            </div>
-                                            <span class="task-count" id="countBlocked">0</span>
-                                        </div>
-                                        <div class="task-list" id="tasksBlocked"></div>
-                                    </div>
                                 </div>
                             </div>
 
                             <!-- Timeline Tab (Gantt Chart) -->
                             <div id="boardTabTimeline" class="board-tab-content">
                                 <div class="gantt-section">
-                                    <div class="gantt-header">
-                                        <h3>Timeline (Quý)</h3>
+                                    <div class="gantt-header" style="margin-bottom:16px">
+                                        <h3 style="margin:0;font-size:16px;font-weight:700">Timeline dự án</h3>
                                         <div class="gantt-legend">
-                                            <span class="legend-item"><span class="legend-color todo"></span> To
-                                                Do</span>
-                                            <span class="legend-item"><span class="legend-color in-progress"></span> In
-                                                Progress</span>
-                                            <span class="legend-item"><span class="legend-color done"></span>
-                                                Done</span>
-                                            <span class="legend-item"><span class="legend-color blocked"></span>
-                                                Blocked</span>
+                                            <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#10b981;display:inline-block"></span> Hoàn thành</span>
+                                            <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#4361ee;display:inline-block"></span> Đang thực hiện</span>
+                                            <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#e2e5eb;display:inline-block"></span> Chưa bắt đầu</span>
                                         </div>
                                     </div>
                                     <!-- Year selector for Quarterly view -->
@@ -1181,6 +1467,19 @@
                     <label>Màu nhận diện</label>
                     <input type="color" id="projectColor" value="#6366f1">
                 </div>
+                <div class="form-group project-member-picker-group">
+                    <label>Thành viên dự án</label>
+                    <div id="projectMemberPickerContainer" class="assignees-container">
+                        <button type="button" class="assignee-dropdown-toggle" id="memberPickerToggle">
+                            <span id="projectMemberPickerCount">0 thành viên</span>
+                            <span class="material-symbols-outlined">keyboard_arrow_down</span>
+                        </button>
+                        <div id="projectMemberPickerList" class="assignees-list">
+                            <div class="empty-state">Đang tải danh sách user...</div>
+                        </div>
+                    </div>
+                    <small class="input-hint">Danh sách này sẽ được dùng trong vùng phân công của popup New Task.</small>
+                </div>
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" id="cancelProject">Hủy</button>
                     <button type="submit" class="btn-primary">Lưu dự án</button>
@@ -1191,92 +1490,139 @@
 
     <!-- Task Modal -->
     <div id="taskModal" class="modal modal-wide">
-        <div class="modal-content">
+        <div class="modal-content task-assignment-modal">
             <div class="modal-header">
-                <h2 id="taskModalTitle">New Task</h2>
+                <div>
+                    <h2 id="taskModalTitle">New Task</h2>
+                    <p class="modal-subtitle">Giao công việc định kỳ theo tuần, tháng, quý, 6 tháng hoặc năm.</p>
+                </div>
                 <button class="modal-close" id="closeTaskModal">×</button>
             </div>
             <form id="taskForm">
                 <input type="hidden" id="taskId">
-                <div class="form-group">
-                    <label>Task Title</label>
-                    <input type="text" id="taskTitle" required>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="taskDescription" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Assignees (có thể chọn nhiều)</label>
-                    <div id="taskAssigneesContainer" class="assignees-container">
-                        <div class="assignees-list" id="taskAssigneesList">
-                            <!-- Checkboxes sẽ được thêm bằng JavaScript -->
+                <div class="task-assignment-grid">
+                    <section class="task-assignment-main">
+                        <div class="form-group">
+                            <label>Tên công việc</label>
+                            <input type="text" id="taskTitle" required placeholder="Nhập tên công việc cần giao">
                         </div>
-                        <small class="input-hint">Chọn một hoặc nhiều thành viên để gán task</small>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Status</label>
-                        <select id="taskStatus">
-                            <option value="todo">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="done">Done</option>
-                            <option value="blocked">Blocked</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Priority</label>
-                        <select id="taskPriority">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Due Date</label>
-                    <input type="datetime-local" id="taskDueDate">
-                </div>
-                <div class="form-group">
-                    <label>Tags (comma-separated)</label>
-                    <input type="text" id="taskTags" placeholder="tag1, tag2, tag3">
+                        <div class="form-group">
+                            <label>Mô tả / hướng dẫn thực hiện</label>
+                            <textarea id="taskDescription" rows="5" placeholder="Ghi rõ yêu cầu, đầu ra cần chuẩn bị, hoặc nội dung cần phản hồi trước họp."></textarea>
+                        </div>
+                        <div class="task-schedule-panel">
+                            <!-- Loại task toggle -->
+                            <div class="form-group task-type-group">
+                                <label>Loại công việc</label>
+                                <div class="task-type-toggle" id="taskTypeToggle">
+                                    <button type="button" class="task-type-btn active" data-type="recurring">
+                                        <span class="material-symbols-outlined">autorenew</span>Lặp lại
+                                    </button>
+                                    <button type="button" class="task-type-btn" data-type="one_time">
+                                        <span class="material-symbols-outlined">event_available</span>Phát sinh
+                                    </button>
+                                </div>
+                                <input type="hidden" id="taskType" value="recurring">
+                            </div>
+
+                            <!-- Recurring fields -->
+                            <div id="taskScheduleRecurring">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Tần suất</label>
+                                        <select id="taskFrequency">
+                                            <option value="weekly">Hàng tuần</option>
+                                            <option value="monthly">Hàng tháng</option>
+                                            <option value="quarterly">Hàng quý</option>
+                                            <option value="semiannual">6 tháng</option>
+                                            <option value="yearly">Hàng năm</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Ngày bắt đầu kỳ đầu</label>
+                                        <input type="date" id="taskPeriodStart">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Kết thúc kỳ đầu</label>
+                                        <input type="date" id="taskPeriodEnd">
+                                        <small class="input-hint">Tự tính theo tần suất.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Lặp đến ngày</label>
+                                        <input type="date" id="taskRepeatUntil">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- One-time fields -->
+                            <div id="taskScheduleOneTime" style="display:none">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Từ ngày</label>
+                                        <input type="date" id="taskOneTimeFrom">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Đến ngày</label>
+                                        <input type="date" id="taskOneTimeTo">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <aside class="task-assignment-side">
+                        <div class="task-status-panel" id="taskStatusPanel">
+                            <span class="task-status-label">Tình trạng</span>
+                            <strong id="taskStatusDisplay">Chưa thực hiện</strong>
+                            <p id="taskPeriodPreview">Chọn tần suất để tự tính kỳ hạn.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Assigned tasks</label>
+                            <div id="taskAssigneesContainer" class="assignees-container">
+                                <button type="button" class="assignee-dropdown-toggle" id="assigneeDropdownToggle">
+                                    <span id="assigneeDropdownLabel">Chọn người thực hiện</span>
+                                    <span class="material-symbols-outlined">keyboard_arrow_down</span>
+                                </button>
+                                <div class="assignees-list" id="taskAssigneesList">
+                                    <!-- Checkboxes sẽ được thêm bằng JavaScript -->
+                                </div>
+                                <small class="input-hint">Chọn Họ tên (mã nhân viên), không cần email.</small>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
                 <div id="taskReadOnlyNote" class="readonly-note" style="display: none;">
                     Bạn chỉ đang xem chi tiết task này và không thể chỉnh sửa.
                 </div>
-                <div class="form-group">
-                    <label>Progress</label>
-                    <div class="task-progress-wrapper">
-                        <div class="task-progress-bar">
-                            <div class="task-progress-fill" id="taskProgressFill" style="width: 0%;"></div>
-                        </div>
-                        <small id="taskProgressText">0% (0/0)</small>
+
+                <!-- Sub Tasks Section -->
+                <div class="subtasks-section" id="subtasksSection">
+                    <div class="subtasks-header">
+                        <label>Sub Tasks</label>
+                        <span id="taskProgressText" class="subtask-progress-text"></span>
                     </div>
-                </div>
-                <div class="form-group" id="subtasksSection">
-                    <label>Sub Tasks</label>
-                    <div id="subtasksEmptyState" class="subtasks-empty">Lưu task trước khi thêm sub task.</div>
+                    <div class="subtask-progress-bar"><div id="taskProgressFill" class="subtask-progress-fill"></div></div>
                     <div id="subtasksList" class="subtasks-list"></div>
-                    <div class="subtask-form" id="subtaskFormWrapper">
-                        <input type="text" id="newSubtaskTitle" placeholder="Tên sub task">
-                        <textarea id="newSubtaskDescription" rows="2" placeholder="Mô tả (tuỳ chọn)"></textarea>
-                        <input type="text" id="newSubtaskAttachment" placeholder="Link minh hoạ (tuỳ chọn)">
-                        <button type="button" class="btn-primary" id="btnAddSubtask">+ Thêm Sub Task</button>
+                    <div id="subtasksEmptyState" class="empty-state" style="display:none;"></div>
+                    <div id="subtaskFormWrapper" class="subtask-form" style="display:none;">
+                        <input type="text" id="newSubtaskTitle" placeholder="Tên sub task..." class="subtask-title-input">
+                        <button type="button" id="btnAddSubtask" class="btn-secondary">+ Thêm</button>
                     </div>
                 </div>
-                <input type="file" id="subtaskUploadInput" accept="image/*" style="display: none;">
 
                 <!-- Comments Section -->
                 <div class="form-group" id="commentsSection" style="display: none;">
-                    <label>Comments</label>
+                    <label>Ghi chú / phản hồi</label>
                     <div id="commentsList" class="comments-list"></div>
                     <div class="comment-form">
-                        <textarea id="newCommentContent" rows="3" placeholder="Thêm comment..."></textarea>
+                        <textarea id="newCommentContent" rows="3" placeholder="Người thực hiện nhập phản hồi, nội dung chuẩn bị họp hoặc vấn đề cần trao đổi..."></textarea>
                         <div class="comment-form-actions">
                             <input type="file" id="commentAttachmentInput" accept="image/*" style="display: none;">
-                            <button type="button" class="btn-secondary" id="btnCommentAttachment">📎 Đính kèm</button>
+                            <button type="button" class="btn-secondary" id="btnCommentAttachment">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                            Đính kèm
+                        </button>
                             <button type="button" class="btn-primary" id="btnAddComment">Gửi</button>
                         </div>
                         <div id="commentAttachmentPreview" class="comment-attachment-preview" style="display: none;">
@@ -1286,8 +1632,8 @@
 
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" id="cancelTask">Cancel</button>
-                    <button type="button" class="btn-secondary" id="confirmTaskDone" style="display: none;">Xác nhận
-                        Done</button>
+                    <button type="button" class="btn-secondary" id="acknowledgeTaskBtn" style="display: none;">Xác nhận nhận việc</button>
+                    <button type="button" class="btn-secondary" id="completeTaskBtn" style="display: none;">Hoàn thành</button>
                     <button type="submit" class="btn-primary" id="saveTaskBtn">Save</button>
                 </div>
             </form>
@@ -1367,6 +1713,70 @@
         </div>
     </div>
 
+    <!-- Employee Detail Drawer -->
+    <div id="employeeDetailDrawer" class="emp-drawer">
+        <div class="emp-drawer-backdrop" id="empDrawerBackdrop"></div>
+        <div class="emp-drawer-panel" id="empDrawerPanel">
+            <div class="emp-drawer-header">
+                <div class="emp-drawer-profile" id="empDrawerProfile">
+                    <div class="emp-drawer-avatar-wrap" id="empDrawerAvatarWrap"></div>
+                    <div>
+                        <div class="emp-drawer-name" id="empDrawerName">—</div>
+                        <div class="emp-drawer-meta" id="empDrawerMeta">—</div>
+                    </div>
+                </div>
+                <button class="emp-drawer-action-btn" id="empDrawerFullscreenBtn" onclick="toggleEmpDrawerFullscreen()" title="Toàn màn hình">
+                    <span class="material-symbols-outlined" id="empDrawerFullscreenIcon">open_in_full</span>
+                </button>
+                <button class="emp-drawer-close" id="empDrawerClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="emp-drawer-kpi" id="empDrawerKpi"></div>
+            <div class="emp-drawer-body" id="empDrawerBody">
+                <div class="users-empty-state">Đang tải...</div>
+            </div>
+            <div class="emp-drawer-footer">
+                <button type="button" class="btn-secondary" id="empDrawerEditBtn">
+                    <span class="material-symbols-outlined" style="font-size:16px;">edit</span> Chỉnh sửa tasks
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal (description zoom) -->
+    <div id="taskDetailModal" class="modal">
+        <div class="modal-content task-detail-modal-content">
+            <div class="task-detail-header">
+                <div class="task-detail-freq-bar" id="taskDetailFreqBar"></div>
+                <div class="task-detail-header-text">
+                    <span class="task-detail-freq-label" id="taskDetailFreqLabel"></span>
+                    <h2 class="task-detail-title" id="taskDetailTitle"></h2>
+                </div>
+                <button class="rtask-modal-close" id="closeTaskDetailModal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="task-detail-body" id="taskDetailBody"></div>
+        </div>
+    </div>
+
+    <!-- Recurring Tasks Modal -->
+    <div id="recurringTasksModal" class="modal">
+        <div class="modal-content rtask-modal-content">
+            <div class="rtask-modal-header">
+                <div>
+                    <h1 id="recurringTasksModalTitle" class="rtask-modal-title">Công việc định kỳ</h1>
+                    <p id="recurringTasksModalSubtitle" class="rtask-modal-subtitle"></p>
+                </div>
+                <button class="rtask-modal-close" id="closeRecurringTasksModal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="recurringTasksBody" class="rtask-body"></div>
+        </div>
+    </div>
+
     <!-- Work Log Link Modal -->
     <div id="workLogLinkModal" class="modal">
         <div class="modal-content" style="max-width: 480px;">
@@ -1416,20 +1826,28 @@
 
     <!-- Meeting Report Modal -->
     <div id="meetingReportModal" class="modal">
-        <div class="modal-content modal-wide">
+        <div class="modal-content modal-wide meeting-report-modal-content">
             <div class="modal-header no-print">
                 <div>
                     <h2>Biên bản họp cá nhân</h2>
                     <p class="modal-subtitle">Chi tiết nội dung và các thỏa thuận</p>
                 </div>
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <button class="btn-secondary" onclick="window.print()" style="padding: 8px 16px;">🖨️ In biên
-                        bản</button>
+                    <button type="button" class="btn-secondary" id="btnMeetingReportFullscreen" style="padding: 8px 16px; display:inline-flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-outlined" id="meetingReportFullscreenIcon">open_in_full</span>
+                        <span id="meetingReportFullscreenLabel">Toàn màn hình</span>
+                    </button>
+                    <button class="btn-secondary" onclick="window.print()" style="padding: 8px 16px; display:inline-flex; align-items:center; gap:8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        In biên bản
+                    </button>
                     <button class="modal-close" id="closeMeetingReportModal">×</button>
                 </div>
             </div>
-            <div class="meeting-report-container" id="meetingReportContent">
-                <!-- Report content will be rendered here -->
+            <div class="meeting-report-scroll">
+                <div class="meeting-report-container" id="meetingReportContent">
+                    <!-- Report content will be rendered here -->
+                </div>
             </div>
             <div class="modal-footer no-print">
                 <button type="button" class="btn-secondary" id="btnCloseMeetingReport">Đóng</button>
@@ -1460,25 +1878,17 @@
                         <span id="timelineTaskStatus" class="meta-chip">--</span>
                     </div>
                     <div>
-                        <p class="meta-label">Ưu tiên</p>
-                        <span id="timelineTaskPriority" class="meta-chip">--</span>
-                    </div>
-                    <div>
-                        <p class="meta-label">Tiến độ</p>
+                        <p class="meta-label">Tần suất</p>
                         <span id="timelineTaskProgress" class="meta-chip">--</span>
                     </div>
                     <div>
-                        <p class="meta-label">Deadline</p>
+                        <p class="meta-label">Kỳ thực hiện</p>
                         <span id="timelineTaskDeadline" class="meta-chip">--</span>
                     </div>
                 </section>
                 <section class="timeline-task-section">
                     <h3>Người thực hiện</h3>
                     <div id="timelineTaskAssignees" class="assignee-list empty-state">Chưa phân công.</div>
-                </section>
-                <section class="timeline-task-section">
-                    <h3>Subtask</h3>
-                    <div id="timelineTaskSubtasks" class="timeline-subtask-list empty-state">Chưa có subtask.</div>
                 </section>
             </div>
         </div>

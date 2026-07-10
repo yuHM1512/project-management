@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from database import get_db
-from models import Mtcl, Project, ProjectType
+from models import Mtcl, Project, ProjectType, TeamMember, UserRole
 from schemas import ProjectCreate, ProjectUpdate, ProjectResponse
 from routers.auth import get_current_user
 from typing import List
@@ -105,13 +105,17 @@ def delete_project(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    """Xóa project"""
+    """Xóa project và toàn bộ dữ liệu liên quan"""
     db_project = db.query(Project).filter(Project.id == project_id).first()
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if db_project.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Only project owner can delete project")
-    
+    is_admin = current_user.role == UserRole.ADMIN.value
+    if not is_admin and db_project.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only project owner or admin can delete project")
+
+    # TeamMember không có cascade → xóa thủ công
+    db.query(TeamMember).filter(TeamMember.project_id == project_id).delete(synchronize_session=False)
+
     db.delete(db_project)
     db.commit()
     return {"message": "Project deleted successfully"}

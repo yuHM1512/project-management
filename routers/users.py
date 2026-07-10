@@ -8,7 +8,7 @@ from pathlib import Path
 from database import get_db
 from models import User, UserRole
 from schemas import UserResponse, UserUpdate, UserMeUpdate, ChangePasswordRequest, UserCreate
-from routers.auth import get_current_user, require_admin, verify_password, get_password_hash
+from routers.auth import get_current_user, require_admin, verify_password, get_password_hash, MAX_BCRYPT_PASSWORD_BYTES
 
 
 router = APIRouter()
@@ -48,6 +48,8 @@ def create_user(
             raise HTTPException(status_code=400, detail="Email already registered")
 
     # Tạo user mới
+    if len((user_in.password or "").encode("utf-8")) > MAX_BCRYPT_PASSWORD_BYTES:
+        raise HTTPException(status_code=400, detail="Password cannot exceed 72 bytes.")
     hashed_password = get_password_hash(user_in.password)
     db_user = User(
         username=user_in.username,
@@ -143,6 +145,8 @@ def change_password(
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
 
     # Cập nhật mật khẩu mới
+    if len((password_data.new_password or "").encode("utf-8")) > MAX_BCRYPT_PASSWORD_BYTES:
+        raise HTTPException(status_code=400, detail="New password cannot exceed 72 bytes.")
     db_user.hashed_password = get_password_hash(password_data.new_password)
     db.commit()
 

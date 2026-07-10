@@ -1,0 +1,13 @@
+/* ============================================================
+   RADII — Friendly Professional
+   Stick to md/lg for cards; full for pills/avatars.
+   ============================================================ */
+
+:root {
+  --radius-xs:    0.25rem;   /*  4px — chips, tiny tags */
+  --radius-sm:    0.5rem;    /*  8px — inputs */
+  --radius-md:    0.75rem;   /* 12px — buttons, cards (default) */
+  --radius-lg:    1rem;      /* 16px — large cards, modules */
+  --radius-xl:    1.5rem;    /* 24px — hero panels */
+  --radius-pill:  9999px;    /* avatars, pills, progress bars */
+}

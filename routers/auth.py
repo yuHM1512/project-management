@@ -8,8 +8,10 @@ from database import get_db
 from models import User, UserRole
 from schemas import UserCreate, UserResponse
 import os
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Security
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
@@ -19,13 +21,20 @@ REMEMBER_ME_EXPIRE_DAYS = 365  # Remember me: 1 năm
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+MAX_BCRYPT_PASSWORD_BYTES = 72
 
 def verify_password(plain_password, hashed_password):
     """Xác thực password"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except (ValueError, AttributeError) as exc:
+        logger.warning("Password verification failed due to bcrypt backend issue: %s", exc)
+        return False
 
 def get_password_hash(password):
     """Hash password"""
+    if len((password or "").encode("utf-8")) > MAX_BCRYPT_PASSWORD_BYTES:
+        raise ValueError("Password exceeds bcrypt limit of 72 bytes.")
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -54,6 +63,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail="Email already registered")
 
     # Tạo user mới
+    if len((user.password or "").encode("utf-8")) > MAX_BCRYPT_PASSWORD_BYTES:
+        raise HTTPException(status_code=400, detail="Password cannot exceed 72 bytes.")
     hashed_password = get_password_hash(user.password)
     db_user = User(
         username=user.username,

@@ -4,7 +4,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from database import init_db, get_db
 from sqlalchemy.orm import Session
-from routers import projects, tasks, teams, auth, users, subtasks, threads, comments, activities, worklogs, notes, todos, notifications, meetings, mtcl
+from routers import projects, tasks, teams, auth, users, subtasks, threads, comments, activities, worklogs, notifications, meetings, mtcl, recurring_tasks
+# notes, todos hidden (personal scope — team-level app)
+from routers import periodic_meetings
 from routers.auth import get_current_user_from_cookie
 from models import WorkLog
 import uvicorn
@@ -23,6 +25,12 @@ app.mount("/assets", StaticFiles(directory="templates"), name="assets")
 
 # Templates
 templates = Jinja2Templates(directory="templates")
+
+def no_store_template(template_name: str, context: dict):
+    response = templates.TemplateResponse(template_name, context)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    return response
 
 def get_file_version(file_path: str) -> str:
     """Tạo version hash dựa trên thời gian sửa đổi file để cache busting"""
@@ -52,6 +60,7 @@ templates.env.globals['get_file_version'] = get_file_version
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(mtcl.router, prefix="/api/mtcl", tags=["mtcl"])
+app.include_router(recurring_tasks.router, prefix="/api/recurring-tasks", tags=["recurring-tasks"])
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(teams.router, prefix="/api/teams", tags=["teams"])
@@ -60,10 +69,11 @@ app.include_router(threads.router, prefix="/api/threads", tags=["threads"])
 app.include_router(comments.router, prefix="/api/comments", tags=["comments"])
 app.include_router(activities.router, prefix="/api/activities", tags=["activities"])
 app.include_router(worklogs.router, prefix="/api/work-logs", tags=["worklogs"])
-app.include_router(notes.router, prefix="/api/notes", tags=["notes"])
+# app.include_router(notes.router, prefix="/api/notes", tags=["notes"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
-app.include_router(todos.router, prefix="/api/todos", tags=["todos"])
+# app.include_router(todos.router, prefix="/api/todos", tags=["todos"])
 app.include_router(meetings.router, prefix="/api/meetings", tags=["meetings"])
+app.include_router(periodic_meetings.router, prefix="/api", tags=["periodic-meetings"])
 from routers import intern, mes
 app.include_router(intern.router, prefix="/intern", tags=["intern"])
 app.include_router(mes.router)
@@ -71,13 +81,13 @@ app.include_router(mes.router)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     """Trang chủ"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return no_store_template("index.html", {"request": request})
 
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """Trang đăng nhập"""
-    return templates.TemplateResponse("login.html", {"request": request})
+    return no_store_template("login.html", {"request": request})
 
 
 @app.get("/mes", response_class=HTMLResponse)
@@ -138,7 +148,7 @@ async def catch_all(request: Request, path: str):
     # Bỏ qua các routes đã được xử lý bởi các routes khác
     # (API routes, static files, login, worklogs được xử lý trước)
     # Chỉ serve index.html cho các frontend routes
-    return templates.TemplateResponse("index.html", {"request": request})
+    return no_store_template("index.html", {"request": request})
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8004, reload=True)

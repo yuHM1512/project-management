@@ -22,6 +22,10 @@ INTERN_DATABASE_URL = os.getenv(
 main_connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 intern_connect_args = {"check_same_thread": False} if INTERN_DATABASE_URL.startswith("sqlite") else {}
 
+# Force UTF-8 client encoding for PostgreSQL to prevent mojibake
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
+    main_connect_args["options"] = "-c client_encoding=utf8"
+
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args=main_connect_args,
@@ -138,7 +142,30 @@ def _run_main_schema_sync():
                 """))
 
         inspector = inspect(conn)
+        if _table_exists(inspector, "tasks"):
+            task_columns = _column_names(inspector, "tasks")
+            datetime_type = "TIMESTAMP WITH TIME ZONE" if dialect == "postgresql" else "DATETIME"
+            if "frequency" not in task_columns:
+                conn.execute(text("ALTER TABLE tasks ADD COLUMN frequency VARCHAR(50)"))
+            if "series_id" not in task_columns:
+                conn.execute(text("ALTER TABLE tasks ADD COLUMN series_id VARCHAR(64)"))
+            if "period_start" not in task_columns:
+                conn.execute(text(f"ALTER TABLE tasks ADD COLUMN period_start {datetime_type}"))
+            if "period_end" not in task_columns:
+                conn.execute(text(f"ALTER TABLE tasks ADD COLUMN period_end {datetime_type}"))
+            if "repeat_until" not in task_columns:
+                conn.execute(text(f"ALTER TABLE tasks ADD COLUMN repeat_until {datetime_type}"))
+            if "task_type" not in task_columns:
+                conn.execute(text("ALTER TABLE tasks ADD COLUMN task_type VARCHAR(20) DEFAULT 'recurring'"))
+
+        inspector = inspect(conn)
         if _table_exists(inspector, "notifications"):
+            notif_columns = _column_names(inspector, "notifications")
+            if "session_id" not in notif_columns:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN session_id INTEGER"))
+            if "meeting_id" not in notif_columns:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN meeting_id INTEGER"))
+
             notification_indexes = _index_names(inspector, "notifications")
             if "idx_notifications_user_id" not in notification_indexes:
                 conn.execute(text("CREATE INDEX idx_notifications_user_id ON notifications(user_id)"))
@@ -154,6 +181,12 @@ def _run_main_schema_sync():
                     ON notifications(user_id, is_read)
                     WHERE is_read = FALSE
                 """))
+
+        inspector = inspect(conn)
+        if _table_exists(inspector, "meeting_sessions"):
+            session_cols = _column_names(inspector, "meeting_sessions")
+            if "notified_open" not in session_cols:
+                conn.execute(text("ALTER TABLE meeting_sessions ADD COLUMN notified_open BOOLEAN DEFAULT FALSE"))
 
         inspector = inspect(conn)
         if _table_exists(inspector, "projects"):

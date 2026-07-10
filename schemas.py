@@ -148,6 +148,12 @@ class TaskBase(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = TaskStatus.TODO.value
     priority: Optional[str] = TaskPriority.MEDIUM.value
+    task_type: Optional[str] = "recurring"  # "recurring" | "one_time"
+    frequency: Optional[str] = None
+    series_id: Optional[str] = None
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
+    repeat_until: Optional[datetime] = None
     assignee_ids: Optional[List[int]] = None  # Danh sách assignees
     due_date: Optional[datetime] = None
     tags: Optional[str] = None
@@ -285,6 +291,12 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
+    task_type: Optional[str] = None  # "recurring" | "one_time"
+    frequency: Optional[str] = None
+    series_id: Optional[str] = None
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
+    repeat_until: Optional[datetime] = None
     assignee_ids: Optional[List[int]] = None  # Danh sách assignees
     due_date: Optional[datetime] = None
     tags: Optional[str] = None
@@ -335,6 +347,12 @@ class TaskResponse(TaskBase):
                     'description': data.description,
                     'status': data.status,
                     'priority': data.priority,
+                    'task_type': getattr(data, 'task_type', 'recurring') or 'recurring',
+                    'frequency': getattr(data, 'frequency', None),
+                    'series_id': getattr(data, 'series_id', None),
+                    'period_start': getattr(data, 'period_start', None),
+                    'period_end': getattr(data, 'period_end', None),
+                    'repeat_until': getattr(data, 'repeat_until', None),
                     'due_date': data.due_date,
                     'tags': data.tags,
                     'position': data.position,
@@ -462,6 +480,8 @@ class NotificationBase(BaseModel):
     project_id: Optional[int] = None
     task_id: Optional[int] = None
     thread_id: Optional[int] = None
+    session_id: Optional[int] = None
+    meeting_id: Optional[int] = None
 
 
 class NotificationResponse(NotificationBase):
@@ -615,3 +635,31 @@ class MESAllContentResponse(BaseModel):
     kpis: List[MESKPIResponse]
     map_nodes: List[MESMapNodeResponse]
     module_details: List[MESModuleDetailResponse]
+
+
+# Recurring Task Templates
+class RecurringTaskTemplateBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    frequency: str  # weekly, monthly, quarterly, semi_annual, annual, ad_hoc
+    is_active: Optional[bool] = True
+
+
+class RecurringTaskTemplateCreate(RecurringTaskTemplateBase):
+    pass
+
+
+class RecurringTaskTemplateUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    frequency: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class RecurringTaskTemplateResponse(RecurringTaskTemplateBase):
+    id: int
+    user_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

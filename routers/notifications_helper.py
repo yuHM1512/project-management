@@ -16,7 +16,9 @@ def create_notification(
     project_id: Optional[int] = None,
     task_id: Optional[int] = None,
     thread_id: Optional[int] = None,
-    activity_id: Optional[int] = None
+    activity_id: Optional[int] = None,
+    session_id: Optional[int] = None,
+    meeting_id: Optional[int] = None,
 ):
     """Tạo một notification cho user"""
     notification = Notification(
@@ -27,7 +29,9 @@ def create_notification(
         project_id=project_id,
         task_id=task_id,
         thread_id=thread_id,
-        activity_id=activity_id
+        activity_id=activity_id,
+        session_id=session_id,
+        meeting_id=meeting_id,
     )
     db.add(notification)
     return notification
@@ -110,6 +114,46 @@ def notify_mentioned_in_thread(
         thread_id=thread_id
     )
     # KHÔNG commit ở đây - để caller commit
+
+
+def notify_meeting_assigned(
+    db: Session,
+    meeting_title: str,
+    new_participant_ids: list,
+    assigned_by_user: User,
+):
+    """Thông báo cho user khi được thêm vào một cuộc họp định kỳ."""
+    assigner_name = assigned_by_user.full_name or assigned_by_user.username
+    for uid in new_participant_ids:
+        create_notification(
+            db=db,
+            user_id=uid,
+            notification_type="meeting_assigned",
+            title="Bạn được thêm vào cuộc họp định kỳ",
+            message=f'{assigner_name} đã thêm bạn vào cuộc họp định kỳ "{meeting_title}".',
+        )
+    db.commit()
+
+
+def notify_meeting_session_open(
+    db: Session,
+    session_title: str,
+    meeting_title: str,
+    participant_ids: list,
+    session_id: Optional[int] = None,
+    meeting_id: Optional[int] = None,
+):
+    """Thông báo cho participants khi phiên họp mở để cập nhật thông tin (không commit, caller tự commit)."""
+    for uid in participant_ids:
+        create_notification(
+            db=db,
+            user_id=uid,
+            notification_type="meeting_session_open",
+            title="Phiên họp mở – cập nhật thông tin",
+            message=f'Phiên "{session_title}" ({meeting_title}) đã mở. Hãy cập nhật nội dung trước ngày họp.',
+            session_id=session_id,
+            meeting_id=meeting_id,
+        )
 
 
 def notify_deadline_reminder(

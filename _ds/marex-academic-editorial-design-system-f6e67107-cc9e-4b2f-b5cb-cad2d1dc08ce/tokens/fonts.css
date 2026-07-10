@@ -1,0 +1,9 @@
+/* ============================================================
+   FONTS — Google Fonts (Manrope + Inter)
+   NOTE: No font files were shipped with the source DESIGN.md.
+   We load the canonical foundry versions from Google Fonts. If
+   you have licensed binaries, drop them in /assets/fonts/ and
+   swap the @font-face src below.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');

@@ -1,0 +1,138 @@
+/* ============================================================
+   TYPOGRAPHY — Editorial Authority
+   Manrope (display/headlines) + Inter (body/UI).
+   ============================================================ */
+
+:root {
+  /* ── Families ────────────────────────────────────────────── */
+  --font-display:   'Manrope', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body:      'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:      'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ── Type ramp (px, no rem — design tokens are concrete) ─── */
+  --type-display-lg-size:        56px;
+  --type-display-lg-weight:      700;
+  --type-display-lg-lh:          1.1;
+  --type-display-lg-tracking:    -0.02em;
+
+  --type-display-md-size:        44px;
+  --type-display-md-weight:      700;
+  --type-display-md-lh:          1.12;
+  --type-display-md-tracking:    -0.02em;
+
+  --type-headline-lg-size:       36px;
+  --type-headline-lg-weight:     600;
+  --type-headline-lg-lh:         1.2;
+  --type-headline-lg-tracking:   -0.01em;
+
+  --type-headline-md-size:       28px;
+  --type-headline-md-weight:     600;
+  --type-headline-md-lh:         1.3;
+  --type-headline-md-tracking:   -0.01em;
+
+  --type-headline-sm-size:       22px;
+  --type-headline-sm-weight:     600;
+  --type-headline-sm-lh:         1.35;
+  --type-headline-sm-tracking:   0;
+
+  --type-title-md-size:          18px;
+  --type-title-md-weight:        600;
+  --type-title-md-lh:            1.4;
+
+  --type-body-lg-size:           16px;
+  --type-body-lg-weight:         400;
+  --type-body-lg-lh:             1.6;
+
+  --type-body-md-size:           14px;
+  --type-body-md-weight:         400;
+  --type-body-md-lh:             1.55;
+
+  --type-label-md-size:          12px;
+  --type-label-md-weight:        500;
+  --type-label-md-lh:            1.0;
+  --type-label-md-tracking:      0.01em;
+
+  --type-overline-size:          11px;
+  --type-overline-weight:        600;
+  --type-overline-lh:            1.0;
+  --type-overline-tracking:      0.12em;
+}
+
+/* ── Utility text classes — quickly apply a ramp step ────── */
+.t-display-lg {
+  font-family: var(--font-display);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-lh);
+  letter-spacing: var(--type-display-lg-tracking);
+  color: var(--text-display);
+}
+.t-display-md {
+  font-family: var(--font-display);
+  font-size: var(--type-display-md-size);
+  font-weight: var(--type-display-md-weight);
+  line-height: var(--type-display-md-lh);
+  letter-spacing: var(--type-display-md-tracking);
+  color: var(--text-display);
+}
+.t-headline-lg {
+  font-family: var(--font-display);
+  font-size: var(--type-headline-lg-size);
+  font-weight: var(--type-headline-lg-weight);
+  line-height: var(--type-headline-lg-lh);
+  letter-spacing: var(--type-headline-lg-tracking);
+  color: var(--text-display);
+}
+.t-headline-md {
+  font-family: var(--font-display);
+  font-size: var(--type-headline-md-size);
+  font-weight: var(--type-headline-md-weight);
+  line-height: var(--type-headline-md-lh);
+  letter-spacing: var(--type-headline-md-tracking);
+  color: var(--text-display);
+}
+.t-headline-sm {
+  font-family: var(--font-display);
+  font-size: var(--type-headline-sm-size);
+  font-weight: var(--type-headline-sm-weight);
+  line-height: var(--type-headline-sm-lh);
+  color: var(--text-display);
+}
+.t-title-md {
+  font-family: var(--font-display);
+  font-size: var(--type-title-md-size);
+  font-weight: var(--type-title-md-weight);
+  line-height: var(--type-title-md-lh);
+  color: var(--text-body);
+}
+.t-body-lg {
+  font-family: var(--font-body);
+  font-size: var(--type-body-lg-size);
+  font-weight: var(--type-body-lg-weight);
+  line-height: var(--type-body-lg-lh);
+  color: var(--text-body);
+}
+.t-body-md {
+  font-family: var(--font-body);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-lh);
+  color: var(--text-body);
+}
+.t-label-md {
+  font-family: var(--font-body);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-lh);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--text-muted);
+}
+.t-overline {
+  font-family: var(--font-body);
+  font-size: var(--type-overline-size);
+  font-weight: var(--type-overline-weight);
+  line-height: var(--type-overline-lh);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

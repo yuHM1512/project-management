@@ -4,46 +4,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập - Project Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Đăng nhập — Project Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:           #002b73;
+            --primary-container: #0056d2;
+            --gradient-primary:  linear-gradient(135deg, #0040a1 0%, #0056d2 100%);
+            --surface:           #f8f9fa;
+            --on-surface:        #191c1d;
+            --on-surface-variant:#424654;
+            --shadow-cloud-xl:   0px 32px 64px rgba(25, 28, 29, 0.08);
+            --font-display: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+            --font-body:    'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+            --radius-md:   0.75rem;
+            --radius-xl:   1.5rem;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: var(--font-body);
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--on-surface);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 25% 90%, rgba(178, 197, 255, 0.30), transparent 52%);
+            pointer-events: none;
+        }
+
+        .sign-in-shell {
+            position: relative;
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .sign-in-eyebrow {
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: var(--font-body);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .sign-in-card {
+            background: rgba(248, 249, 250, 0.92);
+            backdrop-filter: blur(24px);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-cloud-xl);
+        }
+
+        .sign-in-logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .sign-in-logo img {
+            max-height: 72px;
+            width: auto;
+            display: block;
+        }
+
+        .sign-in-headline {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .sign-in-sub {
+            text-align: center;
+            font-size: 14px;
+            color: var(--on-surface-variant);
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            min-height: 52px;
+            padding: 0 16px;
+            background: #f1f3f4;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 15px;
+            color: var(--on-surface);
+            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            background: #ffffff;
+            border-color: rgba(0, 43, 115, 0.30);
+            box-shadow: 0 0 0 3px rgba(0, 43, 115, 0.08);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(66, 70, 84, 0.45);
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .remember-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-container);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .remember-row label {
+            font-size: 14px;
+            color: var(--on-surface-variant);
+            cursor: pointer;
+        }
+
+        .btn-sign-in {
+            width: 100%;
+            min-height: 52px;
+            background: var(--gradient-primary);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: filter 0.2s, transform 0.1s;
+            box-shadow: 0 16px 32px rgba(0, 86, 210, 0.22);
+        }
+
+        .btn-sign-in:hover {
+            filter: brightness(1.06);
+        }
+
+        .btn-sign-in:active {
+            transform: translateY(0.5px);
+        }
+
+        .sign-in-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--on-surface-variant);
+        }
+
+        .error-msg {
+            display: none;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            background: #ffdad6;
+            color: #93000a;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .error-msg.visible {
+            display: block;
+        }
+    </style>
 </head>
 
-<body class="bg-light">
-    <div class="container min-vh-100 d-flex align-items-center justify-content-center">
-        <div class="card shadow" style="max-width: 420px; width: 100%;">
-            <div class="text-center p-4">
-                <img src="{{ url_for('static', path='Logo.png') }}" alt="Project Management Logo" class="img-fluid"
-                    style="max-height: 120px;">
+<body>
+    <div class="sign-in-shell">
+        <p class="sign-in-eyebrow">Marex · Project Management System</p>
+        <div class="sign-in-card">
+            <div class="sign-in-logo">
+                <img src="{{ url_for('static', path='Logo.png') }}" alt="Marex">
             </div>
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Đăng nhập</h5>
+            <h1 class="sign-in-headline">Chào mừng trở lại.</h1>
+            <p class="sign-in-sub">Đăng nhập để tiếp tục quản lý dự án.</p>
+
+            <div class="error-msg" id="errorMsg">Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.</div>
+
+            <div class="form-group">
+                <label for="loginUsername">Tên đăng nhập</label>
+                <input type="text" id="loginUsername" placeholder="Nhập username của bạn" autocomplete="username">
             </div>
-            <div class="card-body p-4">
-                <div class="mb-3">
-                    <label class="form-label">Tên đăng nhập</label>
-                    <input type="text" class="form-control" id="loginUsername"
-                        placeholder="Nhập username (ví dụ: admin)">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Mật khẩu</label>
-                    <input type="password" class="form-control" id="loginPassword" placeholder="Nhập mật khẩu">
-                </div>
-                <div class="mb-4">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="rememberMe" checked>
-                        <label class="form-check-label" for="rememberMe">
-                            Ghi nhớ đăng nhập
-                        </label>
-                    </div>
-                </div>
-                <button class="btn btn-primary w-100" onclick="doLogin()">
-                    <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
-                </button>
-                <div class="text-center mt-3">
-                    <small class="text-muted">Sử dụng tài khoản đã được cấp trong hệ thống</small>
-                </div>
+            <div class="form-group">
+                <label for="loginPassword">Mật khẩu</label>
+                <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" autocomplete="current-password">
             </div>
+            <div class="remember-row">
+                <input type="checkbox" id="rememberMe" checked>
+                <label for="rememberMe">Ghi nhớ đăng nhập</label>
+            </div>
+            <button class="btn-sign-in" id="btnSignIn" onclick="doLogin()">Đăng nhập</button>
+            <p class="sign-in-footer">Sử dụng tài khoản đã được cấp trong hệ thống</p>
         </div>
     </div>
 
@@ -51,43 +239,50 @@
         async function doLogin() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const btn = document.getElementById('btnSignIn');
+
+            errorMsg.classList.remove('visible');
 
             if (!username || !password) {
-                alert('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
+                errorMsg.textContent = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
+                errorMsg.classList.add('visible');
                 return;
             }
 
+            btn.textContent = 'Đang đăng nhập...';
+            btn.disabled = true;
+
             try {
-                const rememberMe = document.getElementById('rememberMe').checked;
                 const formData = new URLSearchParams();
                 formData.append('username', username);
                 formData.append('password', password);
-                formData.append('remember_me', rememberMe ? 'true' : 'false');
+                formData.append('remember_me', document.getElementById('rememberMe').checked ? 'true' : 'false');
 
                 const res = await fetch('/api/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString()
                 });
 
-                if (!res.ok) {
-                    throw new Error('Đăng nhập thất bại');
-                }
+                if (!res.ok) throw new Error('login_failed');
 
                 const data = await res.json();
                 localStorage.setItem('pm_token', data.access_token);
 
-                // Kiểm tra tham số 'next' trong URL
                 const urlParams = new URLSearchParams(window.location.search);
-                const nextUrl = urlParams.get('next');
-
-                window.location.href = nextUrl || '/';
+                window.location.href = urlParams.get('next') || '/';
             } catch (error) {
-                alert('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+                errorMsg.textContent = 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+                errorMsg.classList.add('visible');
+                btn.textContent = 'Đăng nhập';
+                btn.disabled = false;
             }
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
     </script>
 </body>
 

@@ -1,3 +1,7 @@
+﻿import calendar
+import calendar
+import uuid
+from datetime import datetime, time, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,6 +15,121 @@ from routers.notifications_helper import notify_task_assigned, notify_task_updat
 from schemas import TaskCreate, TaskMove, TaskResponse, TaskUpdate, UserResponse
 
 router = APIRouter()
+
+VALID_TASK_FREQUENCIES = {"weekly", "monthly", "quarterly", "semiannual", "yearly"}
+
+
+def _end_of_day(value: datetime) -> datetime:
+    return datetime.combine(value.date(), time.max)
+
+
+def _start_of_day(value: datetime) -> datetime:
+    return datetime.combine(value.date(), time.min)
+
+
+def _end_of_month(value: datetime) -> datetime:
+    if value.month == 12:
+        next_month = datetime(value.year + 1, 1, 1)
+    else:
+        next_month = datetime(value.year, value.month + 1, 1)
+    return _end_of_day(next_month - timedelta(days=1))
+
+
+def _add_months(value: datetime, months: int) -> datetime:
+    month_index = value.month - 1 + months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(value.day, calendar.monthrange(year, month)[1])
+    return value.replace(year=year, month=month, day=day)
+
+
+def _calculate_period_end(start: datetime, frequency: Optional[str], explicit_end: Optional[datetime] = None) -> datetime:
+    if explicit_end:
+        return _end_of_day(explicit_end)
+    if frequency == "weekly":
+        days_until_saturday = (5 - start.weekday()) % 7
+        return _end_of_day(start + timedelta(days=days_until_saturday))
+    if frequency == "monthly":
+        return _end_of_month(start)
+    if frequency == "quarterly":
+        quarter_end_month = ((start.month - 1) // 3 + 1) * 3
+        return _end_of_month(datetime(start.year, quarter_end_month, 1))
+    if frequency == "semiannual":
+        end_month = 6 if start.month <= 6 else 12
+        return _end_of_month(datetime(start.year, end_month, 1))
+    if frequency == "yearly":
+        return _end_of_day(datetime(start.year, 12, 31))
+    return explicit_end or start
+
+
+def _next_period_window(previous_end: datetime, frequency: Optional[str], custom_end_anchor: bool = False) -> tuple[datetime, datetime]:
+    if frequency == "weekly":
+        start = _start_of_day(previous_end + timedelta(days=2))
+        return start, _calculate_period_end(start, frequency)
+
+    start = _start_of_day(previous_end + timedelta(days=1))
+    if custom_end_anchor and frequency == "semiannual":
+        return start, _end_of_day(_add_months(previous_end, 6))
+    if custom_end_anchor and frequency == "yearly":
+        return start, _end_of_day(_add_months(previous_end, 12))
+
+    return start, _calculate_period_end(start, frequency)
+
+
+def _build_recurring_task_payloads(task_data: dict, custom_end_anchor: bool = False) -> list[dict]:
+    frequency = task_data.get("frequency")
+    repeat_until = task_data.get("repeat_until")
+    period_end = task_data.get("period_end")
+    if not frequency or not repeat_until or not period_end:
+        return []
+
+    payloads = []
+    next_start, next_end = _next_period_window(period_end, frequency, custom_end_anchor)
+    while next_start <= repeat_until and len(payloads) < 120:
+        cloned = dict(task_data)
+        cloned["period_start"] = next_start
+        cloned["period_end"] = min(next_end, repeat_until)
+        cloned["due_date"] = cloned["period_end"]
+        payloads.append(cloned)
+        next_start, next_end = _next_period_window(cloned["period_end"], frequency, custom_end_anchor)
+
+    return payloads
+
+
+def _uses_custom_end_anchor(frequency: Optional[str], period_start: Optional[datetime], period_end: Optional[datetime]) -> bool:
+    if frequency not in {"semiannual", "yearly"} or not period_start or not period_end:
+        return False
+    default_end = _calculate_period_end(period_start, frequency)
+    return period_end.date() != default_end.date()
+
+
+def _normalize_task_schedule(payload: dict, apply_defaults: bool = False) -> dict:
+    frequency = payload.get("frequency")
+    if frequency == "":
+        frequency = None
+        payload["frequency"] = None
+    if frequency and frequency not in VALID_TASK_FREQUENCIES:
+        raise HTTPException(status_code=400, detail="Invalid task frequency")
+
+    period_start = payload.get("period_start")
+    explicit_period_end = payload.get("period_end")
+    if frequency and not period_start:
+        period_start = datetime.utcnow()
+        payload["period_start"] = period_start
+
+    if period_start:
+        period_end = _calculate_period_end(period_start, frequency, explicit_period_end)
+        payload["period_end"] = period_end
+        payload["due_date"] = period_end
+    elif explicit_period_end and not payload.get("due_date"):
+        payload["due_date"] = explicit_period_end
+
+    if apply_defaults and ("status" not in payload or payload.get("status") in (None, "")):
+        payload["status"] = TaskStatus.TODO.value
+    if apply_defaults and ("priority" not in payload or payload.get("priority") in (None, "")):
+        payload["priority"] = "medium"
+
+    return payload
 
 
 def _get_task_or_404(db: Session, task_id: int) -> Task:
@@ -170,7 +289,17 @@ def create_task(
         .count()
     )
 
-    task_data = task.dict(exclude={"assignee_ids"})
+    raw_task_data = task.dict(exclude={"assignee_ids"})
+    task_data = _normalize_task_schedule(raw_task_data, apply_defaults=True)
+    custom_end_anchor = _uses_custom_end_anchor(
+        task_data.get("frequency"),
+        task_data.get("period_start"),
+        task_data.get("period_end"),
+    )
+    recurring_payloads = _build_recurring_task_payloads(task_data, custom_end_anchor)
+    if recurring_payloads and not task_data.get("series_id"):
+        task_data["series_id"] = uuid.uuid4().hex
+
     task_data["position"] = max_position
 
     db_task = Task(**task_data)
@@ -179,6 +308,16 @@ def create_task(
 
     for user_id in assignee_ids:
         db.add(TaskAssignee(task_id=db_task.id, user_id=user_id))
+
+    for index, recurring_data in enumerate(recurring_payloads, start=1):
+        recurring_data = dict(recurring_data)
+        recurring_data["series_id"] = task_data.get("series_id")
+        recurring_data["position"] = max_position + index
+        recurring_task = Task(**recurring_data)
+        db.add(recurring_task)
+        db.flush()
+        for user_id in assignee_ids:
+            db.add(TaskAssignee(task_id=recurring_task.id, user_id=user_id))
 
     db.commit()
 
@@ -220,7 +359,7 @@ def update_task(
 
     old_status = db_task.status
     old_assignee_ids = [task_assignee.user_id for task_assignee in db_task.assignees] if db_task.assignees else []
-    update_data = task_update.dict(exclude_unset=True)
+    update_data = _normalize_task_schedule(task_update.dict(exclude_unset=True))
 
     assignee_ids = update_data.pop("assignee_ids", None)
     assignees_changed = False
@@ -417,6 +556,73 @@ def move_task(
             )
 
     return {"message": "Task moved successfully", "task": _enrich_task(db_task)}
+
+
+@router.post("/{task_id}/acknowledge", response_model=TaskResponse)
+def acknowledge_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Người thực hiện xác nhận nhận việc."""
+    db_task = _load_task_with_relations(db, task_id)
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    _ensure_task_access(db_task, current_user)
+
+    if db_task.status == TaskStatus.DONE.value:
+        return _enrich_task(db_task)
+
+    old_status = db_task.status
+    db_task.status = TaskStatus.IN_PROGRESS.value
+    db.commit()
+    db.refresh(db_task)
+
+    if old_status != db_task.status:
+        log_activity(
+            db,
+            db_task.project_id,
+            current_user.id,
+            "task_acknowledged",
+            "task",
+            db_task.id,
+            f"{current_user.full_name or current_user.username} đã xác nhận nhận task '{db_task.title}'",
+            {"task_id": db_task.id, "task_title": db_task.title},
+        )
+
+    latest = _load_task_with_relations(db, task_id)
+    return _enrich_task(latest)
+
+
+@router.post("/{task_id}/complete", response_model=TaskResponse)
+def complete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Người thực hiện đánh dấu hoàn thành task."""
+    db_task = _load_task_with_relations(db, task_id)
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    _ensure_task_access(db_task, current_user)
+
+    db_task.status = TaskStatus.DONE.value
+    db.commit()
+    db.refresh(db_task)
+
+    log_activity(
+        db,
+        db_task.project_id,
+        current_user.id,
+        "task_completed",
+        "task",
+        db_task.id,
+        f"{current_user.full_name or current_user.username} đã hoàn thành task '{db_task.title}'",
+        {"task_id": db_task.id, "task_title": db_task.title},
+    )
+
+    latest = _load_task_with_relations(db, task_id)
+    return _enrich_task(latest)
 
 
 @router.post("/{task_id}/confirm-complete", response_model=TaskResponse)

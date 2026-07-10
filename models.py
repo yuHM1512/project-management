@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum, JSON
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum, JSON, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -70,6 +70,7 @@ class User(Base):
     notes = relationship("Note", back_populates="owner", cascade="all, delete-orphan")
     meetings_created = relationship("Meeting", foreign_keys="Meeting.creator_id", cascade="all, delete-orphan")
     meetings_as_employee = relationship("Meeting", foreign_keys="Meeting.employee_id", cascade="all, delete-orphan")
+    recurring_task_templates = relationship("RecurringTaskTemplate", back_populates="user", cascade="all, delete-orphan")
 
 
 class Mtcl(Base):
@@ -156,6 +157,12 @@ class Task(Base):
     status = Column(String, default=TaskStatus.TODO.value)
     priority = Column(String, default=TaskPriority.MEDIUM.value)
     project_id = Column(Integer, ForeignKey("projects.id"))
+    task_type = Column(String(20), nullable=True, default="recurring")  # "recurring" | "one_time"
+    frequency = Column(String, nullable=True)
+    series_id = Column(String(64), nullable=True, index=True)
+    period_start = Column(DateTime(timezone=True), nullable=True)
+    period_end = Column(DateTime(timezone=True), nullable=True)
+    repeat_until = Column(DateTime(timezone=True), nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     tags = Column(String, nullable=True)  # Comma-separated tags
     position = Column(Integer, default=0)  # Vị trí trong board
@@ -328,6 +335,8 @@ class Notification(Base):
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True)
     thread_id = Column(Integer, ForeignKey("threads.id", ondelete="CASCADE"), nullable=True)
     activity_id = Column(Integer, ForeignKey("activity_logs.id", ondelete="SET NULL"), nullable=True)
+    session_id = Column(Integer, nullable=True)   # for meeting_session_open
+    meeting_id = Column(Integer, nullable=True)   # for meeting_session_open
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -356,6 +365,20 @@ class Meeting(Base):
     # Relationships
     creator = relationship("User", foreign_keys=[creator_id], back_populates="meetings_created")
     employee = relationship("User", foreign_keys=[employee_id], back_populates="meetings_as_employee")
+
+
+class RecurringTaskTemplate(Base):
+    __tablename__ = "recurring_task_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    frequency = Column(String(50), nullable=False)  # weekly, monthly, quarterly, semi_annual, annual, ad_hoc
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="recurring_task_templates")
 
 
 class MESKPI(Base):
@@ -399,3 +422,78 @@ class MESModuleDetail(Base):
     icon = Column(String(50), nullable=True)
     order = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# ── Recurring Meeting Models ──────────────────────────────────────────────────
+
+class PeriodicMeeting(Base):
+    """Định nghĩa cuộc họp định kỳ (template)."""
+    __tablename__ = "periodic_meetings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    frequency = Column(String(20), nullable=False)   # weekly / monthly / quarterly
+    day_of_week = Column(Integer, nullable=True)     # 0=Mon..6=Sun  (weekly)
+    day_of_month = Column(Integer, nullable=True)    # 1-28           (monthly / quarterly)
+    month_of_quarter = Column(Integer, nullable=True) # 1,2,3 = tháng đầu mỗi quý (quarterly)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=True)
+    description = Column(Text, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    creator = relationship("User", foreign_keys=[created_by])
+    participants = relationship("PeriodicMeetingParticipant", back_populates="meeting",
+                                cascade="all, delete-orphan")
+    sessions = relationship("MeetingSession", back_populates="meeting",
+                            order_by="MeetingSession.session_date",
+                            cascade="all, delete-orphan")
+
+
+class PeriodicMeetingParticipant(Base):
+    __tablename__ = "periodic_meeting_participants"
+
+    id = Column(Integer, primary_key=True)
+    meeting_id = Column(Integer, ForeignKey("periodic_meetings.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    role = Column(String(20), default="participant")  # organizer / participant
+
+    meeting = relationship("PeriodicMeeting", back_populates="participants")
+    user = relationship("User")
+
+
+class MeetingSession(Base):
+    """Một phiên họp cụ thể được tạo tự động theo chu kỳ."""
+    __tablename__ = "meeting_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    meeting_id = Column(Integer, ForeignKey("periodic_meetings.id", ondelete="CASCADE"))
+    session_date = Column(Date, nullable=False)      # ngày họp thực tế
+    opens_at = Column(DateTime(timezone=True), nullable=False)  # khi block mở ra
+    title = Column(String(300), nullable=False)      # e.g. "Tuần 28 – 07/07/2026"
+    notes = Column(Text, nullable=True)              # ghi chú tổng hợp sau họp
+    notified_open = Column(Boolean, default=False)   # đã gửi thông báo mở phiên chưa
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    meeting = relationship("PeriodicMeeting", back_populates="sessions")
+    agenda_items = relationship("MeetingAgendaItem", back_populates="session",
+                                order_by="MeetingAgendaItem.created_at",
+                                cascade="all, delete-orphan")
+
+
+class MeetingAgendaItem(Base):
+    """Nội dung từng thành viên chuẩn bị trước phiên họp."""
+    __tablename__ = "meeting_agenda_items"
+
+    id = Column(Integer, primary_key=True)
+    session_id = Column(Integer, ForeignKey("meeting_sessions.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    content = Column(Text, nullable=False)
+    item_type = Column(String(20), default="update")  # update / issue / plan
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    session = relationship("MeetingSession", back_populates="agenda_items")
+    user = relationship("User")
