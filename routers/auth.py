@@ -9,9 +9,17 @@ from models import User, UserRole
 from schemas import UserCreate, UserResponse
 import os
 import logging
+from types import SimpleNamespace
+
+import bcrypt as _bcrypt
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# passlib 1.7.x expects bcrypt.__about__.__version__, which bcrypt 4.1+
+# removed. Add it when the server venv has a newer bcrypt package.
+if not hasattr(_bcrypt, "__about__"):
+    _bcrypt.__about__ = SimpleNamespace(__version__=getattr(_bcrypt, "__version__", "unknown"))
 
 # Security
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
@@ -25,6 +33,9 @@ MAX_BCRYPT_PASSWORD_BYTES = 72
 
 def verify_password(plain_password, hashed_password):
     """Xác thực password"""
+    if len((plain_password or "").encode("utf-8")) > MAX_BCRYPT_PASSWORD_BYTES:
+        logger.warning("Password verification rejected: password exceeds bcrypt limit of 72 bytes.")
+        return False
     try:
         return pwd_context.verify(plain_password, hashed_password)
     except (ValueError, AttributeError) as exc:
