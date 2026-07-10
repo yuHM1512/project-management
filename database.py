@@ -103,18 +103,20 @@ def _run_main_schema_sync():
                 conn.execute(text("""
                     INSERT INTO project_types (name, description)
                     VALUES
-                        ('Company', 'Dự án cấp công ty'),
-                        ('Administration Department', 'Dự án cấp phòng Hành chính'),
-                        ('Trading Department', 'Dự án cấp phòng Kinh doanh')
+                        ('Công ty', 'Dự án cấp công ty'),
+                        ('Phòng Tổng hợp', 'Dự án của phòng Tổng hợp'),
+                        ('Phòng KDXNK', 'Dự án của phòng Kinh doanh'),
+                        ('Phòng QLCL', 'Dự án của phòng QLCL')
                     ON CONFLICT (name) DO NOTHING
                 """))
             else:
                 conn.execute(text("""
                     INSERT OR IGNORE INTO project_types (name, description)
                     VALUES
-                        ('Company', 'Dự án cấp công ty'),
-                        ('Administration Department', 'Dự án cấp phòng Hành chính'),
-                        ('Trading Department', 'Dự án cấp phòng Kinh doanh')
+                        ('Công ty', 'Dự án cấp công ty'),
+                        ('Phòng Tổng hợp', 'Dự án của phòng Tổng hợp'),
+                        ('Phòng KDXNK', 'Dự án của phòng Kinh doanh'),
+                        ('Phòng QLCL', 'Dự án của phòng QLCL')
                 """))
 
         inspector = inspect(conn)

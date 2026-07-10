@@ -11,6 +11,8 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+VI_PROJECT_TYPE_ORDER = ["Công ty", "Phòng Tổng hợp", "Phòng KDXNK", "Phòng QLCL"]
+
 
 class ProjectTypeResponse(BaseModel):
     id: int
@@ -127,6 +129,7 @@ def get_project_types(
     current_user=Depends(get_current_user),
 ):
     """Lấy danh sách project types"""
-    project_types = db.query(ProjectType).order_by(ProjectType.id).all()
+    project_types = db.query(ProjectType).filter(ProjectType.name.in_(VI_PROJECT_TYPE_ORDER)).all()
+    project_types.sort(key=lambda item: VI_PROJECT_TYPE_ORDER.index(item.name))
     return project_types
 
