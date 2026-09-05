@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from typing import List
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 
 from database import get_db
 from models import Notification, User, Task, TaskAssignee
@@ -59,7 +59,7 @@ def mark_as_read(
         raise HTTPException(status_code=404, detail="Notification not found")
     
     notification.is_read = True
-    notification.read_at = datetime.utcnow()
+    notification.read_at = datetime.now(timezone.utc)
     db.commit()
     
     return {"message": "Notification marked as read"}
@@ -76,7 +76,7 @@ def mark_all_as_read(
         Notification.is_read == False
     ).update({
         "is_read": True,
-        "read_at": datetime.utcnow()
+        "read_at": datetime.now(timezone.utc)
     })
     db.commit()
     

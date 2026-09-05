@@ -1,6 +1,6 @@
 """Periodic (recurring) meeting API."""
 from __future__ import annotations
-from datetime import date, datetime, timedelta, time as dt_time
+from datetime import date, datetime, timedelta, time as dt_time, timezone
 from typing import List, Optional
 import math
 
@@ -202,7 +202,7 @@ def _generate_sessions(meeting: PeriodicMeeting) -> List[MeetingSession]:
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _session_status(s: MeetingSession) -> str:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if now < s.opens_at.replace(tzinfo=None) if s.opens_at.tzinfo else s.opens_at:
         return "upcoming"
     today = date.today()
@@ -526,7 +526,7 @@ def check_open_sessions(db: Session = Depends(get_db),
     if not _is_admin(current_user):
         raise HTTPException(status_code=403, detail="Admin only")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     sessions = (db.query(MeetingSession)
                 .options(joinedload(MeetingSession.meeting)
                          .joinedload(PeriodicMeeting.participants))

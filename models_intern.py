@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Text, Table
 from sqlalchemy.orm import relationship
 from database import InternBase as Base # Alias explicitly for minimal diffs
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Association table for many-to-many relationship between roadmaps and resources
 roadmap_resources = Table(
@@ -38,16 +38,16 @@ class Resource(Base):
     title = Column(String)
     description = Column(Text)
     url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class DailyLog(Base):
     __tablename__ = "daily_logs"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer)
-    date = Column(Date, default=datetime.utcnow().date)
+    date = Column(Date, default=lambda: datetime.now(timezone.utc).date())
     content = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Question(Base):
     __tablename__ = "questions"
@@ -57,7 +57,7 @@ class Question(Base):
     author_name = Column(String)
     title = Column(String)
     content = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     answers = relationship("Answer", back_populates="question")
 
@@ -70,7 +70,7 @@ class Answer(Base):
     author_name = Column(String)
     author_role = Column(String) # Mentor, Trainer, etc.
     content = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     question = relationship("Question", back_populates="answers")
 
@@ -84,7 +84,7 @@ class Roadmap(Base):
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
     position = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Many-to-many relationship with resources
     resources = relationship("Resource", secondary=roadmap_resources, backref="roadmaps")

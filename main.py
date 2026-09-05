@@ -133,11 +133,31 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "message": "Project Management API is running"}
 
+JS_MODULE_FILES = [
+    "static/js/utils.js",
+    "static/js/app.js",
+    "static/js/dashboard.js",
+    "static/js/projects.js",
+    "static/js/kanban.js",
+    "static/js/tasks.js",
+    "static/js/timeline.js",
+    "static/js/meetings.js",
+    "static/js/periodic-meetings.js",
+    "static/js/notifications.js",
+    "static/js/threads.js",
+    "static/js/activities.js",
+    "static/js/settings.js",
+    "static/js/worklogs.js",
+    "static/js/personal.js",
+    "static/js/recurring-tasks.js",
+]
+
 @app.get("/api/version/js")
 async def get_js_version():
-    """Lấy version hiện tại của file JavaScript để kiểm tra update"""
-    version = get_file_version("static/js/app.v2.js")
-    return {"version": version, "file": "app.v2.js"}
+    """Lấy combined version hash của tất cả JS modules để kiểm tra update"""
+    combined = "_".join(get_file_version(f) for f in JS_MODULE_FILES)
+    version = hashlib.md5(combined.encode()).hexdigest()[:8]
+    return {"version": version, "files": [Path(f).name for f in JS_MODULE_FILES]}
 
 @app.get("/{path:path}", response_class=HTMLResponse)
 async def catch_all(request: Request, path: str):

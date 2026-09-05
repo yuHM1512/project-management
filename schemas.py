@@ -1,7 +1,18 @@
 from pydantic import BaseModel, EmailStr, field_serializer, model_validator
 from typing import Optional, List
 from datetime import datetime
+from pathlib import Path
 from models import ProjectStatus, TaskStatus, TaskPriority, UserRole
+
+
+def _clean_avatar_url(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    if value.startswith("/static/"):
+        local_path = Path(value.lstrip("/"))
+        if not local_path.exists():
+            return None
+    return value
 
 # User Schemas
 class UserFieldGroupEntry(BaseModel):
@@ -64,6 +75,10 @@ class UserResponse(UserBase):
     role: Optional[str] = None
     is_active: bool
     created_at: datetime
+
+    @field_serializer("avatar_url")
+    def serialize_avatar_url(self, value: Optional[str]) -> Optional[str]:
+        return _clean_avatar_url(value)
 
     class Config:
         from_attributes = True

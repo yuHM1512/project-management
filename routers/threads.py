@@ -1,7 +1,7 @@
 import os
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
 
@@ -227,7 +227,7 @@ def update_thread(
         old_mentions = db_thread.mentions or []
         db_thread.mentions = mentions if mentions else None
         db_thread.is_edited = True
-        db_thread.updated_at = datetime.utcnow()
+        db_thread.updated_at = datetime.now(timezone.utc)
 
         new_mentions = [user_id for user_id in mentions if user_id not in old_mentions]
         for mentioned_user_id in new_mentions:
@@ -264,7 +264,7 @@ def delete_thread(
         raise HTTPException(status_code=403, detail="You can only delete your own messages or be project owner")
 
     db_thread.is_deleted = True
-    db_thread.updated_at = datetime.utcnow()
+    db_thread.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": "Thread deleted successfully"}

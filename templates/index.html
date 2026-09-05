@@ -839,7 +839,7 @@
                                                     <option value="">-- Chưa gán --</option>
                                                 </select>
                                             </div>
-                                            <div class="form-group">
+                                            <div class="form-group" style="display:none;">
                                                 <label>Sub Task</label>
                                                 <select id="workLogSubtask" disabled>
                                                     <option value="">-- Chưa gán --</option>
@@ -1256,7 +1256,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="activity-log-card summary-activity-card" id="activityLogCard">
+                                    <!-- Activity log hidden by admin request -->
+                                    <div class="activity-log-card summary-activity-card" id="activityLogCard" style="display:none;">
                                         <div class="activity-header">
                                             <h3>Activity log</h3>
                                         </div>
@@ -1275,15 +1276,16 @@
                                             <div class="project-members-empty">Chưa có mục tiêu nào.</div>
                                         </div>
                                     </div>
-                                    <div class="activity-log-card member-directory-card" id="projectMembersCard">
-                                        <div class="activity-header">
-                                            <h3>Thành viên</h3>
-                                        </div>
-                                        <div class="project-members-shell">
-                                            <div class="project-members-table" id="projectMembersList">
-                                                <div class="project-members-empty">Chưa có thành viên nào.</div>
-                                            </div>
-                                        </div>
+                                </div>
+                            </div>
+
+                            <div class="activity-log-card member-directory-card" id="projectMembersCard">
+                                <div class="activity-header">
+                                    <h3>Thành viên</h3>
+                                </div>
+                                <div class="project-members-shell">
+                                    <div class="project-members-table" id="projectMembersList">
+                                        <div class="project-members-empty">Chưa có thành viên nào.</div>
                                     </div>
                                 </div>
                             </div>
@@ -1292,7 +1294,6 @@
                             <div class="board-tabs">
                                 <button class="board-tab active" data-tab="status">Status</button>
                                 <button class="board-tab" data-tab="timeline">Timeline</button>
-                                <button class="board-tab" data-tab="overview">Task Overview</button>
                                 <button class="board-tab" data-tab="workload">Team Workload</button>
                                 <!-- Thread tab is temporarily hidden because this board flow no longer uses discussion threads. -->
                                 <!-- <button class="board-tab" data-tab="thread">Thread</button> -->
@@ -1334,18 +1335,25 @@
                                 </div>
                             </div>
 
-                            <!-- Timeline Tab (Gantt Chart) -->
+                            <!-- Timeline Tab (Task Overview + Gantt Chart) -->
                             <div id="boardTabTimeline" class="board-tab-content">
+                                <div class="task-overview-shell" id="taskOverviewBoard" style="margin-bottom:24px;"></div>
                                 <div class="gantt-section">
                                     <div class="gantt-header" style="margin-bottom:16px">
                                         <h3 style="margin:0;font-size:16px;font-weight:700">Timeline dự án</h3>
-                                        <div class="gantt-legend">
-                                            <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#10b981;display:inline-block"></span> Hoàn thành</span>
-                                            <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#4361ee;display:inline-block"></span> Đang thực hiện</span>
-                                            <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#e2e5eb;display:inline-block"></span> Chưa bắt đầu</span>
+                                        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                                            <div class="tl-zoom-toggle">
+                                                <button id="tlZoomQuarter" class="tl-zoom-btn active">Theo Quý</button>
+                                                <button id="tlZoomMonth" class="tl-zoom-btn">Theo Tháng</button>
+                                            </div>
+                                            <div class="gantt-legend">
+                                                <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#10b981;display:inline-block"></span> Hoàn thành</span>
+                                                <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#4361ee;display:inline-block"></span> Đang thực hiện</span>
+                                                <span class="legend-item"><span style="width:10px;height:10px;border-radius:3px;background:#e2e5eb;display:inline-block"></span> Chưa bắt đầu</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <!-- Year selector for Quarterly view -->
+                                    <!-- Year / Month selector -->
                                     <div class="quarterly-year-selector" id="quarterlyYearSelector">
                                         <button class="btn-secondary" id="prevYearBtn">← Năm trước</button>
                                         <span id="currentYearDisplay" class="year-display"></span>
@@ -1362,10 +1370,7 @@
                                 </div>
                             </div>
 
-                            <!-- Task Overview Tab -->
-                            <div id="boardTabOverview" class="board-tab-content">
-                                <div class="task-overview-shell" id="taskOverviewBoard"></div>
-                            </div>
+                            <!-- Task Overview Tab (merged into Timeline) -->
 
                             <!-- Team Workload Tab -->
                             <div id="boardTabWorkload" class="board-tab-content">
@@ -1475,7 +1480,10 @@
                             <span class="material-symbols-outlined">keyboard_arrow_down</span>
                         </button>
                         <div id="projectMemberPickerList" class="assignees-list">
-                            <div class="empty-state">Đang tải danh sách user...</div>
+                            <input type="text" id="projectMemberSearch" class="member-search-input" placeholder="Tìm theo tên nhân viên..." autocomplete="off">
+                            <div id="projectMemberPickerItems">
+                                <div class="empty-state">Đang tải danh sách user...</div>
+                            </div>
                         </div>
                     </div>
                     <small class="input-hint">Danh sách này sẽ được dùng trong vùng phân công của popup New Task.</small>
@@ -1575,10 +1583,9 @@
                         <div class="task-status-panel" id="taskStatusPanel">
                             <span class="task-status-label">Tình trạng</span>
                             <strong id="taskStatusDisplay">Chưa thực hiện</strong>
-                            <p id="taskPeriodPreview">Chọn tần suất để tự tính kỳ hạn.</p>
                         </div>
                         <div class="form-group">
-                            <label>Assigned tasks</label>
+                            <label>Người thực hiện</label>
                             <div id="taskAssigneesContainer" class="assignees-container">
                                 <button type="button" class="assignee-dropdown-toggle" id="assigneeDropdownToggle">
                                     <span id="assigneeDropdownLabel">Chọn người thực hiện</span>
@@ -1589,6 +1596,7 @@
                                 </div>
                                 <small class="input-hint">Chọn Họ tên (mã nhân viên), không cần email.</small>
                             </div>
+                            <div id="selectedAssigneeChips" class="selected-assignee-chips"></div>
                         </div>
                     </aside>
                 </div>
@@ -1596,8 +1604,8 @@
                     Bạn chỉ đang xem chi tiết task này và không thể chỉnh sửa.
                 </div>
 
-                <!-- Sub Tasks Section -->
-                <div class="subtasks-section" id="subtasksSection">
+                <!-- Sub Tasks Section (hidden by admin request) -->
+                <div class="subtasks-section" id="subtasksSection" style="display:none;">
                     <div class="subtasks-header">
                         <label>Sub Tasks</label>
                         <span id="taskProgressText" class="subtask-progress-text"></span>
@@ -1631,10 +1639,9 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary" id="cancelTask">Cancel</button>
-                    <button type="button" class="btn-secondary" id="acknowledgeTaskBtn" style="display: none;">Xác nhận nhận việc</button>
+                    <button type="button" class="btn-secondary" id="cancelTask">Hủy</button>
                     <button type="button" class="btn-secondary" id="completeTaskBtn" style="display: none;">Hoàn thành</button>
-                    <button type="submit" class="btn-primary" id="saveTaskBtn">Save</button>
+                    <button type="submit" class="btn-primary" id="saveTaskBtn">Lưu</button>
                 </div>
             </form>
         </div>
@@ -1787,7 +1794,7 @@
             <div class="modal-body">
                 <div style="margin-bottom: 16px;">
                     <button class="btn-primary" id="btnCreateNewWorkLog" style="width: 100%;">
-                        + Tạo Work Log mới và gắn vào Subtask
+                        + Tạo Work Log mới
                     </button>
                 </div>
                 <div id="workLogLinkList" class="worklog-link-list">
@@ -1905,7 +1912,23 @@
 
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@3.1.1/dist/index.min.js"></script>
-    <script src="/static/js/app.v2.js?v={{ get_file_version('static/js/app.v2.js') }}"></script>
+    <!-- JS Modules (thứ tự load quan trọng: utils → app core → feature modules) -->
+    <script src="/static/js/utils.js?v={{ get_file_version('static/js/utils.js') }}"></script>
+    <script src="/static/js/app.js?v={{ get_file_version('static/js/app.js') }}"></script>
+    <script src="/static/js/dashboard.js?v={{ get_file_version('static/js/dashboard.js') }}"></script>
+    <script src="/static/js/projects.js?v={{ get_file_version('static/js/projects.js') }}"></script>
+    <script src="/static/js/kanban.js?v={{ get_file_version('static/js/kanban.js') }}"></script>
+    <script src="/static/js/tasks.js?v={{ get_file_version('static/js/tasks.js') }}"></script>
+    <script src="/static/js/timeline.js?v={{ get_file_version('static/js/timeline.js') }}"></script>
+    <script src="/static/js/meetings.js?v={{ get_file_version('static/js/meetings.js') }}"></script>
+    <script src="/static/js/periodic-meetings.js?v={{ get_file_version('static/js/periodic-meetings.js') }}"></script>
+    <script src="/static/js/notifications.js?v={{ get_file_version('static/js/notifications.js') }}"></script>
+    <script src="/static/js/threads.js?v={{ get_file_version('static/js/threads.js') }}"></script>
+    <script src="/static/js/activities.js?v={{ get_file_version('static/js/activities.js') }}"></script>
+    <script src="/static/js/settings.js?v={{ get_file_version('static/js/settings.js') }}"></script>
+    <script src="/static/js/worklogs.js?v={{ get_file_version('static/js/worklogs.js') }}"></script>
+    <script src="/static/js/personal.js?v={{ get_file_version('static/js/personal.js') }}"></script>
+    <script src="/static/js/recurring-tasks.js?v={{ get_file_version('static/js/recurring-tasks.js') }}"></script>
 </body>
 
 </html>

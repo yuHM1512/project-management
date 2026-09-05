@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -95,7 +95,7 @@ def update_todo(
     if "is_done" in update_data:
         is_done = update_data["is_done"]
         todo.is_done = bool(is_done)
-        todo.done_at = datetime.utcnow() if is_done else None
+        todo.done_at = datetime.now(timezone.utc) if is_done else None
         update_data.pop("is_done")
     for field, value in update_data.items():
         setattr(todo, field, value)
@@ -117,7 +117,7 @@ def toggle_todo_done(
     if planned_day and planned_day != today:
         raise HTTPException(status_code=400, detail="Chỉ có thể đánh dấu done trong ngày đã lên kế hoạch")
     todo.is_done = not todo.is_done
-    todo.done_at = datetime.utcnow() if todo.is_done else None
+    todo.done_at = datetime.now(timezone.utc) if todo.is_done else None
     db.commit()
     db.refresh(todo)
     return todo

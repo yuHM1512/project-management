@@ -131,6 +131,8 @@ let worklogTabsInitialized = false;
 let todos = [];
 let dashboardMonth = new Date();
 let quarterlyYear = new Date().getFullYear();
+let timelineMonth = new Date().getMonth();
+let timelineZoom = 'quarter'; // 'quarter' | 'month'
 let timelineTooltip = null;
 let projectMembers = [];
 let selectedProjectMemberId = null;
@@ -653,13 +655,27 @@ function initEventListeners() {
         await loadTodos(dashboardMonth);
     });
     document.getElementById('prevYearBtn')?.addEventListener('click', () => {
-        quarterlyYear--;
-        renderGanttChartQuy();
+        if (timelineZoom === 'month') {
+            timelineMonth--;
+            if (timelineMonth < 0) { timelineMonth = 11; quarterlyYear--; }
+            renderTimeline();
+        } else {
+            quarterlyYear--;
+            renderTimeline();
+        }
     });
     document.getElementById('nextYearBtn')?.addEventListener('click', () => {
-        quarterlyYear++;
-        renderGanttChartQuy();
+        if (timelineZoom === 'month') {
+            timelineMonth++;
+            if (timelineMonth > 11) { timelineMonth = 0; quarterlyYear++; }
+            renderTimeline();
+        } else {
+            quarterlyYear++;
+            renderTimeline();
+        }
     });
+    document.getElementById('tlZoomQuarter')?.addEventListener('click', () => setTimelineZoom('quarter'));
+    document.getElementById('tlZoomMonth')?.addEventListener('click', () => setTimelineZoom('month'));
 }
 
 function handleSearchInput(event) {
@@ -684,7 +700,7 @@ function handleSearchInput(event) {
         renderTasks();
     }
     if (timelineTab && timelineTab.classList.contains('active')) {
-        renderGanttChartQuy();
+        renderTimeline();
     }
     if (overviewTab && overviewTab.classList.contains('active')) {
         renderTaskOverviewBoard();
@@ -2929,7 +2945,7 @@ async function loadTasks(projectId = null, assignedOnly = false) {
             renderTasks();
         }
         if (timelineTab && timelineTab.classList.contains('active')) {
-            renderGanttChart();
+            renderTimeline();
         }
         if (overviewTab && overviewTab.classList.contains('active')) {
             renderTaskOverviewBoard();
@@ -3038,7 +3054,7 @@ function switchBoardTab(tabName) {
     // Render content based on active tab
     if (tabName === 'timeline') {
         stopThreadPolling();
-        renderGanttChartQuy();
+        renderTimeline();
     } else if (tabName === 'status') {
         stopThreadPolling();
         renderTasks();
@@ -3707,6 +3723,237 @@ function renderGanttChartQuy() {
             <div class="tl-summary-card">
                 <div class="tl-summary-icon" style="background:#ecfdf5;color:#10b981">${doneAll}</div>
                 <div><div class="tl-summary-sub">Hoàn thành</div><div class="tl-summary-val">đúng tiến độ</div></div>
+            </div>
+            <div class="tl-summary-card">
+                <div class="tl-summary-icon" style="background:#eff6ff;color:#4361ee">${inProgAll}</div>
+                <div><div class="tl-summary-sub">Đang thực hiện</div><div class="tl-summary-val">công việc</div></div>
+            </div>
+            <div class="tl-summary-card">
+                <div class="tl-summary-icon" style="background:#faf5ff;color:#8b5cf6">${seriesCount}</div>
+                <div><div class="tl-summary-sub">Nhóm lặp lại</div><div class="tl-summary-val">đã gom lại</div></div>
+            </div>
+        </div>`;
+
+    chart.querySelectorAll('.tl-bar').forEach(bar => {
+        bar.addEventListener('mouseenter', e => showTimelineTooltip(e, bar.getAttribute('data-tooltip')));
+        bar.addEventListener('mousemove',  moveTimelineTooltip);
+        bar.addEventListener('mouseleave', hideTimelineTooltip);
+    });
+}
+
+function renderTimeline() {
+    if (timelineZoom === 'month') renderGanttChartMonth();
+    else renderGanttChartQuy();
+}
+
+function setTimelineZoom(zoom) {
+    timelineZoom = zoom;
+    const btnQ = document.getElementById('tlZoomQuarter');
+    const btnM = document.getElementById('tlZoomMonth');
+    if (btnQ) btnQ.classList.toggle('active', zoom === 'quarter');
+    if (btnM) btnM.classList.toggle('active', zoom === 'month');
+    // Update nav button labels
+    const prevBtn = document.getElementById('prevYearBtn');
+    const nextBtn = document.getElementById('nextYearBtn');
+    if (prevBtn) prevBtn.textContent = zoom === 'month' ? '← Tháng trước' : '← Năm trước';
+    if (nextBtn) nextBtn.textContent = zoom === 'month' ? 'Tháng sau →' : 'Năm sau →';
+    renderTimeline();
+}
+
+function renderGanttChartMonth() {
+    const chart = document.getElementById('ganttChart');
+    if (!chart) return;
+
+    const oldTl = document.getElementById('ganttTimeline');
+    if (oldTl) oldTl.style.display = 'none';
+    const oldHdr = chart.closest('.gantt-section')?.querySelector('.gantt-task-header-row');
+    if (oldHdr) oldHdr.style.display = 'none';
+
+    const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                        'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+    const yearDisplay = document.getElementById('currentYearDisplay');
+    if (yearDisplay) yearDisplay.textContent = `${monthNames[timelineMonth]} / ${quarterlyYear}`;
+
+    if (!currentProject || filteredTasks.length === 0) {
+        chart.innerHTML = '<p class="text-muted" style="padding:24px 0">Chưa có task nào để hiển thị.</p>';
+        return;
+    }
+
+    function parseDate(v) {
+        if (!v) return null;
+        const d = new Date(String(v).replace(' ', 'T'));
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    const today = new Date();
+    const monthStart = new Date(quarterlyYear, timelineMonth, 1);
+    const monthEnd   = new Date(quarterlyYear, timelineMonth + 1, 0, 23, 59, 59, 999);
+    const totalMs    = monthEnd - monthStart;
+
+    function fracOfMonth(date) {
+        const t = Math.min(Math.max(date.getTime(), monthStart.getTime()), monthEnd.getTime());
+        return (t - monthStart) / totalMs;
+    }
+
+    const tasksInMonth = filteredTasks.filter(task => {
+        const end = parseDate(task.due_date);
+        if (!end) return false;
+        const start = parseDate(task.period_start || task.created_at) || end;
+        return !(end < monthStart || start > monthEnd);
+    });
+
+    if (tasksInMonth.length === 0) {
+        chart.innerHTML = `<p class="text-muted" style="padding:24px 0">Không có task nào trong ${monthNames[timelineMonth]} ${quarterlyYear}.</p>`;
+        return;
+    }
+
+    function _groupKey(task) {
+        if (task.task_type === 'one_time') return null;
+        if (!task.frequency) return null;
+        if (task.series_id) return `sid:${task.series_id}`;
+        return `tf:${task.title}|${task.frequency}`;
+    }
+
+    const seriesGroups = {};
+    tasksInMonth.forEach(task => {
+        const key = _groupKey(task);
+        if (!key) return;
+        if (!seriesGroups[key]) seriesGroups[key] = [];
+        seriesGroups[key].push(task);
+    });
+
+    const seenGroups = new Set();
+    const displayRows = [];
+    tasksInMonth.forEach(task => {
+        const key = _groupKey(task);
+        if (key) {
+            if (seenGroups.has(key)) return;
+            seenGroups.add(key);
+            const instances = seriesGroups[key];
+            const starts   = instances.map(t => parseDate(t.period_start || t.created_at)).filter(Boolean);
+            const ends     = instances.map(t => parseDate(t.due_date)).filter(Boolean);
+            const doneCount   = instances.filter(t => t.status === 'done').length;
+            const inProgCount = instances.filter(t => t.status === 'in_progress').length;
+            displayRows.push({
+                ...instances[0],
+                _isGroup:    true,
+                _count:      instances.length,
+                _groupStart: starts.length ? new Date(Math.min(...starts.map(d => d.getTime()))) : null,
+                _groupEnd:   ends.length   ? new Date(Math.max(...ends.map(d => d.getTime())))   : null,
+                status: doneCount === instances.length ? 'done'
+                       : (inProgCount > 0 || doneCount > 0 ? 'in_progress' : 'todo'),
+                _progress: Math.round((doneCount / instances.length) * 100)
+            });
+        } else {
+            displayRows.push({ ...task, _isGroup: false, _count: 1, _progress: undefined });
+        }
+    });
+
+    function statusCfg(s) {
+        if (s === 'done')        return { dot: '#10b981', track: 'rgba(16,185,129,.12)', fill: 'linear-gradient(90deg,#10b981,#34d399)' };
+        if (s === 'in_progress') return { dot: '#4361ee', track: 'rgba(67,97,238,.10)',  fill: 'linear-gradient(90deg,#4361ee,#6b83f7)' };
+        return                          { dot: '#cbd5e1', track: 'rgba(0,0,0,.05)',       fill: '#e2e5eb' };
+    }
+
+    const daysInMonth = monthEnd.getDate();
+    const weeks = [];
+    let ws = 1;
+    while (ws <= daysInMonth) { weeks.push({ start: ws, end: Math.min(ws + 6, daysInMonth) }); ws += 7; }
+
+    const todayFrac  = (today >= monthStart && today <= monthEnd) ? fracOfMonth(today) : null;
+    const currentDay = (today.getFullYear() === quarterlyYear && today.getMonth() === timelineMonth) ? today.getDate() : -1;
+
+    const weekHeaderHtml = weeks.map((w, wi) => {
+        const isCurrWeek = currentDay >= w.start && currentDay <= w.end;
+        return `<div class="tl-week${isCurrWeek ? ' current-w' : ''}">
+            <div class="tl-w-label${isCurrWeek ? ' current' : ''}">Tuần ${wi + 1}</div>
+            <div class="tl-w-days">${w.start}–${w.end}</div>
+        </div>`;
+    }).join('');
+
+    const weekBandColors = ['rgba(59,130,246,.035)','rgba(67,97,238,.025)','rgba(59,130,246,.035)','rgba(67,97,238,.025)','rgba(59,130,246,.035)'];
+    const bandsAndLinesHtml = (() => {
+        let html = '';
+        weeks.forEach((w, wi) => {
+            const leftF  = (w.start - 1) / daysInMonth;
+            const widthF = (w.end - w.start + 1) / daysInMonth;
+            html += `<div class="tl-q-band" style="left:calc(260px + (100% - 260px)*${leftF.toFixed(4)});width:calc((100% - 260px)*${widthF.toFixed(4)});background:${weekBandColors[wi % weekBandColors.length]}"></div>`;
+        });
+        for (let wi = 1; wi < weeks.length; wi++) {
+            const frac = (weeks[wi].start - 1) / daysInMonth;
+            html += `<div class="tl-quarter-divider" style="left:calc(260px + (100% - 260px)*${frac.toFixed(4)})"></div>`;
+        }
+        return html;
+    })();
+
+    const statusLabelMap = { todo: 'Chưa thực hiện', in_progress: 'Đang thực hiện', done: 'Hoàn thành' };
+
+    const rowsHtml = displayRows.map(row => {
+        const rawStart = row._isGroup ? row._groupStart : parseDate(row.period_start || row.created_at);
+        const rawEnd   = row._isGroup ? row._groupEnd   : parseDate(row.due_date);
+        if (!rawEnd) return '';
+
+        const start      = rawStart && rawStart <= rawEnd ? rawStart : rawEnd;
+        const clampStart = new Date(Math.max(start.getTime(), monthStart.getTime()));
+        const clampEnd   = new Date(Math.min(rawEnd.getTime(), monthEnd.getTime()));
+        if (clampStart > clampEnd) return '';
+
+        const leftF    = fracOfMonth(clampStart);
+        const rightF   = fracOfMonth(clampEnd);
+        const leftPct  = (leftF * 100).toFixed(2);
+        const widthPct = Math.max(2, (rightF - leftF) * 100).toFixed(2);
+
+        const cfg      = statusCfg(row.status);
+        const progress = row._progress !== undefined ? row._progress
+                       : (row.status === 'done' ? 100 : row.status === 'in_progress' ? 50 : 0);
+
+        const badgeHtml  = row._isGroup
+            ? `<span class="tl-row-badge">×${row._count}</span>`
+            : (row.task_type === 'one_time' ? `<span class="tl-row-badge tl-badge-once">1 lần</span>` : '');
+        const freqHint   = row._isGroup ? ` · ${getTaskFrequencyLabel(row.frequency, row.task_type)} · ${row._count} chu kỳ` : '';
+        const tooltip    = `${row.title}\n${statusLabelMap[row.status] || ''}${freqHint}\n${formatDateDisplay(clampStart)} – ${formatDateDisplay(clampEnd)}`;
+
+        return `<div class="tl-row">
+            <div class="tl-row-name">
+                <div class="tl-row-dot" style="background:${cfg.dot}"></div>
+                <button type="button" class="tl-row-title" onclick="openTimelineTaskModal(${row.id})" title="${escapeHtml(row.title)}">${escapeHtml(row.title)}</button>
+                ${badgeHtml}
+            </div>
+            <div class="tl-bar-area">
+                <div class="tl-bar" style="left:${leftPct}%;width:${widthPct}%;background:${cfg.track}" data-tooltip="${escapeHtml(tooltip)}" onclick="openTimelineTaskModal(${row.id})">
+                    <div class="tl-bar-fill" style="width:${progress}%;background:${cfg.fill}"></div>
+                    ${progress >= 15 ? `<span class="tl-bar-label">${progress}%</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    const doneAll   = tasksInMonth.filter(t => t.status === 'done').length;
+    const inProgAll = tasksInMonth.filter(t => t.status === 'in_progress').length;
+    const seriesCount = Object.values(seriesGroups).filter(g => g.length > 1).length;
+
+    chart.innerHTML = `
+        <div class="tl-card">
+            <div class="tl-scroll">
+                <div class="tl-header-row">
+                    <div class="tl-header-stub"><span>Danh sách công việc</span></div>
+                    <div class="tl-quarters tl-weeks">${weekHeaderHtml}</div>
+                </div>
+                <div class="tl-rows">
+                    ${bandsAndLinesHtml}
+                    ${todayFrac !== null ? `<div class="tl-today-line" style="left:calc(260px + (100% - 260px) * ${todayFrac.toFixed(4)})"><div class="tl-today-label">Hôm nay</div></div>` : ''}
+                    ${rowsHtml || `<div style="padding:32px 24px;color:#9ca3af;font-size:14px">Không có task nào trong tháng này.</div>`}
+                </div>
+            </div>
+        </div>
+        <div class="tl-summary">
+            <div class="tl-summary-card">
+                <div class="tl-summary-icon" style="background:#f0f1ff;color:#4361ee">${displayRows.length}</div>
+                <div><div class="tl-summary-sub">Hiển thị</div><div class="tl-summary-val">dòng timeline</div></div>
+            </div>
+            <div class="tl-summary-card">
+                <div class="tl-summary-icon" style="background:#ecfdf5;color:#10b981">${doneAll}</div>
+                <div><div class="tl-summary-sub">Hoàn thành</div><div class="tl-summary-val">trong tháng</div></div>
             </div>
             <div class="tl-summary-card">
                 <div class="tl-summary-icon" style="background:#eff6ff;color:#4361ee">${inProgAll}</div>

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import shutil
 
@@ -181,7 +181,7 @@ def update_comment(
     if comment_update.content is not None:
         db_comment.content = comment_update.content
         db_comment.is_edited = True
-        db_comment.updated_at = datetime.utcnow()
+        db_comment.updated_at = datetime.now(timezone.utc)
     
     if comment_update.attachment_url is not None:
         db_comment.attachment_url = comment_update.attachment_url
@@ -223,7 +223,7 @@ def delete_comment(
         raise HTTPException(status_code=403, detail="You don't have permission to delete this comment")
     
     db_comment.is_deleted = True
-    db_comment.updated_at = datetime.utcnow()
+    db_comment.updated_at = datetime.now(timezone.utc)
     db.commit()
     
     return {"message": "Comment deleted successfully"}
@@ -246,7 +246,7 @@ async def upload_comment_attachment(
     
     # Lưu file
     file_ext = os.path.splitext(file.filename)[1]
-    filename = f"comment_{comment_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}{file_ext}"
+    filename = f"comment_{comment_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}{file_ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
     
     with open(filepath, "wb") as buffer:

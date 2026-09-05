@@ -1,7 +1,6 @@
 ﻿import calendar
-import calendar
 import uuid
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -25,6 +24,16 @@ def _end_of_day(value: datetime) -> datetime:
 
 def _start_of_day(value: datetime) -> datetime:
     return datetime.combine(value.date(), time.min)
+
+
+def _as_utc_datetime(value) -> Optional[datetime]:
+    if not value:
+        return None
+    if not isinstance(value, datetime):
+        value = datetime.combine(value, time.min)
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def _end_of_month(value: datetime) -> datetime:
@@ -114,7 +123,7 @@ def _normalize_task_schedule(payload: dict, apply_defaults: bool = False) -> dic
     period_start = payload.get("period_start")
     explicit_period_end = payload.get("period_end")
     if frequency and not period_start:
-        period_start = datetime.utcnow()
+        period_start = datetime.now(timezone.utc)
         payload["period_start"] = period_start
 
     if period_start:
@@ -244,6 +253,21 @@ def get_tasks(
         .limit(limit)
         .all()
     )
+
+    now = datetime.now(timezone.utc)
+    changed = False
+    for t in tasks:
+        if t.status == TaskStatus.TODO.value and t.period_start:
+            start = _as_utc_datetime(t.period_start)
+            if now >= start:
+                t.status = TaskStatus.IN_PROGRESS.value
+                changed = True
+    if changed:
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+
     return [_enrich_task(task) for task in tasks]
 
 

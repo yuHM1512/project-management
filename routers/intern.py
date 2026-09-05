@@ -6,7 +6,7 @@ from database import get_intern_db
 from models_intern import InternProfile, DailyLog, Resource, Question, Roadmap, Answer
 from models import User
 from routers.auth import get_current_user_from_cookie
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 router = APIRouter()
@@ -262,7 +262,7 @@ async def daily_log_get(request: Request, date: str = None, user: User = Depends
         return RedirectResponse(url="/login", status_code=303)
     profile = db.query(InternProfile).filter(InternProfile.user_id == user.id).first()
 
-    target_date = datetime.strptime(date, "%Y-%m-%d").date() if date else datetime.utcnow().date()
+    target_date = datetime.strptime(date, "%Y-%m-%d").date() if date else datetime.now(timezone.utc).date()
 
     log = db.query(DailyLog).filter(DailyLog.user_id == user.id, DailyLog.date == target_date).first()
     return templates.TemplateResponse("intern/daily_log.html", {
@@ -286,7 +286,7 @@ async def daily_log_post(
         return RedirectResponse(url="/login", status_code=303)
     profile = db.query(InternProfile).filter(InternProfile.user_id == user.id).first()
 
-    target_date = datetime.strptime(date, "%Y-%m-%d").date() if date else datetime.utcnow().date()
+    target_date = datetime.strptime(date, "%Y-%m-%d").date() if date else datetime.now(timezone.utc).date()
 
     log = db.query(DailyLog).filter(DailyLog.user_id == user.id, DailyLog.date == target_date).first()
     if log:
